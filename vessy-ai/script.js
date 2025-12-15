@@ -1,35 +1,49 @@
-// ... inside handleSend function, inside the try block ...
+const chatWindow = document.getElementById('chatWindow');
+const userInput = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
 
-        const data = await response.json();
+function addMessage(text, sender) {
+    const div = document.createElement('div');
+    div.className = `message ${sender}`;
+    div.innerHTML = `<div class="bubble">${text}</div>`;
+    chatWindow.appendChild(div);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+}
 
-        // Reset Island
-        island.style.width = '';
-        statusText.textContent = 'Vessy Intelligence';
+async function handleSend() {
+    const text = userInput.value.trim();
+    if (!text) return;
 
-        const botDiv = document.createElement('div');
-        botDiv.className = 'message bot-message';
-        const bubble = document.createElement('div');
-        bubble.className = 'glass-bubble';
+    addMessage(text, 'user');
+    userInput.value = '';
+    
+    // Disable input while thinking
+    userInput.disabled = true;
+    
+    try {
+        const response = await fetch('/.netlify/functions/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: text })
+        });
         
-        botDiv.appendChild(bubble);
-        chatWindow.appendChild(botDiv);
-
+        const data = await response.json();
+        
         if (data.error) {
-            bubble.style.color = '#ff4444';
-            bubble.textContent = "Error: " + data.error;
+            addMessage("Error: " + data.error, 'bot');
         } else {
-            // Show the response
-            typeWriter(bubble, data.reply);
-            
-            // OPTIONAL: Show which model was used (Tiny text at bottom)
-            if (data.debug_model) {
-                const modelTag = document.createElement('div');
-                modelTag.style.fontSize = '10px';
-                modelTag.style.opacity = '0.5';
-                modelTag.style.marginTop = '5px';
-                modelTag.textContent = `Powered by: ${data.debug_model}`;
-                bubble.appendChild(modelTag);
-            }
+            addMessage(data.reply, 'bot');
         }
+    } catch (e) {
+        addMessage("Connection failed.", 'bot');
+    }
 
-// ... rest of code ...
+    // ALWAYS re-enable input
+    userInput.disabled = false;
+    userInput.focus();
+}
+
+sendBtn.addEventListener('click', handleSend);
+userInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleSend();
+});
