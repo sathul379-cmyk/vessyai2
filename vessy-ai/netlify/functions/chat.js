@@ -1,37 +1,38 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 exports.handler = async function(event, context) {
-    // Only allow POST requests
-    if (event.httpMethod !== "POST") {
-        return { statusCode: 405, body: "Method Not Allowed" };
-    }
+    if (event.httpMethod !== "POST") return { statusCode: 405, body: "Method Not Allowed" };
 
-    try {
-        // 1. Get the prompt from the frontend
-        const { prompt } = JSON.parse(event.body);
+    const { prompt } = JSON.parse(event.body);
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-        // 2. Initialize Gemini with the Secure Key from Environment Variables
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        
-        // *** IMPORTANT CHANGE HERE: Updated model name to gemini-2.5-flash ***
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    // LIST OF MODELS TO TRY (In order of preference)
+    // If "2.5" fails, it will automatically try "1.5"
+    const modelsToTry = ["gemini-2.0-flash-exp", "gemini-1.5-flash"];
 
-        // 3. Generate Content
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
+    for (const modelName of modelsToTry) {
+        try {
+            console.log(`Trying model: ${modelName}`);
+            const model = genAI.getGenerativeModel({ model: modelName });
+            
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const text = response.text();
 
-        // 4. Send back to frontend
-        return {
-            statusCode: 200,
-            body: JSON.stringify({ reply: text })
-        };
-
-    } catch (error) {
-        console.error("Error:", error);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ error: "Failed to generate response" })
-        };
+            return {
+                statusCode: 200,
+                body: JSON.stringify({ reply: text, modelUsed: modelName })
+            };
+        } catch (error) {
+            console.error(`Model ${modelName} failed:`, error.message);
+            // If this was the last model in the list, return the error
+            if (modelName === modelsToTry[modelsToTry.length - 1]) {
+                return {
+                    statusCode: 500,
+                    body: JSON.stringify({ error: "All AI models are busy. Please try again." })
+                };
+            }
+            // Otherwise, loop continues to the next model...
+        }
     }
 };
