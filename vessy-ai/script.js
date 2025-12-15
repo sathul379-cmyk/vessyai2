@@ -1,67 +1,48 @@
 const chatWindow = document.getElementById('chatWindow');
 const userInput = document.getElementById('userInput');
 const sendBtn = document.getElementById('sendBtn');
+const island = document.querySelector('.dynamic-island');
+const statusText = document.querySelector('.ai-name');
 
-// Auto-scroll to bottom
 function scrollToBottom() {
     chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
-// Add message to UI
-function addMessage(text, sender) {
-    const div = document.createElement('div');
-    div.classList.add('message', sender === 'user' ? 'user-message' : 'bot-message');
-    
-    const avatar = document.createElement('div');
-    avatar.classList.add('avatar');
-    avatar.textContent = sender === 'user' ? 'U' : 'V';
-    
-    const bubble = document.createElement('div');
-    bubble.classList.add('bubble');
-    
-    // Simple formatting for code blocks if Gemini sends them
-    if (sender === 'bot') {
-        // Convert newlines to breaks for display
-        bubble.innerHTML = text.replace(/\n/g, '<br>');
-    } else {
-        bubble.textContent = text;
+// Typewriter Effect for AI Response
+function typeWriter(element, text, speed = 10) {
+    let i = 0;
+    element.innerHTML = '';
+    function type() {
+        if (i < text.length) {
+            element.innerHTML += text.charAt(i) === '\n' ? '<br>' : text.charAt(i);
+            i++;
+            scrollToBottom();
+            setTimeout(type, speed);
+        }
     }
-
-    if (sender === 'user') {
-        div.appendChild(bubble);
-        div.appendChild(avatar);
-    } else {
-        div.appendChild(avatar);
-        div.appendChild(bubble);
-    }
-
-    chatWindow.appendChild(div);
-    scrollToBottom();
+    type();
 }
 
-// Handle sending
 async function handleSend() {
     const text = userInput.value.trim();
     if (!text) return;
 
-    // 1. Add User Message
-    addMessage(text, 'user');
+    // UI Updates
     userInput.value = '';
-    userInput.disabled = true;
-    sendBtn.disabled = true;
-
-    // 2. Show Loading Indicator
-    const loadingDiv = document.createElement('div');
-    loadingDiv.classList.add('message', 'bot-message');
-    loadingDiv.innerHTML = `
-        <div class="avatar">V</div>
-        <div class="bubble" style="color: #888;">Thinking...</div>
-    `;
-    chatWindow.appendChild(loadingDiv);
+    userInput.blur(); // Close keyboard on mobile
+    
+    // Add User Message
+    const userDiv = document.createElement('div');
+    userDiv.className = 'message user-message';
+    userDiv.innerHTML = `<div class="glass-bubble">${text}</div>`;
+    chatWindow.appendChild(userDiv);
     scrollToBottom();
 
+    // Animate Island (Loading State)
+    island.style.width = '200px';
+    statusText.textContent = 'Vessy is thinking...';
+    
     try {
-        // 3. Call Netlify Function (The Secure Backend)
         const response = await fetch('/.netlify/functions/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -70,23 +51,34 @@ async function handleSend() {
 
         const data = await response.json();
 
-        // Remove loading indicator
-        chatWindow.removeChild(loadingDiv);
+        // Reset Island
+        island.style.width = '';
+        statusText.textContent = 'Vessy Intelligence';
+
+        // Add Bot Message
+        const botDiv = document.createElement('div');
+        botDiv.className = 'message bot-message';
+        const bubble = document.createElement('div');
+        bubble.className = 'glass-bubble';
+        botDiv.appendChild(bubble);
+        chatWindow.appendChild(botDiv);
 
         if (data.error) {
-            addMessage("Error: " + data.error, 'bot');
+            bubble.style.color = '#ff4444';
+            bubble.textContent = "Error: " + data.error;
         } else {
-            addMessage(data.reply, 'bot');
+            // Use Typewriter effect
+            typeWriter(bubble, data.reply);
         }
 
     } catch (error) {
-        chatWindow.removeChild(loadingDiv);
-        addMessage("Connection error. Please try again.", 'bot');
+        island.style.width = '';
+        statusText.textContent = 'Connection Lost';
+        const errDiv = document.createElement('div');
+        errDiv.className = 'message bot-message';
+        errDiv.innerHTML = `<div class="glass-bubble" style="color:#ff4444">System Failure. Please retry.</div>`;
+        chatWindow.appendChild(errDiv);
     }
-
-    userInput.disabled = false;
-    sendBtn.disabled = false;
-    userInput.focus();
 }
 
 sendBtn.addEventListener('click', handleSend);
