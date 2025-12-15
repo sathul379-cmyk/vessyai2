@@ -12,7 +12,9 @@ exports.handler = async function(event, context) {
 
         // 2. Initialize Gemini with the Secure Key from Environment Variables
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        
+        // *** IMPORTANT CHANGE HERE: Updated model name to gemini-2.5-flash ***
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         // 3. Generate Content
         const result = await model.generateContent(prompt);
