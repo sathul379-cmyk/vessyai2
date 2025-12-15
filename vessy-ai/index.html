@@ -2,39 +2,46 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vessy AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vessy AI // OS</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="background-glow"></div>
-    
-    <main class="chat-container">
-        <header class="chat-header">
-            <div class="logo">
-                <div class="logo-icon">V</div>
-                <h1>Vessy AI</h1>
-            </div>
-            <span class="status-badge">Online</span>
-        </header>
+    <!-- Animated Background -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="noise-overlay"></div>
 
-        <div class="chat-window" id="chatWindow">
-            <div class="message bot-message">
-                <div class="avatar">V</div>
-                <div class="bubble">Hello. I am Vessy. How can I assist you today?</div>
+    <!-- Dynamic Island Header -->
+    <header class="island-container">
+        <div class="dynamic-island">
+            <div class="island-content">
+                <span class="ai-status-dot"></span>
+                <span class="ai-name">Vessy Intelligence</span>
             </div>
         </div>
+    </header>
 
-        <div class="input-area">
-            <div class="input-wrapper">
-                <input type="text" id="userInput" placeholder="Ask Vessy anything..." autocomplete="off">
-                <button id="sendBtn">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                </button>
+    <!-- Main Chat Area -->
+    <main class="chat-view" id="chatWindow">
+        <div class="message bot-message intro">
+            <div class="glass-bubble">
+                <p>Vessy OS 2.0 Online.<br>Ready for input.</p>
             </div>
         </div>
     </main>
+
+    <!-- Floating Input Bar -->
+    <footer class="input-dock">
+        <div class="glass-input-wrapper">
+            <input type="text" id="userInput" placeholder="Type a message..." autocomplete="off">
+            <button id="sendBtn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 4L12 20M12 4L6 10M12 4L18 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+    </footer>
 
     <script src="script.js"></script>
 </body>
