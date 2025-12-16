@@ -5,27 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Vessy AI</title>
     <link rel="stylesheet" href="style.css">
+    <!-- This script makes the text look nice (Bold, Code, Lists) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
-    <div class="bg-gradient"></div>
+    <!-- Colorful Background Orbs -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="noise-overlay"></div>
     
     <header>
-        <div class="pill">
+        <div class="glass-pill">
             <div class="dot"></div>
-            <span>Vessy AI (Llama 3)</span>
+            <span>Vessy AI // Athul</span>
         </div>
     </header>
 
     <main id="chatWindow">
         <div class="message bot">
-            <div class="bubble">System Online. I am Vessy.</div>
+            <div class="glass-bubble">
+                <p>System Online. Created by Athul.</p>
+            </div>
         </div>
     </main>
 
     <footer>
-        <div class="input-box">
-            <input type="text" id="userInput" placeholder="Message Vessy..." autocomplete="off">
-            <button id="sendBtn">→</button>
+        <div class="glass-input-box">
+            <input type="text" id="userInput" placeholder="Ask Vessy..." autocomplete="off">
+            <button id="sendBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+            </button>
         </div>
     </footer>
 
