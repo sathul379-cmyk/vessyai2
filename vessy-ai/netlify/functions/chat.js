@@ -5,9 +5,7 @@ exports.handler = async function(event, context) {
         const { prompt } = JSON.parse(event.body);
         const apiKey = process.env.GROQ_API_KEY;
 
-        if (!apiKey) {
-            return { statusCode: 500, body: JSON.stringify({ error: "API Key is missing" }) };
-        }
+        if (!apiKey) return { statusCode: 500, body: JSON.stringify({ error: "API Key is missing" }) };
 
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
@@ -16,20 +14,17 @@ exports.handler = async function(event, context) {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                // *** THIS IS THE NEW MODEL NAME ***
                 model: "llama-3.3-70b-versatile", 
                 messages: [
-                    { role: "system", content: "You are Vessy, a helpful AI." },
+                    // *** THIS LINE MAKES IT SAY ATHUL MADE IT ***
+                    { role: "system", content: "You are Vessy, a helpful AI assistant created by Athul. You format your answers using Markdown (bold, lists, code blocks)." },
                     { role: "user", content: prompt }
                 ]
             })
         });
 
         const data = await response.json();
-
-        if (data.error) {
-            throw new Error(data.error.message);
-        }
+        if (data.error) throw new Error(data.error.message);
 
         return {
             statusCode: 200,
@@ -37,10 +32,6 @@ exports.handler = async function(event, context) {
         };
 
     } catch (error) {
-        console.error("Error:", error);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ error: error.message })
-        };
+        return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
 };
