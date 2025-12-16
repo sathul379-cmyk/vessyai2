@@ -1,37 +1,49 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-
-exports.handler = async function(event, context) {
-    // Only allow POST requests
-    if (event.httpMethod !== "POST") {
-        return { statusCode: 405, body: "Method Not Allowed" };
+export default async function handler(req, res) {
+    // 1. Allow only POST requests
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
     try {
-        // 1. Get the prompt from the frontend
-        const { prompt } = JSON.parse(event.body);
+        // Vercel parses JSON automatically! No need for JSON.parse()
+        const { prompt } = req.body;
 
-        // 2. Initialize Gemini with the Secure Key from Environment Variables
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        
-        // *** IMPORTANT CHANGE HERE: Updated model name to gemini-2.5-flash ***
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        // 2. Check API Key
+        const apiKey = process.env.GROQ_API_KEY;
+        if (!apiKey) {
+            return res.status(500).json({ error: "API Key is missing in Vercel settings." });
+        }
 
-        // 3. Generate Content
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
+        // 3. Call Groq (Llama 3.3)
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: "llama-3.3-70b-versatile",
+                messages: [
+                    { 
+                        role: "system", 
+                        content: "You are Vessy, a futuristic AI assistant created by Athul. If the user asks for code, provide the full HTML/CSS/JS in a single code block." 
+                    },
+                    { role: "user", content: prompt }
+                ]
+            })
+        });
 
-        // 4. Send back to frontend
-        return {
-            statusCode: 200,
-            body: JSON.stringify({ reply: text })
-        };
+        const data = await response.json();
+
+        if (data.error) {
+            throw new Error(data.error.message);
+        }
+
+        // 4. Send Response (Vercel style)
+        return res.status(200).json({ reply: data.choices[0].message.content });
 
     } catch (error) {
         console.error("Error:", error);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ error: "Failed to generate response" })
-        };
+        return res.status(500).json({ error: error.message });
     }
-};
+}
