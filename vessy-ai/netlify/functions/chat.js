@@ -1,18 +1,14 @@
 exports.handler = async function(event, context) {
-    // 1. Security Check
     if (event.httpMethod !== "POST") return { statusCode: 405, body: "Method Not Allowed" };
     
     try {
         const { prompt } = JSON.parse(event.body);
-        
-        // Get the key from Netlify
         const apiKey = process.env.GROQ_API_KEY;
 
         if (!apiKey) {
             return { statusCode: 500, body: JSON.stringify({ error: "API Key is missing" }) };
         }
 
-        // 2. Talk to Groq (using standard web tools, no package.json needed)
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -20,7 +16,8 @@ exports.handler = async function(event, context) {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "llama3-8b-8192", 
+                // *** THIS IS THE NEW MODEL NAME ***
+                model: "llama-3.3-70b-versatile", 
                 messages: [
                     { role: "system", content: "You are Vessy, a helpful AI." },
                     { role: "user", content: prompt }
