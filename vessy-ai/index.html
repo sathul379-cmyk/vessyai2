@@ -3,40 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vessy AI</title>
+    <title>Vessy OS 26</title>
     <link rel="stylesheet" href="style.css">
-    <!-- This script makes the text look nice (Bold, Code, Lists) -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
-    <!-- Colorful Background Orbs -->
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="noise-overlay"></div>
-    
+    <!-- Holographic Background -->
+    <div class="holo-gradient"></div>
+    <div class="glass-overlay"></div>
+
+    <!-- Header -->
     <header>
-        <div class="glass-pill">
-            <div class="dot"></div>
-            <span>Vessy AI // Athul</span>
+        <div class="island">
+            <div class="status-dot"></div>
+            <span class="title">Vessy OS // Athul</span>
         </div>
     </header>
 
+    <!-- Chat Area -->
     <main id="chatWindow">
         <div class="message bot">
-            <div class="glass-bubble">
-                <p>System Online. Created by Athul.</p>
+            <div class="glass-card">
+                <p>Vessy OS 26 Online.<br>Created by Athul.<br>Ready to code.</p>
             </div>
         </div>
     </main>
 
+    <!-- Input Dock -->
     <footer>
-        <div class="glass-input-box">
-            <input type="text" id="userInput" placeholder="Ask Vessy..." autocomplete="off">
+        <div class="dock">
+            <input type="text" id="userInput" placeholder="Design a website..." autocomplete="off">
             <button id="sendBtn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
             </button>
         </div>
     </footer>
+
+    <!-- Code Preview Modal (Hidden by default) -->
+    <div id="previewModal" class="modal hidden">
+        <div class="modal-header">
+            <span>Live Preview</span>
+            <button onclick="closePreview()">✕</button>
+        </div>
+        <iframe id="previewFrame"></iframe>
+    </div>
 
     <script src="script.js"></script>
 </body>
