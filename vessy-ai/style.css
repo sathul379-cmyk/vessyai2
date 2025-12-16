@@ -1,8 +1,7 @@
 :root {
     --glass: rgba(255, 255, 255, 0.05);
     --border: rgba(255, 255, 255, 0.15);
-    --accent: #00f2ff; /* Cyan Neon */
-    --accent-2: #ff00ff; /* Magenta Neon */
+    --accent: #00f2ff;
     --text: #ffffff;
 }
 
@@ -16,42 +15,47 @@ body {
     display: flex; flex-direction: column;
 }
 
-/* --- HOLOGRAPHIC BACKGROUND --- */
-.holo-gradient {
-    position: absolute; inset: 0; z-index: -2;
-    background: 
-        radial-gradient(circle at 0% 0%, rgba(0, 242, 255, 0.3), transparent 50%),
-        radial-gradient(circle at 100% 100%, rgba(255, 0, 255, 0.3), transparent 50%);
-    animation: pulse 10s infinite alternate;
+/* --- BACKGROUNDS --- */
+#bgLayer { position: absolute; inset: 0; z-index: -2; transition: background 0.5s ease; background-size: cover; background-position: center; }
+.bg-default {
+    background: radial-gradient(circle at 50% 50%, #1a1a1a, #000);
+}
+.bg-cyber {
+    background: linear-gradient(45deg, #2b002b, #000);
+}
+.bg-nature {
+    background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
 }
 .glass-overlay {
     position: absolute; inset: 0; z-index: -1;
-    backdrop-filter: blur(80px);
-    -webkit-backdrop-filter: blur(80px);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
 }
 
-@keyframes pulse { 0% { opacity: 0.5; } 100% { opacity: 1; } }
-
-/* --- UI ELEMENTS --- */
-header { padding: 20px; display: flex; justify-content: center; z-index: 10; }
+/* --- HEADER & SETTINGS --- */
+header { padding: 20px; display: flex; justify-content: center; align-items: center; z-index: 10; position: relative; }
 .island {
     background: rgba(0,0,0,0.6);
     border: 1px solid var(--border);
     padding: 10px 20px;
     border-radius: 50px;
     display: flex; align-items: center; gap: 10px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 .status-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent); }
-.title { font-size: 14px; font-weight: 600; letter-spacing: 1px; }
+.title { font-size: 14px; font-weight: 600; }
 
-/* --- CHAT --- */
-main {
-    flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 120px;
-    display: flex; flex-direction: column; gap: 20px;
+.icon-btn {
+    position: absolute; right: 20px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid var(--border);
+    width: 40px; height: 40px; border-radius: 50%;
+    color: white; cursor: pointer; font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
 }
 
-.message { display: flex; flex-direction: column; max-width: 90%; animation: slideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+/* --- CHAT --- */
+main { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 20px; }
+.message { display: flex; flex-direction: column; max-width: 90%; animation: slideUp 0.3s ease; }
 .user { align-self: flex-end; align-items: flex-end; }
 .bot { align-self: flex-start; }
 
@@ -63,30 +67,20 @@ main {
     font-size: 16px;
     line-height: 1.6;
     backdrop-filter: blur(20px);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 .user .glass-card { background: rgba(0, 242, 255, 0.15); border-color: rgba(0, 242, 255, 0.3); text-align: right; }
 
-/* --- CODE BLOCKS & BUTTONS --- */
+/* --- CODE & BUTTONS --- */
 pre { background: #111; padding: 15px; border-radius: 12px; overflow-x: auto; margin-top: 10px; border: 1px solid var(--border); }
 code { font-family: monospace; color: #00f2ff; }
 strong { color: #fff; font-weight: 700; }
-
 .run-btn {
-    margin-top: 10px;
-    background: linear-gradient(45deg, var(--accent), var(--accent-2));
-    border: none; padding: 8px 16px; border-radius: 8px;
+    margin-top: 10px; background: var(--accent); border: none; padding: 8px 16px; border-radius: 8px;
     color: black; font-weight: bold; cursor: pointer;
-    display: inline-flex; align-items: center; gap: 5px;
-    transition: transform 0.2s;
 }
-.run-btn:hover { transform: scale(1.05); box-shadow: 0 0 15px var(--accent); }
 
 /* --- DOCK --- */
-footer {
-    position: fixed; bottom: 30px; left: 0; right: 0;
-    display: flex; justify-content: center; z-index: 100;
-}
+footer { position: fixed; bottom: 30px; left: 0; right: 0; display: flex; justify-content: center; z-index: 100; }
 .dock {
     width: 90%; max-width: 600px;
     background: rgba(20, 20, 20, 0.7);
@@ -95,27 +89,19 @@ footer {
     border-radius: 40px;
     padding: 8px;
     display: flex; align-items: center;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
 }
-input {
-    flex: 1; background: transparent; border: none;
-    padding: 12px 20px; color: white; font-size: 16px; outline: none;
+input { flex: 1; background: transparent; border: none; padding: 12px 20px; color: white; font-size: 16px; outline: none; }
+button#sendBtn {
+    width: 44px; height: 44px; border-radius: 50%; background: white; border: none; color: black;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
 }
-button {
-    width: 44px; height: 44px; border-radius: 50%;
-    background: white; border: none; color: black;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: 0.2s;
-}
-button:hover { transform: scale(1.1); background: var(--accent); }
 
-/* --- PREVIEW MODAL --- */
+/* --- MODALS --- */
 .modal {
     position: fixed; inset: 20px; z-index: 200;
     background: #000; border: 1px solid var(--border);
     border-radius: 20px; display: flex; flex-direction: column;
     box-shadow: 0 0 100px rgba(0,0,0,0.8);
-    animation: zoomIn 0.3s ease;
 }
 .hidden { display: none; }
 .modal-header {
@@ -123,8 +109,25 @@ button:hover { transform: scale(1.1); background: var(--accent); }
     display: flex; justify-content: space-between; align-items: center;
     background: #111; border-radius: 20px 20px 0 0;
 }
-.modal-header button { width: 30px; height: 30px; background: #333; color: white; font-size: 12px; border-radius: 50%; cursor: pointer; }
+.modal-header button { width: 30px; height: 30px; background: #333; color: white; border-radius: 50%; border: none; cursor: pointer; }
+.modal-body { padding: 20px; color: white; }
 iframe { flex: 1; border: none; background: white; border-radius: 0 0 20px 20px; }
 
+/* --- SETTINGS GRID --- */
+.bg-grid { display: flex; gap: 10px; margin-bottom: 20px; }
+.bg-option { width: 60px; height: 60px; border-radius: 10px; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+.bg-option:hover { border-color: var(--accent); }
+
+/* --- GAME OVERLAY --- */
+#gameOverlay {
+    position: fixed; inset: 0; z-index: 9999; background: black;
+    display: flex; flex-direction: column;
+}
+#closeGameBtn {
+    position: absolute; top: 20px; right: 20px; z-index: 10000;
+    background: red; color: white; border: none; padding: 10px 20px;
+    font-weight: bold; cursor: pointer; border-radius: 8px;
+}
+#gameFrame { width: 100%; height: 100%; border: none; }
+
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
