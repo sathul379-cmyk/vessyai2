@@ -18,7 +18,6 @@
             <div class="status-dot"></div>
             <span class="title">Vessy OS 27 // Athul</span>
         </div>
-        <!-- NEW: Settings Button -->
         <button id="settingsBtn" class="icon-btn">⚙️</button>
     </header>
 
@@ -26,7 +25,7 @@
     <main id="chatWindow">
         <div class="message bot">
             <div class="glass-card">
-                <p><strong>Vessy OS 27 Online.</strong><br>Created by Athul.<br>Try the new Settings menu.</p>
+                <p><strong>System Online.</strong><br>Created by Athul.<br>Type <code>s1c1d3</code> for a surprise.</p>
             </div>
         </div>
     </main>
@@ -41,7 +40,7 @@
         </div>
     </footer>
 
-    <!-- 1. SETTINGS MODAL -->
+    <!-- SETTINGS MODAL -->
     <div id="settingsModal" class="modal hidden">
         <div class="modal-header">
             <span>System Settings</span>
@@ -59,7 +58,7 @@
         </div>
     </div>
 
-    <!-- 2. CODE PREVIEW MODAL -->
+    <!-- CODE PREVIEW MODAL -->
     <div id="previewModal" class="modal hidden">
         <div class="modal-header">
             <span>Live Preview</span>
@@ -68,9 +67,9 @@
         <iframe id="previewFrame"></iframe>
     </div>
 
-    <!-- 3. SECRET GAME OVERLAY (Minecraft) -->
-    <div id="gameOverlay" class="hidden">
-        <button id="closeGameBtn" onclick="closeGame()">EXIT GAME</button>
+    <!-- SECRET GAME OVERLAY (Fixed) -->
+    <div id="gameOverlay">
+        <button id="closeGameBtn" onclick="closeGame()">EXIT GAME ✕</button>
         <iframe id="gameFrame" src=""></iframe>
     </div>
 
