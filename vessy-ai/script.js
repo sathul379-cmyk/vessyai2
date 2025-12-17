@@ -2,6 +2,7 @@ const chatWindow = document.getElementById('chatWindow');
 const userInput = document.getElementById('userInput');
 const sendBtn = document.getElementById('sendBtn');
 const settingsModal = document.getElementById('settingsModal');
+const bgLayer = document.getElementById('bgLayer');
 const gameOverlay = document.getElementById('gameOverlay');
 const gameFrame = document.getElementById('gameFrame');
 const gameTitle = document.getElementById('gameTitle');
@@ -12,56 +13,34 @@ const previewFrame = document.getElementById('previewFrame');
 document.getElementById('settingsBtn').addEventListener('click', () => settingsModal.classList.toggle('hidden'));
 function toggleSettings() { settingsModal.classList.toggle('hidden'); }
 
-// --- GAME LOGIC ---
-// ... inside script.js ...
+function setBg(type) {
+    bgLayer.style.backgroundImage = ''; 
+    bgLayer.className = ''; 
+    if (type === 'ultra') bgLayer.className = 'bg-ultra';
+    else bgLayer.classList.add('bg-' + type);
+}
+
+document.getElementById('customBgInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => { bgLayer.className = ''; bgLayer.style.backgroundImage = `url(${event.target.result})`; };
+        reader.readAsDataURL(file);
+    }
+});
 
 // --- GAME LOGIC ---
 function launchGame(type) {
     gameOverlay.classList.add('active');
-    
     if (type === 'minecraft') {
         gameTitle.innerText = "VESSY CRAFT (GOD MODE)";
-        // The API will handle the code generation for this
+        // API handles code generation
     } else if (type === 'fortnite') {
         gameTitle.innerText = "VESSY ROYALE (EV.IO)";
-        // SWITCHED TO EV.IO (Better Fortnite clone for browsers)
         gameFrame.src = "https://ev.io"; 
     }
 }
-
-// --- SETTINGS LOGIC ---
-function setBg(type) {
-    bgLayer.style.backgroundImage = ''; 
-    bgLayer.className = ''; // Clear old classes
-    
-    if (type === 'ultra') {
-        document.querySelector('.nebula-bg').style.display = 'block';
-    } else {
-        document.querySelector('.nebula-bg').style.display = 'none';
-        bgLayer.classList.add('bg-' + type);
-    }
-}
-
-// ... rest of script.js stays the same ...
-function launchGame(type) {
-    gameOverlay.classList.add('active');
-    
-    if (type === 'minecraft') {
-        gameTitle.innerText = "VESSY CRAFT (GOD MODE)";
-        // We use the API to generate the engine, but here we simulate the launch
-        // For the '20154' code, we will trigger the API to send the engine code
-        // But for a quick play, we can use a web-based voxel viewer if preferred.
-        // However, per instructions, we will ask the API for the engine.
-    } else if (type === 'fortnite') {
-        gameTitle.innerText = "VESSY ROYALE (1v1.LOL)";
-        gameFrame.src = "https://1v1.lol"; // The best browser Fortnite clone
-    }
-}
-
-function closeGame() {
-    gameOverlay.classList.remove('active');
-    gameFrame.src = "";
-}
+function closeGame() { gameOverlay.classList.remove('active'); gameFrame.src = ""; }
 
 // --- PREVIEW LOGIC ---
 window.openPreview = function(encodedCode, lang) {
@@ -72,11 +51,12 @@ window.openPreview = function(encodedCode, lang) {
     
     let content = code;
     if (lang === 'python' || lang === 'py') {
-        content = `<html><head><link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" /><script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script><style>body{background:#111;color:#fff;font-family:monospace;padding:20px;}</style></head><body><h3>Python Output:</h3><script type="py">${code}</script></body></html>`;
+        content = `<html><head><link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" /><script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script><style>body{background:#0d1117;color:#c9d1d9;font-family:monospace;padding:20px;}</style></head><body><h3>Python Terminal</h3><script type="py" terminal>${code}</script></body></html>`;
     } else if (lang === 'js') {
-        content = `<html><body style="background:#111;color:#0f0;font-family:monospace;padding:20px;"><h3>Console:</h3><div id="c"></div><script>console.log=m=>{document.getElementById('c').innerHTML+=m+'<br>'};try{${code}}catch(e){console.log(e)}</script></body></html>`;
+        content = `<html><body style="background:#1e1e1e;color:#d4d4d4;font-family:monospace;padding:20px;"><h3>JS Console</h3><div id="c"></div><script>console.log=m=>{document.getElementById('c').innerHTML+='> '+m+'<br>'};try{${code}}catch(e){console.log('Error: '+e)}</script></body></html>`;
+    } else if (lang === 'css') {
+        content = `<html><head><style>body{padding:20px;background:#fff;color:#333;display:flex;flex-direction:column;gap:10px;} ${code}</style></head><body><h2>CSS Test</h2><button class="btn">Button</button><div class="card">Card Content</div><input placeholder="Input"></body></html>`;
     }
-    
     doc.write(content);
     doc.close();
 };
@@ -89,7 +69,7 @@ function addMessage(text, sender) {
     const div = document.createElement('div');
     div.className = `message ${sender}`;
     const card = document.createElement('div');
-    card.className = sender === 'bot' ? 'glass-card ultra-card' : 'glass-card';
+    card.className = 'glass-card';
     
     if (sender === 'bot') {
         let htmlContent = marked.parse(text);
@@ -98,7 +78,7 @@ function addMessage(text, sender) {
         while ((match = codeRegex.exec(text)) !== null) {
             const lang = match[1].toLowerCase();
             const code = match[2];
-            if (['html', 'python', 'py', 'javascript', 'js', 'css'].includes(lang)) {
+            if (['html', 'python', 'py', 'javascript', 'js', 'css', 'java'].includes(lang)) {
                 const safeCode = encodeURIComponent(code);
                 htmlContent += `<button class="run-btn" onclick="openPreview('${safeCode}', '${lang}')">▶ Run ${lang.toUpperCase()}</button>`;
             }
@@ -116,27 +96,22 @@ async function handleSend() {
     const text = userInput.value.trim();
     if (!text) return;
 
-    // --- SPECIAL CODES ---
-    
-    // 1. MINECRAFT (Special User Code)
+    // 1. MINECRAFT CODE
     if (text === '20154') {
         userInput.value = '';
-        addMessage("🔒 AUTHENTICATING SPECIAL USER...", 'bot');
+        addMessage("🔒 AUTHENTICATING...", 'bot');
         setTimeout(() => {
-            addMessage("✅ ACCESS GRANTED. GENERATING VOXEL ENGINE...", 'bot');
-            // We trigger the API to send the Minecraft code
+            addMessage("✅ ACCESS GRANTED. GENERATING ENGINE...", 'bot');
             triggerAI("Build Minecraft from scratch");
         }, 1000);
         return;
     }
 
     // 2. FORTNITE
-    if (text.toLowerCase() === 'play fortnite' || text.toLowerCase() === 'fortnite') {
+    if (text.toLowerCase() === 'play fortnite') {
         userInput.value = '';
-        addMessage("🚀 LAUNCHING VESSY ROYALE...", 'bot');
-        setTimeout(() => {
-            launchGame('fortnite');
-        }, 1000);
+        addMessage("🚀 LAUNCHING EV.IO...", 'bot');
+        setTimeout(() => launchGame('fortnite'), 1000);
         return;
     }
 
@@ -149,7 +124,7 @@ async function handleSend() {
 async function triggerAI(promptText) {
     const loadingDiv = document.createElement('div');
     loadingDiv.className = 'message bot';
-    loadingDiv.innerHTML = '<div class="glass-card">Processing...</div>';
+    loadingDiv.innerHTML = '<div class="glass-card">...</div>';
     chatWindow.appendChild(loadingDiv);
     
     try {
@@ -158,10 +133,8 @@ async function triggerAI(promptText) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ prompt: promptText })
         });
-        
         const data = await response.json();
         chatWindow.removeChild(loadingDiv);
-        
         if (data.error) addMessage("Error: " + data.error, 'bot');
         else addMessage(data.reply, 'bot');
     } catch (e) {
@@ -173,7 +146,4 @@ async function triggerAI(promptText) {
 }
 
 sendBtn.addEventListener('click', handleSend);
-userInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleSend();
-});
-
+userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
