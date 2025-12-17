@@ -8,7 +8,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'SF Pro Display', -apple-system, sans-serif; }
 
 body {
-    background: #000; /* Base color */
+    background: #000;
     color: var(--text);
     height: 100vh;
     overflow: hidden;
@@ -16,42 +16,34 @@ body {
     position: relative;
 }
 
-/* --- BACKGROUNDS (FIXED) --- */
+/* --- BACKGROUNDS --- */
 #bgLayer { 
-    position: absolute; 
-    inset: 0; 
-    z-index: 0; /* FIXED: Moved up so it's visible */
+    position: absolute; inset: 0; z-index: 0; 
     transition: background 0.5s ease; 
-    background-size: cover; 
-    background-position: center; 
+    background-size: cover; background-position: center; 
 }
 
-/* THE COLORFUL HOLOGRAPHIC LOOK */
 .bg-default {
     background: 
         radial-gradient(circle at 0% 0%, rgba(0, 242, 255, 0.5), transparent 60%),
         radial-gradient(circle at 100% 100%, rgba(255, 0, 255, 0.5), transparent 60%);
     animation: pulse 10s infinite alternate;
 }
-
 .bg-dark { background: #000; }
 .bg-nature { background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364); }
 
 @keyframes pulse { 0% { opacity: 0.5; } 100% { opacity: 1; } }
 
 .glass-overlay {
-    position: absolute; inset: 0; 
-    z-index: 1; /* FIXED: sits on top of color */
-    backdrop-filter: blur(40px); 
-    -webkit-backdrop-filter: blur(40px);
-    pointer-events: none; /* Lets you click through it */
+    position: absolute; inset: 0; z-index: 1;
+    backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+    pointer-events: none;
 }
 
 /* --- HEADER --- */
 header { 
     padding: 20px; display: flex; justify-content: center; align-items: center; 
-    z-index: 10; /* FIXED: sits on top of everything */
-    position: relative; 
+    z-index: 10; position: relative; 
 }
 .island {
     background: rgba(0,0,0,0.6); border: 1px solid var(--border);
@@ -63,8 +55,7 @@ header {
 
 .icon-btn {
     position: absolute; right: 20px;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.1); border: 1px solid var(--border);
     width: 40px; height: 40px; border-radius: 50%;
     color: white; cursor: pointer; font-size: 20px;
     display: flex; align-items: center; justify-content: center;
@@ -73,21 +64,16 @@ header {
 /* --- CHAT --- */
 main { 
     flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 120px; 
-    display: flex; flex-direction: column; gap: 20px;
-    z-index: 5; /* FIXED: Text is above background */
+    display: flex; flex-direction: column; gap: 20px; z-index: 5; 
 }
 .message { display: flex; flex-direction: column; max-width: 90%; animation: slideUp 0.3s ease; }
 .user { align-self: flex-end; align-items: flex-end; }
 .bot { align-self: flex-start; }
 
 .glass-card {
-    background: var(--glass);
-    border: 1px solid var(--border);
-    padding: 16px 24px;
-    border-radius: 24px;
-    font-size: 16px;
-    line-height: 1.6;
-    backdrop-filter: blur(20px);
+    background: var(--glass); border: 1px solid var(--border);
+    padding: 16px 24px; border-radius: 24px;
+    font-size: 16px; line-height: 1.6; backdrop-filter: blur(20px);
 }
 .user .glass-card { background: rgba(0, 242, 255, 0.15); border-color: rgba(0, 242, 255, 0.3); text-align: right; }
 
@@ -101,19 +87,11 @@ strong { color: #fff; font-weight: 700; }
 }
 
 /* --- DOCK --- */
-footer { 
-    position: fixed; bottom: 30px; left: 0; right: 0; 
-    display: flex; justify-content: center; 
-    z-index: 100; /* FIXED: Input is always clickable */
-}
+footer { position: fixed; bottom: 30px; left: 0; right: 0; display: flex; justify-content: center; z-index: 100; }
 .dock {
-    width: 90%; max-width: 600px;
-    background: rgba(20, 20, 20, 0.7);
-    backdrop-filter: blur(40px);
-    border: 1px solid var(--border);
-    border-radius: 40px;
-    padding: 8px;
-    display: flex; align-items: center;
+    width: 90%; max-width: 600px; background: rgba(20, 20, 20, 0.7);
+    backdrop-filter: blur(40px); border: 1px solid var(--border);
+    border-radius: 40px; padding: 8px; display: flex; align-items: center;
 }
 input { flex: 1; background: transparent; border: none; padding: 12px 20px; color: white; font-size: 16px; outline: none; }
 button#sendBtn {
@@ -149,7 +127,6 @@ iframe { flex: 1; border: none; background: white; border-radius: 0 0 20px 20px;
     flex-direction: column;
 }
 #gameOverlay.active { display: flex; }
-
 #closeGameBtn {
     position: absolute; top: 20px; right: 20px; z-index: 10000;
     background: #ff4444; color: white; border: none; padding: 12px 24px;
