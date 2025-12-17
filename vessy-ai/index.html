@@ -3,40 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vessy OS 28 // ULTRA</title>
+    <title>Vessy OS 28.2 // ULTRA GLASS</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
-    <!-- ULTRA SHADERS BACKGROUND -->
-    <div class="nebula-bg"></div>
-    <div class="grid-overlay"></div>
+    <!-- DYNAMIC BACKGROUNDS -->
+    <div id="bgLayer" class="bg-ultra"></div>
+    <div class="noise-overlay"></div>
     <div class="vignette"></div>
 
-    <!-- Header -->
+    <!-- HEADER -->
     <header>
-        <div class="ultra-island">
-            <div class="rgb-dot"></div>
-            <span class="title">VESSY OS 28 <span class="badge">ULTRA</span></span>
+        <div class="island">
+            <div class="status-light"></div>
+            <span class="title">VESSY OS 28.2</span>
         </div>
-        <button id="settingsBtn" class="icon-btn">⚙️</button>
+        <button id="settingsBtn" class="glass-btn icon-only">⚙️</button>
     </header>
 
-    <!-- Chat Area -->
+    <!-- CHAT STREAM -->
     <main id="chatWindow">
         <div class="message bot">
-            <div class="glass-card ultra-card">
-                <p><strong>SYSTEM OVERCLOCKED.</strong><br>Vessy OS 28 Online.<br>Graphics: ULTRA.<br>Awaiting Input.</p>
+            <div class="glass-card">
+                <p><strong>System Updated.</strong><br>Vessy OS 28.2 "Ultra Glass" is active.<br>Visuals: MAX.</p>
             </div>
         </div>
     </main>
 
-    <!-- Input Dock -->
+    <!-- INPUT DOCK -->
     <footer>
-        <div class="dock ultra-dock">
-            <input type="text" id="userInput" placeholder="Command / Chat..." autocomplete="off">
-            <button id="sendBtn">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        <div class="dock">
+            <input type="text" id="userInput" placeholder="Type a command..." autocomplete="off">
+            <button id="sendBtn" class="glass-btn icon-only">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
             </button>
         </div>
     </footer>
@@ -44,22 +44,23 @@
     <!-- SETTINGS MODAL -->
     <div id="settingsModal" class="modal hidden">
         <div class="modal-header">
-            <span>GPU Settings</span>
+            <span>Appearance</span>
             <button onclick="toggleSettings()">✕</button>
         </div>
         <div class="modal-body">
-            <h3>Visuals</h3>
+            <h3>Environment</h3>
             <div class="bg-grid">
-                <div class="bg-option" onclick="setBg('ultra')" style="background: linear-gradient(45deg, #f0f, #0ff);">Ultra</div>
+                <div class="bg-option" onclick="setBg('ultra')" style="background: linear-gradient(45deg, #1a0b2e, #000);">Ultra</div>
+                <div class="bg-option" onclick="setBg('sunset')" style="background: linear-gradient(to bottom, #ff4e50, #f9d423);">Sunset</div>
+                <div class="bg-option" onclick="setBg('matrix')" style="background: #003300; border: 1px solid #0f0;">Matrix</div>
                 <div class="bg-option" onclick="setBg('void')" style="background: #000;">Void</div>
-                <div class="bg-option" onclick="setBg('matrix')" style="background: #0f0;">Matrix</div>
             </div>
             <h3>Custom Texture</h3>
             <input type="file" id="customBgInput" accept="image/*">
         </div>
     </div>
 
-    <!-- UNIVERSAL PREVIEW MODAL -->
+    <!-- PREVIEW MODAL -->
     <div id="previewModal" class="modal hidden">
         <div class="modal-header">
             <span>Code Preview</span>
@@ -68,11 +69,11 @@
         <iframe id="previewFrame"></iframe>
     </div>
 
-    <!-- GAME OVERLAY (Fortnite & Minecraft) -->
+    <!-- GAME OVERLAY -->
     <div id="gameOverlay">
-        <div class="game-header">
+        <div class="game-bar">
             <span id="gameTitle">GAME MODE</span>
-            <button id="closeGameBtn" onclick="closeGame()">EXIT TO OS</button>
+            <button onclick="closeGame()">EXIT</button>
         </div>
         <iframe id="gameFrame" src="" allow="autoplay; fullscreen; pointer-lock; microphone"></iframe>
     </div>
