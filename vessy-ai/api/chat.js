@@ -1,19 +1,12 @@
 export default async function handler(req, res) {
-    // 1. Allow only POST
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method Not Allowed' });
-    }
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
     try {
         const { prompt } = req.body;
-        
-        // 2. Check API Key
         const apiKey = process.env.GROQ_API_KEY;
-        if (!apiKey) {
-            return res.status(500).json({ error: "API Key is missing in Vercel Settings." });
-        }
+        
+        if (!apiKey) return res.status(500).json({ error: "API Key is missing." });
 
-        // 3. Call Groq
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -25,7 +18,7 @@ export default async function handler(req, res) {
                 messages: [
                     { 
                         role: "system", 
-                        content: "You are Vessy, a futuristic AI assistant created by Athul. If the user asks for code, provide the full HTML/CSS/JS in a single code block." 
+                        content: "You are Vessy, created by Athul. If the user asks for code, provide it in a markdown code block. You can write HTML, Python, JavaScript, or CSS. If writing Python, use simple print statements or basic logic." 
                     },
                     { role: "user", content: prompt }
                 ]
@@ -33,15 +26,11 @@ export default async function handler(req, res) {
         });
 
         const data = await response.json();
-
-        if (data.error) {
-            throw new Error(data.error.message);
-        }
+        if (data.error) throw new Error(data.error.message);
 
         return res.status(200).json({ reply: data.choices[0].message.content });
 
     } catch (error) {
-        console.error("Backend Error:", error);
         return res.status(500).json({ error: error.message });
     }
 }
