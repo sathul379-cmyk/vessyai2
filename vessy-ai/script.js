@@ -39,82 +39,133 @@ function closeGame() {
     gameFrame.src = "";
 }
 
-// --- 3. UNIVERSAL PREVIEW LOGIC (FIXED) ---
+// --- 3. ULTIMATE PREVIEW LOGIC ---
 window.openPreview = function(encodedCode, lang) {
     previewModal.classList.remove('hidden');
     const doc = previewFrame.contentWindow.document;
-    const code = decodeURIComponent(encodedCode); // Decode safely
+    const code = decodeURIComponent(encodedCode);
     
     doc.open();
     
     let finalContent = "";
 
+    // --- PYTHON (PyScript) ---
     if (lang === 'python' || lang === 'py') {
-        // Python Mode (PyScript)
         finalContent = `
+            <!DOCTYPE html>
             <html>
             <head>
                 <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
                 <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
-                <style>body{background:#111;color:#fff;font-family:monospace;padding:20px;}</style>
+                <style>
+                    body { background: #0d1117; color: #c9d1d9; font-family: 'Courier New', monospace; padding: 20px; }
+                    h3 { color: #58a6ff; border-bottom: 1px solid #30363d; padding-bottom: 10px; }
+                    .loading { color: #8b949e; font-style: italic; }
+                </style>
             </head>
             <body>
-                <h3>Python Output:</h3>
-                <script type="py">${code}</script>
+                <h3>🐍 Python Terminal</h3>
+                <div class="loading">Initializing Python Environment...</div>
+                <script type="py" terminal>${code}</script>
             </body>
             </html>`;
-            
-    } else if (lang === 'javascript' || lang === 'js') {
-        // JS Mode (Console Output)
+    } 
+    // --- JAVASCRIPT (Console Capture) ---
+    else if (lang === 'javascript' || lang === 'js') {
         finalContent = `
-            <html>
-            <body style="background:#111;color:#0f0;font-family:monospace;padding:20px;">
-                <h3>JS Console:</h3>
-                <div id="console"></div>
-                <script>
-                    console.log = function(m){ document.getElementById('console').innerHTML += m + '<br>'; };
-                    try { ${code} } catch(e) { console.log("Error: " + e.message); }
-                </script>
-            </body>
-            </html>`;
-            
-    } else if (lang === 'css') {
-        // CSS Mode (The Fix: Adds HTML elements to style)
-        finalContent = `
+            <!DOCTYPE html>
             <html>
             <head>
                 <style>
-                    body { font-family: sans-serif; padding: 20px; background: #f4f4f9; color: #333; }
-                    /* DEFAULT STYLES FOR DEMO */
-                    .demo-container { display: flex; flex-direction: column; gap: 15px; max-width: 400px; margin: 0 auto; }
+                    body { background: #1e1e1e; color: #d4d4d4; font-family: Consolas, monospace; padding: 20px; }
+                    h3 { color: #f7df1e; border-bottom: 1px solid #333; padding-bottom: 10px; }
+                    .log { padding: 5px 0; border-bottom: 1px solid #333; }
+                    .error { color: #f48771; }
+                    #app { background: #252526; padding: 10px; margin-bottom: 20px; border-radius: 5px; border: 1px solid #333; }
+                </style>
+            </head>
+            <body>
+                <h3>⚡ JavaScript Console</h3>
+                <!-- A div for the code to manipulate if it wants -->
+                <div id="app">DOM Playground (id="app")</div>
+                <div id="console"></div>
+                <script>
+                    const consoleDiv = document.getElementById('console');
                     
-                    /* USER CSS APPLIED HERE */
+                    // Capture console.log
+                    console.log = function(...args) {
+                        const line = document.createElement('div');
+                        line.className = 'log';
+                        line.textContent = '> ' + args.join(' ');
+                        consoleDiv.appendChild(line);
+                    };
+                    
+                    // Capture errors
+                    window.onerror = function(msg, url, line) {
+                        const lineDiv = document.createElement('div');
+                        lineDiv.className = 'log error';
+                        lineDiv.textContent = '❌ Error: ' + msg;
+                        consoleDiv.appendChild(lineDiv);
+                        return true;
+                    };
+
+                    try {
+                        ${code}
+                    } catch(e) {
+                        console.error(e);
+                    }
+                </script>
+            </body>
+            </html>`;
+    } 
+    // --- CSS (Test Suite) ---
+    else if (lang === 'css') {
+        finalContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { font-family: sans-serif; padding: 20px; background: #fff; color: #333; display: flex; flex-direction: column; gap: 20px; align-items: center; }
+                    /* USER CSS */
                     ${code}
                 </style>
             </head>
             <body>
-                <div class="demo-container">
-                    <h2>CSS Preview</h2>
-                    <p>This is a paragraph to test your typography settings.</p>
-                    
-                    <!-- Common Elements for CSS Testing -->
-                    <button class="btn">.btn Class</button>
-                    <button>Standard Button</button>
-                    
-                    <div class="card">
-                        <h3>.card Class</h3>
-                        <p>Content inside a card.</p>
-                    </div>
-                    
-                    <div class="box">.box Class</div>
-                    
-                    <input type="text" placeholder="Input field">
+                <h2>CSS Preview Suite</h2>
+                <button class="btn">Button Class</button>
+                <button>Plain Button</button>
+                <div class="card">
+                    <h3>Card Element</h3>
+                    <p>This is some text inside a card div.</p>
                 </div>
+                <input type="text" placeholder="Input field...">
+                <div class="box">Box Element</div>
             </body>
             </html>`;
-            
-    } else {
-        // HTML Mode (Standard)
+    } 
+    // --- JAVA (Virtual Viewer) ---
+    else if (lang === 'java') {
+        finalContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { background: #282c34; color: #abb2bf; font-family: 'Courier New', monospace; padding: 20px; }
+                    h3 { color: #e06c75; }
+                    pre { background: #21252b; padding: 15px; border-radius: 5px; overflow: auto; }
+                    .note { color: #98c379; margin-top: 20px; font-style: italic; }
+                </style>
+            </head>
+            <body>
+                <h3>☕ Java Viewer</h3>
+                <p>Browsers cannot run raw Java code natively. Here is your compiled source:</p>
+                <pre>${code.replace(/</g, '&lt;')}</pre>
+                <div class="note">To run this, install JDK on your computer and run: javac Main.java</div>
+            </body>
+            </html>`;
+    }
+    // --- HTML (Standard) ---
+    else {
         finalContent = code;
     }
 
@@ -136,7 +187,7 @@ function addMessage(text, sender) {
     if (sender === 'bot') {
         let htmlContent = marked.parse(text);
         
-        // Regex to find code blocks
+        // Detect Code Blocks
         const codeRegex = /```(\w+)([\s\S]*?)```/g;
         let match;
         
@@ -144,11 +195,9 @@ function addMessage(text, sender) {
             const lang = match[1].toLowerCase();
             const code = match[2];
             
-            // Supported languages
-            if (['html', 'python', 'py', 'javascript', 'js', 'css'].includes(lang)) {
-                // Encode safely to prevent breaking the HTML string
+            // Supported Languages
+            if (['html', 'python', 'py', 'javascript', 'js', 'css', 'java'].includes(lang)) {
                 const safeCode = encodeURIComponent(code);
-                
                 htmlContent += `
                     <button class="run-btn" onclick="openPreview('${safeCode}', '${lang}')">
                         ▶ Run ${lang.toUpperCase()}
@@ -169,7 +218,6 @@ async function handleSend() {
     const text = userInput.value.trim();
     if (!text) return;
 
-    // Secret Code
     if (text === 's1c1d3') {
         userInput.value = '';
         addMessage("ACCESS GRANTED.", 'bot');
