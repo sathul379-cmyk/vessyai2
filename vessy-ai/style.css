@@ -8,41 +8,51 @@
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'SF Pro Display', -apple-system, sans-serif; }
 
 body {
-    background: #000;
+    background: #000; /* Base color */
     color: var(--text);
     height: 100vh;
     overflow: hidden;
     display: flex; flex-direction: column;
+    position: relative;
 }
 
-/* --- BACKGROUNDS (UPDATED) --- */
+/* --- BACKGROUNDS (FIXED) --- */
 #bgLayer { 
-    position: absolute; inset: 0; z-index: -2; 
+    position: absolute; 
+    inset: 0; 
+    z-index: 0; /* FIXED: Moved up so it's visible */
     transition: background 0.5s ease; 
-    background-size: cover; background-position: center; 
+    background-size: cover; 
+    background-position: center; 
 }
 
-/* THIS IS THE OLD COLORFUL BACKGROUND */
+/* THE COLORFUL HOLOGRAPHIC LOOK */
 .bg-default {
     background: 
-        radial-gradient(circle at 0% 0%, rgba(0, 242, 255, 0.4), transparent 50%),
-        radial-gradient(circle at 100% 100%, rgba(255, 0, 255, 0.4), transparent 50%),
-        #000; /* Fallback black */
+        radial-gradient(circle at 0% 0%, rgba(0, 242, 255, 0.5), transparent 60%),
+        radial-gradient(circle at 100% 100%, rgba(255, 0, 255, 0.5), transparent 60%);
     animation: pulse 10s infinite alternate;
 }
 
 .bg-dark { background: #000; }
 .bg-nature { background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364); }
 
-@keyframes pulse { 0% { opacity: 0.6; } 100% { opacity: 1; } }
+@keyframes pulse { 0% { opacity: 0.5; } 100% { opacity: 1; } }
 
 .glass-overlay {
-    position: absolute; inset: 0; z-index: -1;
-    backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+    position: absolute; inset: 0; 
+    z-index: 1; /* FIXED: sits on top of color */
+    backdrop-filter: blur(40px); 
+    -webkit-backdrop-filter: blur(40px);
+    pointer-events: none; /* Lets you click through it */
 }
 
 /* --- HEADER --- */
-header { padding: 20px; display: flex; justify-content: center; align-items: center; z-index: 10; position: relative; }
+header { 
+    padding: 20px; display: flex; justify-content: center; align-items: center; 
+    z-index: 10; /* FIXED: sits on top of everything */
+    position: relative; 
+}
 .island {
     background: rgba(0,0,0,0.6); border: 1px solid var(--border);
     padding: 10px 20px; border-radius: 50px;
@@ -61,7 +71,11 @@ header { padding: 20px; display: flex; justify-content: center; align-items: cen
 }
 
 /* --- CHAT --- */
-main { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 20px; }
+main { 
+    flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 120px; 
+    display: flex; flex-direction: column; gap: 20px;
+    z-index: 5; /* FIXED: Text is above background */
+}
 .message { display: flex; flex-direction: column; max-width: 90%; animation: slideUp 0.3s ease; }
 .user { align-self: flex-end; align-items: flex-end; }
 .bot { align-self: flex-start; }
@@ -87,7 +101,11 @@ strong { color: #fff; font-weight: 700; }
 }
 
 /* --- DOCK --- */
-footer { position: fixed; bottom: 30px; left: 0; right: 0; display: flex; justify-content: center; z-index: 100; }
+footer { 
+    position: fixed; bottom: 30px; left: 0; right: 0; 
+    display: flex; justify-content: center; 
+    z-index: 100; /* FIXED: Input is always clickable */
+}
 .dock {
     width: 90%; max-width: 600px;
     background: rgba(20, 20, 20, 0.7);
@@ -127,8 +145,7 @@ iframe { flex: 1; border: none; background: white; border-radius: 0 0 20px 20px;
 
 /* --- GAME OVERLAY --- */
 #gameOverlay {
-    display: none; /* Hidden by default */
-    position: fixed; inset: 0; z-index: 9999; background: black;
+    display: none; position: fixed; inset: 0; z-index: 9999; background: black;
     flex-direction: column;
 }
 #gameOverlay.active { display: flex; }
