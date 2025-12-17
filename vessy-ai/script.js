@@ -14,34 +14,32 @@ function toggleSettings() {
 }
 
 function setBg(type) {
-    bgLayer.style.backgroundImage = ''; // Reset custom image
-    bgLayer.className = ''; // Reset classes
+    bgLayer.style.backgroundImage = ''; 
+    bgLayer.className = ''; 
     bgLayer.classList.add('bg-' + type);
 }
 
-// Custom Image Upload
 document.getElementById('customBgInput').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (file) {
         const reader = new FileReader();
         reader.onload = function(event) {
-            bgLayer.className = ''; // Remove presets
+            bgLayer.className = ''; 
             bgLayer.style.backgroundImage = `url(${event.target.result})`;
         };
         reader.readAsDataURL(file);
     }
 });
 
-// --- 2. SECRET GAME LOGIC ---
+// --- 2. SECRET GAME LOGIC (FIXED) ---
 function openGame() {
-    // Use the official Classic Minecraft web version
     gameFrame.src = "https://classic.minecraft.net/";
-    gameOverlay.classList.remove('hidden');
+    gameOverlay.classList.add('active'); // Show it
 }
 
 function closeGame() {
-    gameOverlay.classList.add('hidden');
-    gameFrame.src = ""; // Stop the game to save memory
+    gameOverlay.classList.remove('active'); // Hide it
+    gameFrame.src = ""; // Stop game
 }
 
 // --- 3. CHAT LOGIC ---
@@ -81,7 +79,7 @@ async function handleSend() {
         setTimeout(() => {
             openGame();
         }, 1500);
-        return; // Stop here, don't send to AI
+        return; 
     }
 
     addMessage(text, 'user');
@@ -94,7 +92,6 @@ async function handleSend() {
     chatWindow.appendChild(loadingDiv);
     
     try {
-        // Vercel API Call
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
