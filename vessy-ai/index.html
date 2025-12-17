@@ -25,7 +25,8 @@
     <main id="chatWindow">
         <div class="message bot">
             <div class="glass-card">
-                <p><strong>System Online.</strong><br>Created by Athul.<br>Type <code>s1c1d3</code> for a surprise.</p>
+                <!-- PASSWORD REMOVED HERE -->
+                <p><strong>System Online.</strong><br>Created by Athul.<br>Awaiting input...</p>
             </div>
         </div>
     </main>
@@ -49,8 +50,9 @@
         <div class="modal-body">
             <h3>Background</h3>
             <div class="bg-grid">
-                <div class="bg-option" onclick="setBg('default')" style="background: #000;">Default</div>
-                <div class="bg-option" onclick="setBg('cyber')" style="background: linear-gradient(45deg, #ff0099, #493240);">Cyber</div>
+                <!-- Updated previews to match new colors -->
+                <div class="bg-option" onclick="setBg('default')" style="background: linear-gradient(45deg, #00f2ff, #ff00ff);">Holo</div>
+                <div class="bg-option" onclick="setBg('dark')" style="background: #000;">Dark</div>
                 <div class="bg-option" onclick="setBg('nature')" style="background: linear-gradient(to bottom, #2b5876, #4e4376);">Zen</div>
             </div>
             <h3>Custom Image</h3>
@@ -58,7 +60,7 @@
         </div>
     </div>
 
-    <!-- CODE PREVIEW MODAL -->
+    <!-- PREVIEW MODAL -->
     <div id="previewModal" class="modal hidden">
         <div class="modal-header">
             <span>Live Preview</span>
@@ -67,7 +69,7 @@
         <iframe id="previewFrame"></iframe>
     </div>
 
-    <!-- SECRET GAME OVERLAY (Fixed) -->
+    <!-- SECRET GAME OVERLAY -->
     <div id="gameOverlay">
         <button id="closeGameBtn" onclick="closeGame()">EXIT GAME ✕</button>
         <iframe id="gameFrame" src=""></iframe>
