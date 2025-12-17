@@ -13,6 +13,36 @@ document.getElementById('settingsBtn').addEventListener('click', () => settingsM
 function toggleSettings() { settingsModal.classList.toggle('hidden'); }
 
 // --- GAME LOGIC ---
+// ... inside script.js ...
+
+// --- GAME LOGIC ---
+function launchGame(type) {
+    gameOverlay.classList.add('active');
+    
+    if (type === 'minecraft') {
+        gameTitle.innerText = "VESSY CRAFT (GOD MODE)";
+        // The API will handle the code generation for this
+    } else if (type === 'fortnite') {
+        gameTitle.innerText = "VESSY ROYALE (EV.IO)";
+        // SWITCHED TO EV.IO (Better Fortnite clone for browsers)
+        gameFrame.src = "https://ev.io"; 
+    }
+}
+
+// --- SETTINGS LOGIC ---
+function setBg(type) {
+    bgLayer.style.backgroundImage = ''; 
+    bgLayer.className = ''; // Clear old classes
+    
+    if (type === 'ultra') {
+        document.querySelector('.nebula-bg').style.display = 'block';
+    } else {
+        document.querySelector('.nebula-bg').style.display = 'none';
+        bgLayer.classList.add('bg-' + type);
+    }
+}
+
+// ... rest of script.js stays the same ...
 function launchGame(type) {
     gameOverlay.classList.add('active');
     
@@ -146,3 +176,4 @@ sendBtn.addEventListener('click', handleSend);
 userInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') handleSend();
 });
+
