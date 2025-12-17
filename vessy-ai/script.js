@@ -39,23 +39,89 @@ function closeGame() {
     gameFrame.src = "";
 }
 
-// --- 3. UNIVERSAL PREVIEW LOGIC ---
-window.openPreview = function(code, lang) {
+// --- 3. UNIVERSAL PREVIEW LOGIC (FIXED) ---
+window.openPreview = function(encodedCode, lang) {
     previewModal.classList.remove('hidden');
     const doc = previewFrame.contentWindow.document;
+    const code = decodeURIComponent(encodedCode); // Decode safely
+    
     doc.open();
     
     let finalContent = "";
+
     if (lang === 'python' || lang === 'py') {
-        finalContent = `<html><head><link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" /><script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script><style>body{background:#111;color:#fff;font-family:monospace;padding:20px;}</style></head><body><h3>Python Output:</h3><script type="py">${code}</script></body></html>`;
+        // Python Mode (PyScript)
+        finalContent = `
+            <html>
+            <head>
+                <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
+                <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+                <style>body{background:#111;color:#fff;font-family:monospace;padding:20px;}</style>
+            </head>
+            <body>
+                <h3>Python Output:</h3>
+                <script type="py">${code}</script>
+            </body>
+            </html>`;
+            
     } else if (lang === 'javascript' || lang === 'js') {
-        finalContent = `<html><body style="background:#111;color:#0f0;font-family:monospace;padding:20px;"><h3>JS Console:</h3><div id="console"></div><script>console.log=function(m){document.getElementById('console').innerHTML+=m+'<br>';};try{${code}}catch(e){console.log("Error: "+e.message);}</script></body></html>`;
+        // JS Mode (Console Output)
+        finalContent = `
+            <html>
+            <body style="background:#111;color:#0f0;font-family:monospace;padding:20px;">
+                <h3>JS Console:</h3>
+                <div id="console"></div>
+                <script>
+                    console.log = function(m){ document.getElementById('console').innerHTML += m + '<br>'; };
+                    try { ${code} } catch(e) { console.log("Error: " + e.message); }
+                </script>
+            </body>
+            </html>`;
+            
+    } else if (lang === 'css') {
+        // CSS Mode (The Fix: Adds HTML elements to style)
+        finalContent = `
+            <html>
+            <head>
+                <style>
+                    body { font-family: sans-serif; padding: 20px; background: #f4f4f9; color: #333; }
+                    /* DEFAULT STYLES FOR DEMO */
+                    .demo-container { display: flex; flex-direction: column; gap: 15px; max-width: 400px; margin: 0 auto; }
+                    
+                    /* USER CSS APPLIED HERE */
+                    ${code}
+                </style>
+            </head>
+            <body>
+                <div class="demo-container">
+                    <h2>CSS Preview</h2>
+                    <p>This is a paragraph to test your typography settings.</p>
+                    
+                    <!-- Common Elements for CSS Testing -->
+                    <button class="btn">.btn Class</button>
+                    <button>Standard Button</button>
+                    
+                    <div class="card">
+                        <h3>.card Class</h3>
+                        <p>Content inside a card.</p>
+                    </div>
+                    
+                    <div class="box">.box Class</div>
+                    
+                    <input type="text" placeholder="Input field">
+                </div>
+            </body>
+            </html>`;
+            
     } else {
+        // HTML Mode (Standard)
         finalContent = code;
     }
+
     doc.write(finalContent);
     doc.close();
 };
+
 window.closePreview = () => previewModal.classList.add('hidden');
 
 // --- 4. CHAT LOGIC ---
@@ -69,14 +135,25 @@ function addMessage(text, sender) {
     
     if (sender === 'bot') {
         let htmlContent = marked.parse(text);
+        
+        // Regex to find code blocks
         const codeRegex = /```(\w+)([\s\S]*?)```/g;
         let match;
+        
         while ((match = codeRegex.exec(text)) !== null) {
             const lang = match[1].toLowerCase();
             const code = match[2];
+            
+            // Supported languages
             if (['html', 'python', 'py', 'javascript', 'js', 'css'].includes(lang)) {
+                // Encode safely to prevent breaking the HTML string
                 const safeCode = encodeURIComponent(code);
-                htmlContent += `<button class="run-btn" onclick="openPreview(decodeURIComponent('${safeCode}'), '${lang}')">▶ Run ${lang.toUpperCase()}</button>`;
+                
+                htmlContent += `
+                    <button class="run-btn" onclick="openPreview('${safeCode}', '${lang}')">
+                        ▶ Run ${lang.toUpperCase()}
+                    </button>
+                `;
             }
         }
         card.innerHTML = htmlContent;
@@ -110,7 +187,6 @@ async function handleSend() {
     chatWindow.appendChild(loadingDiv);
     
     try {
-        // FETCHING API/CHAT
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
