@@ -6,12 +6,10 @@ const bgLayer = document.getElementById('bgLayer');
 const gameOverlay = document.getElementById('gameOverlay');
 const gameFrame = document.getElementById('gameFrame');
 
-// --- 1. SETTINGS & BACKGROUNDS ---
-document.getElementById('settingsBtn').addEventListener('click', toggleSettings);
-
-function toggleSettings() {
+// --- 1. SETTINGS ---
+document.getElementById('settingsBtn').addEventListener('click', () => {
     settingsModal.classList.toggle('hidden');
-}
+});
 
 function setBg(type) {
     bgLayer.style.backgroundImage = ''; 
@@ -31,18 +29,18 @@ document.getElementById('customBgInput').addEventListener('change', function(e) 
     }
 });
 
-// --- 2. SECRET GAME LOGIC (FIXED) ---
+// --- 2. SECRET GAME ---
 function openGame() {
     gameFrame.src = "https://classic.minecraft.net/";
-    gameOverlay.classList.add('active'); // Show it
+    gameOverlay.classList.add('active');
 }
 
 function closeGame() {
-    gameOverlay.classList.remove('active'); // Hide it
-    gameFrame.src = ""; // Stop game
+    gameOverlay.classList.remove('active');
+    gameFrame.src = "";
 }
 
-// --- 3. CHAT LOGIC ---
+// --- 3. CHAT LOGIC (THE FIX IS HERE) ---
 marked.setOptions({ highlight: (code) => code });
 
 function addMessage(text, sender) {
@@ -72,13 +70,11 @@ async function handleSend() {
     const text = userInput.value.trim();
     if (!text) return;
 
-    // *** SECRET CODE CHECK ***
+    // Secret Code
     if (text === 's1c1d3') {
         userInput.value = '';
-        addMessage("ACCESS GRANTED. LAUNCHING PROTOCOL...", 'bot');
-        setTimeout(() => {
-            openGame();
-        }, 1500);
+        addMessage("ACCESS GRANTED.", 'bot');
+        setTimeout(openGame, 1500);
         return; 
     }
 
@@ -92,6 +88,7 @@ async function handleSend() {
     chatWindow.appendChild(loadingDiv);
     
     try {
+        // *** CRITICAL FIX: MUST BE /api/chat ***
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -105,7 +102,8 @@ async function handleSend() {
         else addMessage(data.reply, 'bot');
     } catch (e) {
         chatWindow.removeChild(loadingDiv);
-        addMessage("Connection Failed.", 'bot');
+        console.error(e); // Look at console for details
+        addMessage("Connection Failed. (Check Vercel Logs)", 'bot');
     }
 
     userInput.disabled = false;
@@ -117,7 +115,7 @@ userInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') handleSend();
 });
 
-// Preview Modal Logic
+// Preview Logic
 const previewModal = document.getElementById('previewModal');
 const previewFrame = document.getElementById('previewFrame');
 window.openPreview = (code) => {
