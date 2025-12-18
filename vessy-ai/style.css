@@ -27,12 +27,32 @@ body {
 }
 .bg-sunset { background: linear-gradient(to bottom, #2c3e50, #fd746c, #ff9068); }
 .bg-matrix { background: #000; background-image: linear-gradient(0deg, transparent 24%, rgba(0, 255, 0, .2) 25%, rgba(0, 255, 0, .2) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, .2) 75%, rgba(0, 255, 0, .2) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(0, 255, 0, .2) 25%, rgba(0, 255, 0, .2) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, .2) 75%, rgba(0, 255, 0, .2) 76%, transparent 77%, transparent); background-size: 50px 50px; }
-.bg-void { background: #000; }
 
 .noise-overlay { position: absolute; inset: 0; z-index: -2; opacity: 0.03; background: url('https://grainy-gradients.vercel.app/noise.svg'); pointer-events: none; }
 .vignette { position: absolute; inset: 0; z-index: -1; background: radial-gradient(circle, transparent 50%, black 120%); pointer-events: none; }
 
 @keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* --- APP DRAWER (NEW) --- */
+.app-drawer {
+    position: absolute; top: 80px; left: 20px; width: 200px; bottom: 100px;
+    display: flex; flex-direction: column; gap: 15px; z-index: 8;
+    pointer-events: none; /* Click through empty space */
+}
+.widget {
+    background: var(--glass-surface); border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px); border-radius: 20px; padding: 15px;
+    pointer-events: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    animation: slideRight 0.5s ease;
+}
+.clock-widget { text-align: center; }
+#clockTime { font-size: 32px; font-weight: 200; letter-spacing: 2px; }
+#clockDate { font-size: 10px; opacity: 0.7; letter-spacing: 1px; margin-top: 5px; color: var(--neon-accent); }
+.note-widget { flex: 1; display: flex; flex-direction: column; }
+#notepad {
+    width: 100%; height: 100%; background: transparent; border: none;
+    color: white; resize: none; outline: none; font-size: 12px; line-height: 1.5;
+}
 
 /* --- ULTRA GLASS COMPONENTS --- */
 .glass-card {
@@ -42,9 +62,16 @@ body {
     box-shadow: inset 0 1px 0 0 var(--glass-highlight), 0 10px 40px -10px rgba(0,0,0,0.5);
     padding: 18px 24px; border-radius: 24px;
     font-size: 16px; line-height: 1.6;
-    transition: transform 0.2s;
+    transition: transform 0.2s, border-color 2s;
+    /* RGB BREATHING */
+    animation: breatheBorder 4s infinite alternate;
 }
-.user .glass-card { background: rgba(0, 242, 255, 0.1); border-color: rgba(0, 242, 255, 0.2); text-align: right; }
+@keyframes breatheBorder {
+    0% { border-color: rgba(255, 255, 255, 0.1); }
+    100% { border-color: rgba(0, 242, 255, 0.3); }
+}
+
+.user .glass-card { background: rgba(0, 242, 255, 0.1); border-color: rgba(0, 242, 255, 0.2); text-align: right; animation: none; }
 
 .glass-btn {
     background: var(--glass-surface); border: 1px solid var(--glass-border);
@@ -100,5 +127,7 @@ code { font-family: monospace; color: var(--neon-accent); }
 .run-btn { margin-top: 10px; background: var(--neon-accent); border: none; padding: 8px 16px; border-radius: 8px; color: black; font-weight: bold; cursor: pointer; }
 .bg-grid { display: flex; gap: 10px; margin-top: 10px; }
 .bg-option { width: 60px; height: 60px; border-radius: 12px; border: 1px solid var(--glass-border); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+.system-controls { display: flex; gap: 10px; margin-top: 10px; }
 
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideRight { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
