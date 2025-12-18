@@ -3,86 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vessy OS 28.7 // OMNI</title>
+    <title>Vessy OS 29 // REDEMPTION</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- VISUALS -->
-    <div id="bgLayer" class="bg-ultra"></div>
-    <div class="noise-overlay"></div>
-    <div class="vignette"></div>
+    <!-- LAYERS (Fixed Z-Index) -->
+    <div id="bgLayer" class="bg-default"></div>
     <canvas id="particleCanvas"></canvas>
+    <div class="vignette"></div>
 
-    <!-- LEFT DRAWER (System) -->
-    <div id="leftDrawer" class="left-sidebar">
-        <div class="sidebar-header">
-            <span>System Status</span>
-            <button onclick="toggleLeftDrawer()">✕</button>
-        </div>
-        
-        <!-- Weather Widget (New) -->
-        <div class="widget-box">
-            <div class="widget-title">🌦️ Atmosphere</div>
-            <div class="glass-card weather-card">
-                <div id="weatherTemp">--°C</div>
-                <div id="weatherDesc">Scanning...</div>
-            </div>
-        </div>
-
-        <!-- Clock -->
-        <div class="widget-box">
-            <div class="widget-title">🕒 Local Time</div>
-            <div class="glass-card clock-card">
-                <div id="clockTime">00:00</div>
-                <div id="clockDate">SYSTEM ONLINE</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- RIGHT DRAWER (Tools) -->
-    <div id="rightDrawer" class="right-sidebar">
-        <div class="sidebar-header">
-            <span>Omni-Tools</span>
-            <button onclick="toggleRightDrawer()">✕</button>
-        </div>
-        
-        <div class="widget-box">
-            <div class="widget-title">💾 Data Management</div>
-            <button class="glass-btn" onclick="exportChat()">📥 Export Chat Log</button>
-            <button class="glass-btn" onclick="clearMemory()" style="color:#ff0055; border-color:#ff0055">⚠ Wipe Memory</button>
-        </div>
-
-        <div class="widget-box">
-            <div class="widget-title">📝 Neural Notes</div>
-            <textarea id="notepad" placeholder="Persistent notes..."></textarea>
-        </div>
-    </div>
-
-    <!-- HEADER -->
+    <!-- HEADER / STATUS BAR -->
     <header>
-        <button id="leftBtn" class="glass-btn icon-only" onclick="toggleLeftDrawer()">📊</button>
-
-        <!-- NEW LOGO: VOID GLYPH -->
-        <div class="island">
-            <div class="void-logo">
-                <div class="v-shape"></div>
-                <div class="v-core"></div>
-            </div>
-            <span class="title">VESSY OS 28.7</span>
+        <div class="left-controls">
+            <button id="menuBtn" class="glass-btn"><i class="fa-solid fa-grid-2"></i> APPS</button>
+            <div class="clock-widget" id="clock">00:00</div>
         </div>
-        
-        <div class="header-controls">
-            <button id="rightBtn" class="glass-btn icon-only" onclick="toggleRightDrawer()">🛠️</button>
-            <button id="settingsBtn" class="glass-btn icon-only">⚙️</button>
+        <div class="center-title">VESSY OS 29</div>
+        <div class="right-controls">
+            <div id="weather">Loading...</div>
+            <button id="settingsBtn" class="glass-btn icon-only"><i class="fa-solid fa-gear"></i></button>
         </div>
     </header>
 
-    <!-- CHAT STREAM -->
+    <!-- APP GRID (Hidden by default) -->
+    <div id="appGrid" class="app-grid hidden">
+        <div class="app-item" onclick="launchApp('paint')"><i class="fa-solid fa-paintbrush"></i> Paint</div>
+        <div class="app-item" onclick="launchApp('snake')"><i class="fa-solid fa-worm"></i> Snake</div>
+        <div class="app-item" onclick="launchApp('calc')"><i class="fa-solid fa-calculator"></i> Calc</div>
+        <div class="app-item" onclick="launchApp('notes')"><i class="fa-solid fa-note-sticky"></i> Notes</div>
+        <div class="app-item" onclick="launchApp('terminal')"><i class="fa-solid fa-terminal"></i> Terminal</div>
+        <div class="app-item" onclick="launchApp('minecraft')"><i class="fa-solid fa-cube"></i> Voxel</div>
+    </div>
+
+    <!-- CHAT WINDOW (Main) -->
     <main id="chatWindow">
         <div class="message bot">
             <div class="glass-card">
-                <p><strong>Vessy OS 28.7 Online.</strong><br>Audio Engine Repaired.<br>Image Generation Active.<br>Ready.</p>
+                <p><strong>Vessy OS 29 Online.</strong><br>Bugs fixed. Systems nominal.<br>Click "APPS" to see new features.</p>
             </div>
         </div>
     </main>
@@ -90,36 +50,42 @@
     <!-- INPUT DOCK -->
     <footer>
         <div class="dock">
-            <!-- File Upload Button -->
             <input type="file" id="fileInput" hidden>
-            <button id="attachBtn" class="glass-btn icon-only" onclick="document.getElementById('fileInput').click()">📎</button>
+            <button class="glass-btn icon-only" onclick="document.getElementById('fileInput').click()"><i class="fa-solid fa-paperclip"></i></button>
             
-            <input type="text" id="userInput" placeholder="Type 'Draw a cat' or upload a file..." autocomplete="off">
+            <input type="text" id="userInput" placeholder="Ask Vessy anything..." autocomplete="off">
             
-            <button id="sendBtn" class="glass-btn icon-only">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-            </button>
+            <button id="sendBtn" class="glass-btn icon-only"><i class="fa-solid fa-paper-plane"></i></button>
         </div>
     </footer>
 
     <!-- SETTINGS MODAL -->
     <div id="settingsModal" class="modal hidden">
-        <div class="modal-header"><span>Settings</span><button onclick="toggleSettings()">✕</button></div>
+        <div class="modal-header"><span>System Control</span><button onclick="toggleModal('settingsModal')">✕</button></div>
         <div class="modal-body">
-            <h3>Visuals</h3>
+            <h3>Backgrounds</h3>
             <div class="bg-grid">
-                <div class="bg-option" onclick="setBg('ultra')" style="background: linear-gradient(45deg, #1a0b2e, #000);">Ultra</div>
+                <div class="bg-option" onclick="setBg('default')" style="background: linear-gradient(45deg, #00f2ff, #000);">Default</div>
                 <div class="bg-option" onclick="setBg('sunset')" style="background: linear-gradient(to bottom, #ff4e50, #f9d423);">Sunset</div>
-                <div class="bg-option" onclick="setBg('matrix')" style="background: #003300; border: 1px solid #0f0;">Matrix</div>
+                <div class="bg-option" onclick="setBg('matrix')" style="background: #000; border: 1px solid #0f0;">Matrix</div>
+                <div class="bg-option" onclick="setBg('void')" style="background: #000;">Void</div>
             </div>
+            <h3>Custom Wallpaper</h3>
+            <input type="file" id="customBgInput" accept="image/*">
             <h3>Audio</h3>
-            <button class="glass-btn" onclick="toggleSound()">🔊 Toggle SFX</button>
+            <button class="glass-btn full-width" onclick="toggleSound()">🔊 Toggle UI Sounds</button>
         </div>
     </div>
 
+    <!-- UNIVERSAL APP MODAL (Used for Paint, Snake, etc) -->
+    <div id="appModal" class="modal large-modal hidden">
+        <div class="modal-header"><span id="appTitle">App</span><button onclick="toggleModal('appModal')">✕</button></div>
+        <div class="modal-body" id="appContent"></div>
+    </div>
+
     <!-- PREVIEW MODAL -->
-    <div id="previewModal" class="modal hidden">
-        <div class="modal-header"><span>Preview</span><button onclick="closePreview()">✕</button></div>
+    <div id="previewModal" class="modal large-modal hidden">
+        <div class="modal-header"><span>Code Preview</span><button onclick="toggleModal('previewModal')">✕</button></div>
         <iframe id="previewFrame"></iframe>
     </div>
 
