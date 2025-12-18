@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- DOM ELEMENTS ---
     const chatWindow = document.getElementById('chatWindow');
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
@@ -8,230 +7,231 @@ document.addEventListener('DOMContentLoaded', () => {
     const appModal = document.getElementById('appModal');
     const appContent = document.getElementById('appContent');
     const appTitle = document.getElementById('appTitle');
-    const previewModal = document.getElementById('previewModal');
-    const previewFrame = document.getElementById('previewFrame');
 
-    // --- 1. CLOCK & WEATHER (Fixed) ---
-    function updateClock() {
+    // --- 1. CLOCK ---
+    setInterval(() => {
         const now = new Date();
         document.getElementById('clock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    // Fake Weather (Reliable)
-    document.getElementById('weather').innerText = "24°C | ONLINE";
+    }, 1000);
 
     // --- 2. UI CONTROLS ---
-    window.toggleModal = function(id) {
-        document.getElementById(id).classList.toggle('hidden');
+    document.getElementById('menuBtn').addEventListener('click', () => appGrid.classList.toggle('hidden'));
+    document.getElementById('settingsBtn').addEventListener('click', () => document.getElementById('settingsModal').classList.toggle('hidden'));
+    window.toggleSettings = () => document.getElementById('settingsModal').classList.add('hidden');
+    window.closeApp = () => {
+        appModal.classList.add('hidden');
+        appContent.innerHTML = ''; // Kill app to stop sounds/loops
     };
 
-    document.getElementById('menuBtn').addEventListener('click', () => {
-        appGrid.classList.toggle('hidden');
-    });
-
-    document.getElementById('settingsBtn').addEventListener('click', () => {
-        window.toggleModal('settingsModal');
-    });
-
-    // --- 3. BACKGROUNDS (Fixed) ---
-    window.setBg = function(type) {
+    window.setBg = (type) => {
+        bgLayer.className = 'bg-' + type;
         bgLayer.style.backgroundImage = '';
-        bgLayer.className = '';
-        if (type === 'default') bgLayer.className = 'bg-default';
-        else if (type === 'sunset') bgLayer.className = 'bg-sunset';
-        else if (type === 'matrix') bgLayer.className = 'bg-matrix';
-        else bgLayer.className = 'bg-void';
     };
-
-    document.getElementById('customBgInput').addEventListener('change', function(e) {
+    document.getElementById('customBgInput').addEventListener('change', (e) => {
         const file = e.target.files[0];
-        if (file) {
+        if(file) {
             const reader = new FileReader();
-            reader.onload = (event) => {
-                bgLayer.className = '';
-                bgLayer.style.backgroundImage = `url(${event.target.result})`;
-            };
+            reader.onload = (ev) => { bgLayer.style.backgroundImage = `url(${ev.target.result})`; };
             reader.readAsDataURL(file);
         }
     });
 
-    // --- 4. APP LAUNCHER (The 1000 Features) ---
+    // --- 3. APP LAUNCHER (THE WORKING APPS) ---
     window.launchApp = function(app) {
         appGrid.classList.add('hidden');
-        window.toggleModal('appModal');
-        appContent.innerHTML = ''; // Clear previous
+        appModal.classList.remove('hidden');
+        appContent.innerHTML = '';
 
-        if (app === 'paint') {
-            appTitle.innerText = "Paint";
-            appContent.innerHTML = '<canvas id="paintCanvas" style="background:white; width:100%; height:100%; cursor:crosshair;"></canvas>';
-            initPaint();
-        } else if (app === 'snake') {
-            appTitle.innerText = "Snake";
-            appContent.innerHTML = '<iframe src="https://playsnake.org" style="width:100%; height:100%; border:none;"></iframe>';
-        } else if (app === 'calc') {
-            appTitle.innerText = "Calculator";
-            appContent.innerHTML = '<div style="color:white; text-align:center; padding:20px;">Calculator Module Loading... (Use Chat for Math)</div>';
-        } else if (app === 'notes') {
-            appTitle.innerText = "Notes";
-            appContent.innerHTML = '<textarea style="width:100%; height:100%; background:#222; color:white; border:none; padding:10px;">Type notes here...</textarea>';
-        } else if (app === 'terminal') {
-            appTitle.innerText = "Terminal";
-            appContent.innerHTML = '<div style="background:black; color:#0f0; font-family:monospace; height:100%; padding:10px;">root@vessy:~# <span class="blink">_</span></div>';
-        } else if (app === 'minecraft') {
-            appTitle.innerText = "Voxel Engine";
-            // Trigger AI to generate it
-            window.toggleModal('appModal'); // Close app modal
-            triggerAI("Build Minecraft from scratch");
+        if (app === 'paint') initPaint();
+        else if (app === 'snake') initSnake();
+        else if (app === 'calc') initCalc();
+        else if (app === 'minecraft') initMinecraft();
+        else if (app === 'browser') {
+            appTitle.innerText = "Browser";
+            appContent.innerHTML = '<iframe src="https://www.wikipedia.org" style="width:100%; height:100%; border:none;"></iframe>';
         }
     };
 
-    function initPaint() {
-        // Simple paint logic would go here
-        // For now, it's a placeholder canvas
-    }
-
-    // --- 5. FILE UPLOAD ---
-    document.getElementById('fileInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            addMessage(`[FILE UPLOADED: ${file.name}]`, 'user');
-            triggerAI(`I uploaded ${file.name}. Content:\n\n${e.target.result}\n\nAnalyze this.`);
-        };
-        reader.readAsText(file);
-    });
-
-    // --- 6. CHAT & AI LOGIC ---
-    marked.setOptions({ highlight: (code) => code });
-
-    function addMessage(text, sender) {
-        const div = document.createElement('div');
-        div.className = `message ${sender}`;
-        const card = document.createElement('div');
-        card.className = 'glass-card';
+    // --- APP: CALCULATOR ---
+    function initCalc() {
+        appTitle.innerText = "Calculator";
+        appContent.innerHTML = `
+            <div class="calc-grid">
+                <div id="calcDisplay" class="calc-display">0</div>
+                <button class="calc-btn" onclick="calcInput('7')">7</button><button class="calc-btn" onclick="calcInput('8')">8</button><button class="calc-btn" onclick="calcInput('9')">9</button><button class="calc-btn accent" onclick="calcInput('/')">/</button>
+                <button class="calc-btn" onclick="calcInput('4')">4</button><button class="calc-btn" onclick="calcInput('5')">5</button><button class="calc-btn" onclick="calcInput('6')">6</button><button class="calc-btn accent" onclick="calcInput('*')">*</button>
+                <button class="calc-btn" onclick="calcInput('1')">1</button><button class="calc-btn" onclick="calcInput('2')">2</button><button class="calc-btn" onclick="calcInput('3')">3</button><button class="calc-btn accent" onclick="calcInput('-')">-</button>
+                <button class="calc-btn" onclick="calcInput('0')">0</button><button class="calc-btn" onclick="calcInput('.')">.</button><button class="calc-btn" onclick="calcInput('C')">C</button><button class="calc-btn accent" onclick="calcInput('+')">+</button>
+                <button class="calc-btn accent" style="grid-column: span 4" onclick="calcResult()">=</button>
+            </div>`;
         
-        if (sender === 'bot') {
-            let htmlContent = marked.parse(text);
-            // Code Preview Buttons
-            const codeRegex = /```(\w+)([\s\S]*?)```/g;
-            let match;
-            while ((match = codeRegex.exec(text)) !== null) {
-                const lang = match[1].toLowerCase();
-                const code = match[2];
-                if (['html', 'python', 'js', 'css'].includes(lang)) {
-                    const safeCode = encodeURIComponent(code);
-                    htmlContent += `<button class="run-btn" onclick="openPreview('${safeCode}', '${lang}')">▶ Run ${lang.toUpperCase()}</button>`;
-                }
-            }
-            card.innerHTML = htmlContent;
-            playSound('receive');
-        } else {
-            card.textContent = text;
-            playSound('send');
-        }
-        div.appendChild(card);
-        chatWindow.appendChild(div);
-        chatWindow.scrollTop = chatWindow.scrollHeight;
+        let expr = "";
+        window.calcInput = (v) => {
+            if(v === 'C') expr = "";
+            else expr += v;
+            document.getElementById('calcDisplay').innerText = expr || "0";
+        };
+        window.calcResult = () => {
+            try { expr = eval(expr).toString(); } catch { expr = "Error"; }
+            document.getElementById('calcDisplay').innerText = expr;
+        };
     }
 
+    // --- APP: PAINT ---
+    function initPaint() {
+        appTitle.innerText = "Paint";
+        appContent.innerHTML = `
+            <div class="paint-toolbar">
+                <div class="color-btn" style="background:black" onclick="setColor('black')"></div>
+                <div class="color-btn" style="background:red" onclick="setColor('red')"></div>
+                <div class="color-btn" style="background:blue" onclick="setColor('blue')"></div>
+                <div class="color-btn" style="background:green" onclick="setColor('green')"></div>
+                <div class="color-btn" style="background:white; border:1px solid #aaa" onclick="setColor('white')"></div> <!-- Eraser -->
+            </div>
+            <canvas id="paintCanvas"></canvas>`;
+        
+        const canvas = document.getElementById('paintCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = appContent.clientWidth;
+        canvas.height = appContent.clientHeight - 40;
+        
+        let painting = false;
+        let color = 'black';
+        window.setColor = (c) => color = c;
+        
+        canvas.addEventListener('mousedown', () => painting = true);
+        canvas.addEventListener('mouseup', () => painting = false);
+        canvas.addEventListener('mousemove', (e) => {
+            if(!painting) return;
+            const rect = canvas.getBoundingClientRect();
+            ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = color;
+            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+        });
+        canvas.addEventListener('mousedown', (e) => {
+            ctx.beginPath(); // Reset path on new click
+        });
+    }
+
+    // --- APP: SNAKE ---
+    function initSnake() {
+        appTitle.innerText = "Snake";
+        appContent.innerHTML = '<canvas id="snakeCanvas"></canvas>';
+        const canvas = document.getElementById('snakeCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 400; canvas.height = 400;
+        
+        let snake = [{x: 10, y: 10}];
+        let food = {x: 15, y: 15};
+        let dx = 0; let dy = 0;
+        let score = 0;
+        
+        function draw() {
+            if(!document.getElementById('snakeCanvas')) return; // Stop if closed
+            ctx.fillStyle = 'black'; ctx.fillRect(0,0,400,400);
+            ctx.fillStyle = 'lime';
+            snake.forEach(part => ctx.fillRect(part.x*20, part.y*20, 18, 18));
+            ctx.fillStyle = 'red'; ctx.fillRect(food.x*20, food.y*20, 18, 18);
+            
+            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+            snake.unshift(head);
+            if(head.x === food.x && head.y === food.y) {
+                food = {x: Math.floor(Math.random()*20), y: Math.floor(Math.random()*20)};
+            } else {
+                snake.pop();
+            }
+            
+            if(head.x < 0 || head.x >= 20 || head.y < 0 || head.y >= 20) {
+                snake = [{x: 10, y: 10}]; dx=0; dy=0; // Reset
+            }
+        }
+        
+        setInterval(draw, 100);
+        document.addEventListener('keydown', (e) => {
+            if(e.key === 'ArrowUp' && dy === 0) { dx=0; dy=-1; }
+            if(e.key === 'ArrowDown' && dy === 0) { dx=0; dy=1; }
+            if(e.key === 'ArrowLeft' && dx === 0) { dx=-1; dy=0; }
+            if(e.key === 'ArrowRight' && dx === 0) { dx=1; dy=0; }
+        });
+    }
+
+    // --- APP: MINECRAFT (VOXEL) ---
+    function initMinecraft() {
+        appTitle.innerText = "Voxel Engine";
+        // Injecting the iframe directly so it works without API
+        appContent.innerHTML = `
+            <iframe srcdoc="
+            <!DOCTYPE html><html><head><style>body{margin:0;overflow:hidden}#info{position:absolute;top:10px;left:10px;color:white;font-family:sans-serif;background:rgba(0,0,0,0.5);padding:5px}</style></head><body><div id='info'>Click to Capture Mouse<br>WASD to Move<br>Click to Add, Shift+Click to Remove</div><script type='module'>
+            import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+            import { PointerLockControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/PointerLockControls.js';
+            const scene=new THREE.Scene();scene.background=new THREE.Color(0x87CEEB);
+            const camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,1000);
+            const renderer=new THREE.WebGLRenderer();renderer.setSize(window.innerWidth,window.innerHeight);document.body.appendChild(renderer.domElement);
+            const controls=new PointerLockControls(camera,document.body);document.body.addEventListener('click',()=>controls.lock());
+            const geometry=new THREE.BoxGeometry(1,1,1);const material=new THREE.MeshBasicMaterial({color:0x00ff00,wireframe:false});
+            const floor=new THREE.Mesh(new THREE.PlaneGeometry(100,100),new THREE.MeshBasicMaterial({color:0x228b22}));floor.rotation.x=-Math.PI/2;floor.position.y=-1;scene.add(floor);
+            const objects=[];
+            document.addEventListener('mousedown',(e)=>{if(!controls.isLocked)return;
+                const cube=new THREE.Mesh(geometry,new THREE.MeshNormalMaterial());
+                const vector=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion).add(camera.position);
+                cube.position.copy(vector).addScalar(2);
+                scene.add(cube);objects.push(cube);
+            });
+            function animate(){requestAnimationFrame(animate);renderer.render(scene,camera);}animate();
+            </script></body></html>
+            "></iframe>
+        `;
+    }
+
+    // --- 4. CHAT & IMAGE GEN (FIXED) ---
     async function handleSend() {
         const text = userInput.value.trim();
         if (!text) return;
-        
-        // Image Gen Check
-        if (text.toLowerCase().startsWith('draw')) {
+
+        // INTERCEPT IMAGE GENERATION (Fixes 'I cant draw' error)
+        if (text.toLowerCase().startsWith('draw') || text.toLowerCase().includes('image')) {
             addMessage(text, 'user');
             userInput.value = '';
-            const prompt = text.replace('draw', '').trim();
+            const prompt = text.replace(/draw|generate|image/gi, '').trim();
             const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
-            addMessage(`Generating image... <br><img src="${url}" style="max-width:100%; border-radius:10px; margin-top:10px;">`, 'bot');
+            
+            const div = document.createElement('div');
+            div.className = 'message bot';
+            div.innerHTML = `<div class="glass-card"><p>Generating: ${prompt}</p><img src="${url}" class="generated-image" onload="this.scrollIntoView()"></div>`;
+            chatWindow.appendChild(div);
             return;
         }
 
         addMessage(text, 'user');
         userInput.value = '';
-        userInput.disabled = true;
-        triggerAI(text);
-    }
-
-    async function triggerAI(promptText) {
-        const loadingDiv = document.createElement('div');
-        loadingDiv.className = 'message bot';
-        loadingDiv.innerHTML = '<div class="glass-card">...</div>';
-        chatWindow.appendChild(loadingDiv);
         
+        // Call API for text
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: promptText })
+                body: JSON.stringify({ prompt: text })
             });
             const data = await response.json();
-            chatWindow.removeChild(loadingDiv);
             if (data.error) addMessage("Error: " + data.error, 'bot');
             else addMessage(data.reply, 'bot');
         } catch (e) {
-            chatWindow.removeChild(loadingDiv);
             addMessage("Connection Failed.", 'bot');
         }
-        userInput.disabled = false;
-        userInput.focus();
     }
 
-    sendBtn.addEventListener('click', handleSend);
+    function addMessage(text, sender) {
+        const div = document.createElement('div');
+        div.className = `message ${sender}`;
+        div.innerHTML = `<div class="glass-card">${marked.parse(text)}</div>`;
+        chatWindow.appendChild(div);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    document.getElementById('sendBtn').addEventListener('click', handleSend);
     userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
-
-    // --- 7. PREVIEW LOGIC ---
-    window.openPreview = function(encodedCode, lang) {
-        window.toggleModal('previewModal');
-        const doc = previewFrame.contentWindow.document;
-        const code = decodeURIComponent(encodedCode);
-        doc.open();
-        let content = code;
-        if (lang === 'python') content = `<html><head><link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" /><script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script></head><body><script type="py">${code}</script></body></html>`;
-        doc.write(content);
-        doc.close();
-    };
-
-    // --- 8. SOUND ---
-    let soundEnabled = true;
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    window.toggleSound = () => { soundEnabled = !soundEnabled; alert("Sound: " + soundEnabled); };
-    
-    function playSound(type) {
-        if (!soundEnabled || audioCtx.state === 'suspended') { audioCtx.resume(); if(!soundEnabled) return; }
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        if (type === 'send') { osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
-        else { osc.frequency.setValueAtTime(400, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
-    }
-
-    // --- 9. PARTICLES ---
-    const canvas = document.getElementById('particleCanvas');
-    const ctx = canvas.getContext('2d');
-    let particles = [];
-    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-    window.addEventListener('resize', resize); resize();
-    
-    class Particle {
-        constructor(x, y) { this.x = x; this.y = y; this.size = Math.random() * 2; this.life = 1; }
-        update() { this.life -= 0.02; }
-        draw() { ctx.fillStyle = `rgba(0, 242, 255, ${this.life})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill(); }
-    }
-    
-    window.addEventListener('mousemove', (e) => { particles.push(new Particle(e.x, e.y)); });
-    
-    function animate() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        for (let i = 0; i < particles.length; i++) {
-            particles[i].update(); particles[i].draw();
-            if (particles[i].life <= 0) { particles.splice(i, 1); i--; }
-        }
-        requestAnimationFrame(animate);
-    }
-    animate();
 });
