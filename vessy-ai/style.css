@@ -2,7 +2,7 @@
     --glass-surface: rgba(255, 255, 255, 0.03);
     --glass-border: rgba(255, 255, 255, 0.08);
     --glass-highlight: rgba(255, 255, 255, 0.1);
-    --neon-accent: #00f2ff; /* Default Cyan */
+    --neon-accent: #00f2ff;
     --text-main: #ffffff;
 }
 
@@ -10,39 +10,38 @@
 
 body { background: #000; color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
 
-/* --- BOOT SCREEN --- */
-#bootScreen {
-    position: fixed; inset: 0; z-index: 9999; background: #000;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    transition: opacity 1s ease;
+/* --- NEW LOGO: VOID GLYPH --- */
+.void-logo {
+    width: 24px; height: 24px; position: relative;
+    display: flex; justify-content: center; align-items: center;
 }
-.boot-logo { font-size: 80px; font-weight: 900; color: var(--neon-accent); text-shadow: 0 0 20px var(--neon-accent); margin-bottom: 20px; animation: pulse 1s infinite; }
-.boot-text { font-family: monospace; color: #666; margin-bottom: 10px; }
-.boot-bar { width: 200px; height: 4px; background: #333; border-radius: 2px; overflow: hidden; }
-.boot-fill { width: 0%; height: 100%; background: var(--neon-accent); animation: load 2s ease-in-out forwards; }
-@keyframes load { 100% { width: 100%; } }
+.v-shape {
+    width: 0; height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 18px solid var(--neon-accent);
+    filter: drop-shadow(0 0 5px var(--neon-accent));
+    animation: floatLogo 3s ease-in-out infinite;
+}
+.v-core {
+    position: absolute; top: 2px; width: 4px; height: 4px;
+    background: #fff; border-radius: 50%;
+    box-shadow: 0 0 10px #fff;
+}
+@keyframes floatLogo { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 
-/* --- NEW LOGO (CSS) --- */
-.vessy-logo-small {
-    font-family: serif; font-weight: 900; font-size: 24px; position: relative;
-    color: white; display: flex; justify-content: center;
-}
-.logo-core {
-    position: absolute; bottom: 2px; width: 8px; height: 4px;
-    background: #ffaa00; border-radius: 10px 10px 0 0;
-    box-shadow: 0 0 10px #ffaa00;
-}
+/* --- WEATHER WIDGET --- */
+.weather-card { text-align: center; padding: 15px; }
+#weatherTemp { font-size: 32px; font-weight: 200; }
+#weatherDesc { font-size: 12px; color: var(--neon-accent); text-transform: uppercase; letter-spacing: 1px; }
 
-/* --- COMMAND PALETTE --- */
-#cmdPalette {
-    position: fixed; top: 20%; left: 50%; transform: translateX(-50%);
-    width: 400px; background: rgba(0,0,0,0.9); border: 1px solid var(--neon-accent);
-    border-radius: 12px; padding: 10px; z-index: 500;
-    box-shadow: 0 0 50px rgba(0,0,0,0.8);
+/* --- IMAGE GENERATION --- */
+.generated-image {
+    max-width: 100%; border-radius: 12px; border: 1px solid var(--glass-border);
+    margin-top: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+    transition: transform 0.3s;
 }
-#cmdInput { width: 100%; background: transparent; border: none; color: white; font-size: 18px; padding: 10px; outline: none; border-bottom: 1px solid #333; }
-.cmd-list div { padding: 10px; cursor: pointer; color: #888; transition: 0.2s; }
-.cmd-list div:hover { background: var(--neon-accent); color: black; }
+.generated-image:hover { transform: scale(1.02); }
 
 /* --- BACKGROUNDS --- */
 #bgLayer { position: absolute; inset: 0; z-index: -3; transition: background 0.5s ease; background-size: cover; background-position: center; }
@@ -73,25 +72,10 @@ body { background: #000; color: var(--text-main); height: 100vh; overflow: hidde
 .widget-title { font-size: 12px; color: var(--neon-accent); letter-spacing: 1px; font-weight: bold; }
 
 /* --- WIDGETS --- */
-.clock-card { text-align: center; padding: 15px; cursor: grab; }
-.clock-card:active { cursor: grabbing; }
+.clock-card { text-align: center; padding: 15px; }
 #clockTime { font-size: 32px; font-weight: 200; letter-spacing: 2px; }
 #clockDate { font-size: 10px; opacity: 0.7; letter-spacing: 1px; color: var(--neon-accent); }
-.stat-card { padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-.stat-row { display: flex; align-items: center; gap: 10px; font-size: 12px; }
-.bar-bg { flex: 1; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; }
-.bar-fill { height: 100%; background: var(--neon-accent); border-radius: 2px; box-shadow: 0 0 5px var(--neon-accent); transition: width 1s; }
-.focus-card { text-align: center; padding: 20px; }
-#timerDisplay { font-size: 40px; font-weight: bold; color: var(--neon-accent); }
 #notepad { width: 100%; height: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: white; resize: none; outline: none; font-size: 13px; line-height: 1.5; padding: 10px; border-radius: 10px; }
-.ambient-controls { display: flex; align-items: center; gap: 15px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; border: 1px solid var(--glass-border); }
-.visualizer { display: flex; gap: 3px; height: 20px; align-items: flex-end; }
-.bar { width: 4px; background: var(--neon-accent); height: 5px; border-radius: 2px; transition: height 0.1s; }
-.playing .bar { animation: bounce 0.5s infinite alternate; }
-.playing .bar:nth-child(2) { animation-delay: 0.1s; }
-.playing .bar:nth-child(3) { animation-delay: 0.2s; }
-.playing .bar:nth-child(4) { animation-delay: 0.3s; }
-@keyframes bounce { 0% { height: 5px; opacity: 0.5; } 100% { height: 20px; opacity: 1; } }
 
 /* --- HEADER & CONTROLS --- */
 header { padding: 20px; display: flex; justify-content: space-between; align-items: center; z-index: 10; position: relative; }
@@ -124,10 +108,6 @@ input { flex: 1; background: transparent; border: none; padding: 12px 15px; colo
 .modal-header button { background: none; border: none; color: white; cursor: pointer; font-size: 18px; }
 .modal-body { padding: 20px; color: white; }
 iframe { flex: 1; border: none; background: white; border-radius: 0 0 24px 24px; }
-#gameOverlay { display: none; position: fixed; inset: 0; z-index: 9999; background: black; flex-direction: column; }
-#gameOverlay.active { display: flex; }
-.game-bar { height: 50px; background: #111; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid #333; }
-.game-bar button { background: #ff3b30; color: white; border: none; padding: 5px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
 /* --- EXTRAS --- */
 pre { background: #0a0a0a; padding: 15px; border-radius: 12px; overflow-x: auto; margin-top: 10px; border: 1px solid var(--glass-border); }
@@ -135,8 +115,5 @@ code { font-family: monospace; color: var(--neon-accent); }
 .run-btn { margin-top: 10px; background: var(--neon-accent); border: none; padding: 8px 16px; border-radius: 8px; color: black; font-weight: bold; cursor: pointer; }
 .bg-grid { display: flex; gap: 10px; margin-top: 10px; }
 .bg-option { width: 60px; height: 60px; border-radius: 12px; border: 1px solid var(--glass-border); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; }
-.system-controls { display: flex; gap: 10px; margin-top: 10px; }
-.small-btn { font-size: 10px; padding: 5px 10px; height: auto; }
 
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes pulse { 0% { text-shadow: 0 0 20px var(--neon-accent); } 100% { text-shadow: 0 0 40px var(--neon-accent); } }
