@@ -8,14 +8,75 @@ const gameFrame = document.getElementById('gameFrame');
 const gameTitle = document.getElementById('gameTitle');
 const previewModal = document.getElementById('previewModal');
 const previewFrame = document.getElementById('previewFrame');
-const sidecar = document.getElementById('sidecar');
+const leftDrawer = document.getElementById('leftDrawer');
+const rightDrawer = document.getElementById('rightDrawer');
 
-// --- 1. SIDECAR LOGIC ---
-window.toggleSidecar = function() {
-    sidecar.classList.toggle('open');
-};
+// --- 1. DRAWER LOGIC ---
+window.toggleLeftDrawer = function() { leftDrawer.classList.toggle('open'); };
+window.toggleRightDrawer = function() { rightDrawer.classList.toggle('open'); };
 
-// --- 2. AMBIENT CORE (Generative Music) ---
+// --- 2. PARTICLE ENGINE (DIGITAL STARDUST) ---
+const canvas = document.getElementById('particleCanvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+class Particle {
+    constructor(x, y) {
+        this.x = x; this.y = y;
+        this.size = Math.random() * 3 + 1;
+        this.speedX = Math.random() * 2 - 1;
+        this.speedY = Math.random() * 2 - 1;
+        this.color = `hsl(${Math.random() * 60 + 180}, 100%, 50%)`; // Cyan/Blue range
+        this.life = 1.0;
+    }
+    update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        this.life -= 0.02;
+        if (this.size > 0.2) this.size -= 0.1;
+    }
+    draw() {
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = this.life;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+function handleParticles() {
+    for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw();
+        if (particles[i].life <= 0) {
+            particles.splice(i, 1);
+            i--;
+        }
+    }
+}
+
+function animateParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    handleParticles();
+    requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+// Add particles on mouse move
+window.addEventListener('mousemove', (e) => {
+    for (let i = 0; i < 2; i++) {
+        particles.push(new Particle(e.x, e.y));
+    }
+});
+
+// --- 3. AMBIENT CORE ---
 let ambientCtx;
 let ambientOscillators = [];
 let isAmbientPlaying = false;
@@ -25,10 +86,7 @@ window.toggleAmbient = function() {
     const viz = document.getElementById('visualizer');
     
     if (isAmbientPlaying) {
-        // Stop
-        ambientOscillators.forEach(osc => {
-            try { osc.stop(); } catch(e){}
-        });
+        ambientOscillators.forEach(osc => { try { osc.stop(); } catch(e){} });
         ambientOscillators = [];
         if(ambientCtx) ambientCtx.close();
         ambientCtx = null;
@@ -36,50 +94,37 @@ window.toggleAmbient = function() {
         btn.innerText = "START ENGINE";
         viz.classList.remove('playing');
     } else {
-        // Start
         ambientCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        // Create 3 drones
-        const freqs = [110, 164.81, 196.00]; // A major chord (low)
+        const freqs = [110, 164.81, 196.00];
         freqs.forEach(f => {
             const osc = ambientCtx.createOscillator();
             const gain = ambientCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.value = f;
-            gain.gain.value = 0.05; // Low volume
-            osc.connect(gain);
-            gain.connect(ambientCtx.destination);
-            osc.start();
-            ambientOscillators.push(osc);
+            osc.type = 'sine'; osc.frequency.value = f; gain.gain.value = 0.05;
+            osc.connect(gain); gain.connect(ambientCtx.destination);
+            osc.start(); ambientOscillators.push(osc);
         });
-        
         isAmbientPlaying = true;
         btn.innerText = "STOP ENGINE";
         viz.classList.add('playing');
     }
 };
 
-// --- 3. UI SOUNDS ---
+// --- 4. UI SOUNDS ---
 let soundEnabled = true;
 const uiAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
 function playSound(type) {
     if (!soundEnabled) return;
     const osc = uiAudioCtx.createOscillator();
     const gain = uiAudioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(uiAudioCtx.destination);
-
+    osc.connect(gain); gain.connect(uiAudioCtx.destination);
     if (type === 'send') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(800, uiAudioCtx.currentTime);
+        osc.type = 'sine'; osc.frequency.setValueAtTime(800, uiAudioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(1200, uiAudioCtx.currentTime + 0.1);
         gain.gain.setValueAtTime(0.1, uiAudioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, uiAudioCtx.currentTime + 0.1);
         osc.start(); osc.stop(uiAudioCtx.currentTime + 0.1);
     } else if (type === 'receive') {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(400, uiAudioCtx.currentTime);
+        osc.type = 'triangle'; osc.frequency.setValueAtTime(400, uiAudioCtx.currentTime);
         gain.gain.setValueAtTime(0.05, uiAudioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, uiAudioCtx.currentTime + 0.2);
         osc.start(); osc.stop(uiAudioCtx.currentTime + 0.2);
@@ -87,7 +132,7 @@ function playSound(type) {
 }
 window.toggleSound = function() { soundEnabled = !soundEnabled; alert("Sound: " + soundEnabled); };
 
-// --- 4. MEMORY & NOTEPAD ---
+// --- 5. MEMORY & CLOCK ---
 function loadHistory() {
     const saved = localStorage.getItem('vessy_history');
     const savedNote = localStorage.getItem('vessy_note');
@@ -97,7 +142,6 @@ function loadHistory() {
 window.clearMemory = function() { localStorage.removeItem('vessy_history'); localStorage.removeItem('vessy_note'); location.reload(); };
 document.getElementById('notepad').addEventListener('input', (e) => { localStorage.setItem('vessy_note', e.target.value); });
 
-// --- 5. CLOCK ---
 function updateClock() {
     const now = new Date();
     document.getElementById('clockTime').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
