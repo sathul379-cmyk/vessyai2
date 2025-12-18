@@ -3,27 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vessy OS 28.5 // INTERACTIVE</title>
+    <title>Vessy OS 28.5 // SENTIENT</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
+    <!-- BOOT SEQUENCE OVERLAY -->
+    <div id="bootScreen">
+        <div class="boot-logo">V</div>
+        <div class="boot-text">INITIALIZING CORE...</div>
+        <div class="boot-bar"><div class="boot-fill"></div></div>
+    </div>
+
     <!-- VISUALS -->
     <div id="bgLayer" class="bg-ultra"></div>
     <div class="noise-overlay"></div>
     <div class="vignette"></div>
-    <!-- NEW: Particle Canvas -->
     <canvas id="particleCanvas"></canvas>
 
-    <!-- LEFT DRAWER (System Info) -->
-    <div id="leftDrawer" class="left-sidebar open">
+    <!-- COMMAND PALETTE (Hidden) -->
+    <div id="cmdPalette" class="hidden">
+        <input type="text" id="cmdInput" placeholder="Search commands...">
+        <div class="cmd-list">
+            <div onclick="runCmd('clear')">Clear Memory</div>
+            <div onclick="runCmd('theme')">Change Theme</div>
+            <div onclick="runCmd('matrix')">Matrix Mode</div>
+            <div onclick="runCmd('full')">Fullscreen</div>
+        </div>
+    </div>
+
+    <!-- LEFT DRAWER (System) -->
+    <div id="leftDrawer" class="left-sidebar">
         <div class="sidebar-header">
             <span>System Status</span>
             <button onclick="toggleLeftDrawer()">✕</button>
         </div>
         
-        <!-- Clock Widget -->
-        <div class="widget-box">
+        <!-- Draggable Clock -->
+        <div class="widget-box draggable">
             <div class="widget-title">🕒 Local Time</div>
             <div class="glass-card clock-card">
                 <div id="clockTime">00:00</div>
@@ -31,26 +48,34 @@
             </div>
         </div>
 
-        <!-- Fake CPU Monitor (Visual only) -->
+        <!-- Real Battery & Net Status -->
         <div class="widget-box">
-            <div class="widget-title">⚡ Neural Engine</div>
+            <div class="widget-title">🔋 Power & Net</div>
             <div class="glass-card stat-card">
-                <div class="stat-row"><span>CPU</span> <div class="bar-bg"><div class="bar-fill" style="width: 45%"></div></div></div>
-                <div class="stat-row"><span>RAM</span> <div class="bar-bg"><div class="bar-fill" style="width: 72%"></div></div></div>
-                <div class="stat-row"><span>NET</span> <div class="bar-bg"><div class="bar-fill" style="width: 12%"></div></div></div>
+                <div class="stat-row"><span>BATTERY</span> <div class="bar-bg"><div id="batBar" class="bar-fill" style="width: 100%"></div></div></div>
+                <div class="stat-row"><span>ONLINE</span> <span id="netStatus" style="color:#0f0">ACTIVE</span></div>
             </div>
         </div>
     </div>
 
-    <!-- RIGHT DRAWER (Action Center) -->
+    <!-- RIGHT DRAWER (Tools) -->
     <div id="rightDrawer" class="right-sidebar">
         <div class="sidebar-header">
             <span>Action Center</span>
             <button onclick="toggleRightDrawer()">✕</button>
         </div>
         
-        <!-- Notepad -->
+        <!-- Focus Timer -->
         <div class="widget-box">
+            <div class="widget-title">🎯 Focus Mode</div>
+            <div class="glass-card focus-card">
+                <div id="timerDisplay">25:00</div>
+                <button class="glass-btn small-btn" onclick="toggleTimer()">START FOCUS</button>
+            </div>
+        </div>
+
+        <!-- Notepad -->
+        <div class="widget-box draggable">
             <div class="widget-title">📝 Neural Notes</div>
             <textarea id="notepad" placeholder="Write code snippets here..."></textarea>
         </div>
@@ -62,23 +87,22 @@
                 <div class="visualizer" id="visualizer">
                     <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
                 </div>
-                <button id="ambientBtn" class="glass-btn small-btn" onclick="toggleAmbient()">START ENGINE</button>
+                <button id="ambientBtn" class="glass-btn small-btn" onclick="toggleAmbient()">START</button>
             </div>
         </div>
     </div>
 
     <!-- HEADER -->
     <header>
-        <!-- Left Toggle -->
         <button id="leftBtn" class="glass-btn icon-only" onclick="toggleLeftDrawer()">📊</button>
 
+        <!-- NEW LOGO DESIGN -->
         <div class="island">
-            <div class="status-light"></div>
+            <div class="vessy-logo-small">V<div class="logo-core"></div></div>
             <span class="title">VESSY OS 28.5</span>
         </div>
         
         <div class="header-controls">
-            <!-- Right Toggle -->
             <button id="rightBtn" class="glass-btn icon-only" onclick="toggleRightDrawer()">📝</button>
             <button id="settingsBtn" class="glass-btn icon-only">⚙️</button>
         </div>
@@ -88,7 +112,7 @@
     <main id="chatWindow">
         <div class="message bot">
             <div class="glass-card">
-                <p><strong>System Upgrade Complete.</strong><br>Particle Engine Active.<br>Dual Sidebars Ready.</p>
+                <p><strong>System Online.</strong><br>Vessy OS 28.5 "Sentient" Update.<br>Voice Systems Active.</p>
             </div>
         </div>
     </main>
@@ -96,7 +120,11 @@
     <!-- INPUT DOCK -->
     <footer>
         <div class="dock">
-            <input type="text" id="userInput" placeholder="Type a command..." autocomplete="off">
+            <!-- Voice Button -->
+            <button id="micBtn" class="glass-btn icon-only" onclick="toggleVoice()">🎤</button>
+            
+            <input type="text" id="userInput" placeholder="Type or speak..." autocomplete="off">
+            
             <button id="sendBtn" class="glass-btn icon-only">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
             </button>
@@ -107,6 +135,13 @@
     <div id="settingsModal" class="modal hidden">
         <div class="modal-header"><span>System Control</span><button onclick="toggleSettings()">✕</button></div>
         <div class="modal-body">
+            <h3>Accent Color</h3>
+            <div class="bg-grid">
+                <div class="bg-option" onclick="setAccent('#00f2ff')" style="background: #00f2ff;">Cyan</div>
+                <div class="bg-option" onclick="setAccent('#ff00ff')" style="background: #ff00ff;">Neon</div>
+                <div class="bg-option" onclick="setAccent('#00ff00')" style="background: #00ff00;">Hacker</div>
+                <div class="bg-option" onclick="setAccent('#ffaa00')" style="background: #ffaa00;">Gold</div>
+            </div>
             <h3>Visuals</h3>
             <div class="bg-grid">
                 <div class="bg-option" onclick="setBg('ultra')" style="background: linear-gradient(45deg, #1a0b2e, #000);">Ultra</div>
@@ -115,11 +150,9 @@
             </div>
             <h3>System</h3>
             <div class="system-controls">
-                <button class="glass-btn" onclick="toggleSound()">🔊 UI SFX</button>
-                <button class="glass-btn" onclick="clearMemory()" style="border-color: #ff0055; color: #ff0055;">⚠ Wipe Memory</button>
+                <button class="glass-btn" onclick="toggleTTS()">🗣️ Vessy Voice</button>
+                <button class="glass-btn" onclick="toggleFullScreen()">⛶ Fullscreen</button>
             </div>
-            <h3>Custom Texture</h3>
-            <input type="file" id="customBgInput" accept="image/*">
         </div>
     </div>
 
