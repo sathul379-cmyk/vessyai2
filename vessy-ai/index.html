@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vessy OS 28.2 // ULTRA GLASS</title>
+    <title>Vessy OS 28.3 // LIVING</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
@@ -13,11 +13,22 @@
     <div class="noise-overlay"></div>
     <div class="vignette"></div>
 
+    <!-- APP DRAWER (New) -->
+    <div class="app-drawer">
+        <div class="widget clock-widget">
+            <div id="clockTime">00:00</div>
+            <div id="clockDate">SYSTEM READY</div>
+        </div>
+        <div class="widget note-widget">
+            <textarea id="notepad" placeholder="Quick Notes..."></textarea>
+        </div>
+    </div>
+
     <!-- HEADER -->
     <header>
         <div class="island">
             <div class="status-light"></div>
-            <span class="title">VESSY OS 28.2</span>
+            <span class="title">VESSY OS 28.3</span>
         </div>
         <button id="settingsBtn" class="glass-btn icon-only">⚙️</button>
     </header>
@@ -26,7 +37,7 @@
     <main id="chatWindow">
         <div class="message bot">
             <div class="glass-card">
-                <p><strong>System Updated.</strong><br>Vessy OS 28.2 "Ultra Glass" is active.<br>Visuals: MAX.</p>
+                <p><strong>System Restored.</strong><br>Vessy OS 28.3 Online.<br>Memory & Audio Systems Active.</p>
             </div>
         </div>
     </main>
@@ -44,16 +55,20 @@
     <!-- SETTINGS MODAL -->
     <div id="settingsModal" class="modal hidden">
         <div class="modal-header">
-            <span>Appearance</span>
+            <span>System Control</span>
             <button onclick="toggleSettings()">✕</button>
         </div>
         <div class="modal-body">
-            <h3>Environment</h3>
+            <h3>Visuals</h3>
             <div class="bg-grid">
                 <div class="bg-option" onclick="setBg('ultra')" style="background: linear-gradient(45deg, #1a0b2e, #000);">Ultra</div>
                 <div class="bg-option" onclick="setBg('sunset')" style="background: linear-gradient(to bottom, #ff4e50, #f9d423);">Sunset</div>
                 <div class="bg-option" onclick="setBg('matrix')" style="background: #003300; border: 1px solid #0f0;">Matrix</div>
-                <div class="bg-option" onclick="setBg('void')" style="background: #000;">Void</div>
+            </div>
+            <h3>System</h3>
+            <div class="system-controls">
+                <button class="glass-btn" onclick="toggleSound()">🔊 Toggle SFX</button>
+                <button class="glass-btn" onclick="clearMemory()" style="border-color: #ff0055; color: #ff0055;">⚠ Format Memory</button>
             </div>
             <h3>Custom Texture</h3>
             <input type="file" id="customBgInput" accept="image/*">
