@@ -3,38 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vessy OS 28.4 / SIDECAR</title>
+    <title>Vessy OS 28.5 // INTERACTIVE</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
-    <!-- DYNAMIC BACKGROUNDS -->
+    <!-- VISUALS -->
     <div id="bgLayer" class="bg-ultra"></div>
     <div class="noise-overlay"></div>
     <div class="vignette"></div>
+    <!-- NEW: Particle Canvas -->
+    <canvas id="particleCanvas"></canvas>
 
-    <!-- LEFT WIDGET (Clock Only) -->
-    <div class="left-widget">
-        <div class="glass-card clock-card">
-            <div id="clockTime">00:00</div>
-            <div id="clockDate">SYSTEM ONLINE</div>
+    <!-- LEFT DRAWER (System Info) -->
+    <div id="leftDrawer" class="left-sidebar open">
+        <div class="sidebar-header">
+            <span>System Status</span>
+            <button onclick="toggleLeftDrawer()">✕</button>
+        </div>
+        
+        <!-- Clock Widget -->
+        <div class="widget-box">
+            <div class="widget-title">🕒 Local Time</div>
+            <div class="glass-card clock-card">
+                <div id="clockTime">00:00</div>
+                <div id="clockDate">SYSTEM ONLINE</div>
+            </div>
+        </div>
+
+        <!-- Fake CPU Monitor (Visual only) -->
+        <div class="widget-box">
+            <div class="widget-title">⚡ Neural Engine</div>
+            <div class="glass-card stat-card">
+                <div class="stat-row"><span>CPU</span> <div class="bar-bg"><div class="bar-fill" style="width: 45%"></div></div></div>
+                <div class="stat-row"><span>RAM</span> <div class="bar-bg"><div class="bar-fill" style="width: 72%"></div></div></div>
+                <div class="stat-row"><span>NET</span> <div class="bar-bg"><div class="bar-fill" style="width: 12%"></div></div></div>
+            </div>
         </div>
     </div>
 
-    <!-- RIGHT SIDECAR (Hidden by default) -->
-    <div id="sidecar" class="right-sidebar">
+    <!-- RIGHT DRAWER (Action Center) -->
+    <div id="rightDrawer" class="right-sidebar">
         <div class="sidebar-header">
             <span>Action Center</span>
-            <button onclick="toggleSidecar()">✕</button>
+            <button onclick="toggleRightDrawer()">✕</button>
         </div>
         
-        <!-- Feature 1: Notepad -->
+        <!-- Notepad -->
         <div class="widget-box">
             <div class="widget-title">📝 Neural Notes</div>
             <textarea id="notepad" placeholder="Write code snippets here..."></textarea>
         </div>
 
-        <!-- Feature 2: Ambient Core (New) -->
+        <!-- Ambient Core -->
         <div class="widget-box">
             <div class="widget-title">🎵 Ambient Core</div>
             <div class="ambient-controls">
@@ -48,14 +69,17 @@
 
     <!-- HEADER -->
     <header>
+        <!-- Left Toggle -->
+        <button id="leftBtn" class="glass-btn icon-only" onclick="toggleLeftDrawer()">📊</button>
+
         <div class="island">
             <div class="status-light"></div>
-            <span class="title">VESSY OS 28.4</span>
+            <span class="title">VESSY OS 28.5</span>
         </div>
         
         <div class="header-controls">
-            <!-- Button to open Right Sidecar -->
-            <button id="sidecarBtn" class="glass-btn icon-only" onclick="toggleSidecar()">📝</button>
+            <!-- Right Toggle -->
+            <button id="rightBtn" class="glass-btn icon-only" onclick="toggleRightDrawer()">📝</button>
             <button id="settingsBtn" class="glass-btn icon-only">⚙️</button>
         </div>
     </header>
@@ -64,7 +88,7 @@
     <main id="chatWindow">
         <div class="message bot">
             <div class="glass-card">
-                <p><strong>Update Complete.</strong><br>Sidecar & Ambient Core installed.<br>Click the 📝 icon to open notes.</p>
+                <p><strong>System Upgrade Complete.</strong><br>Particle Engine Active.<br>Dual Sidebars Ready.</p>
             </div>
         </div>
     </main>
@@ -114,4 +138,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
