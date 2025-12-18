@@ -3,46 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vessy OS 29 // REDEMPTION</title>
+    <title>Vessy OS 30 // FUNCTIONAL</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- LAYERS (Fixed Z-Index) -->
     <div id="bgLayer" class="bg-default"></div>
-    <canvas id="particleCanvas"></canvas>
     <div class="vignette"></div>
 
-    <!-- HEADER / STATUS BAR -->
+    <!-- HEADER -->
     <header>
         <div class="left-controls">
-            <button id="menuBtn" class="glass-btn"><i class="fa-solid fa-grid-2"></i> APPS</button>
-            <div class="clock-widget" id="clock">00:00</div>
+            <button id="menuBtn" class="glass-btn"><i class="fa-solid fa-bars"></i> APPS</button>
+            <div id="clock">00:00</div>
         </div>
-        <div class="center-title">VESSY OS 29</div>
+        <div class="center-title">VESSY OS 30</div>
         <div class="right-controls">
-            <div id="weather">Loading...</div>
             <button id="settingsBtn" class="glass-btn icon-only"><i class="fa-solid fa-gear"></i></button>
         </div>
     </header>
 
-    <!-- APP GRID (Hidden by default) -->
+    <!-- APP GRID (The Start Menu) -->
     <div id="appGrid" class="app-grid hidden">
-        <div class="app-item" onclick="launchApp('paint')"><i class="fa-solid fa-paintbrush"></i> Paint</div>
-        <div class="app-item" onclick="launchApp('snake')"><i class="fa-solid fa-worm"></i> Snake</div>
-        <div class="app-item" onclick="launchApp('calc')"><i class="fa-solid fa-calculator"></i> Calc</div>
-        <div class="app-item" onclick="launchApp('notes')"><i class="fa-solid fa-note-sticky"></i> Notes</div>
-        <div class="app-item" onclick="launchApp('terminal')"><i class="fa-solid fa-terminal"></i> Terminal</div>
-        <div class="app-item" onclick="launchApp('minecraft')"><i class="fa-solid fa-cube"></i> Voxel</div>
+        <div class="app-item" onclick="launchApp('paint')">
+            <i class="fa-solid fa-palette" style="color:#ff0055"></i> <span>Paint</span>
+        </div>
+        <div class="app-item" onclick="launchApp('snake')">
+            <i class="fa-solid fa-worm" style="color:#00ff00"></i> <span>Snake</span>
+        </div>
+        <div class="app-item" onclick="launchApp('calc')">
+            <i class="fa-solid fa-calculator" style="color:#00f2ff"></i> <span>Calc</span>
+        </div>
+        <div class="app-item" onclick="launchApp('minecraft')">
+            <i class="fa-solid fa-cube" style="color:#ffaa00"></i> <span>Voxel</span>
+        </div>
+        <div class="app-item" onclick="launchApp('browser')">
+            <i class="fa-solid fa-globe" style="color:#fff"></i> <span>Browser</span>
+        </div>
     </div>
 
-    <!-- CHAT WINDOW (Main) -->
+    <!-- CHAT WINDOW -->
     <main id="chatWindow">
         <div class="message bot">
             <div class="glass-card">
-                <p><strong>Vessy OS 29 Online.</strong><br>Bugs fixed. Systems nominal.<br>Click "APPS" to see new features.</p>
+                <p><strong>System Repaired.</strong><br>Apps are now installed locally.<br>Try "Draw a cat" or open the App Menu.</p>
             </div>
         </div>
     </main>
@@ -50,43 +55,34 @@
     <!-- INPUT DOCK -->
     <footer>
         <div class="dock">
-            <input type="file" id="fileInput" hidden>
-            <button class="glass-btn icon-only" onclick="document.getElementById('fileInput').click()"><i class="fa-solid fa-paperclip"></i></button>
-            
-            <input type="text" id="userInput" placeholder="Ask Vessy anything..." autocomplete="off">
-            
+            <input type="text" id="userInput" placeholder="Type 'Draw...' or ask AI..." autocomplete="off">
             <button id="sendBtn" class="glass-btn icon-only"><i class="fa-solid fa-paper-plane"></i></button>
         </div>
     </footer>
 
-    <!-- SETTINGS MODAL -->
-    <div id="settingsModal" class="modal hidden">
-        <div class="modal-header"><span>System Control</span><button onclick="toggleModal('settingsModal')">✕</button></div>
-        <div class="modal-body">
-            <h3>Backgrounds</h3>
-            <div class="bg-grid">
-                <div class="bg-option" onclick="setBg('default')" style="background: linear-gradient(45deg, #00f2ff, #000);">Default</div>
-                <div class="bg-option" onclick="setBg('sunset')" style="background: linear-gradient(to bottom, #ff4e50, #f9d423);">Sunset</div>
-                <div class="bg-option" onclick="setBg('matrix')" style="background: #000; border: 1px solid #0f0;">Matrix</div>
-                <div class="bg-option" onclick="setBg('void')" style="background: #000;">Void</div>
-            </div>
-            <h3>Custom Wallpaper</h3>
-            <input type="file" id="customBgInput" accept="image/*">
-            <h3>Audio</h3>
-            <button class="glass-btn full-width" onclick="toggleSound()">🔊 Toggle UI Sounds</button>
+    <!-- UNIVERSAL APP WINDOW -->
+    <div id="appModal" class="modal hidden">
+        <div class="modal-header">
+            <span id="appTitle">Application</span>
+            <button onclick="closeApp()">✕</button>
+        </div>
+        <div class="modal-body" id="appContent">
+            <!-- App content injects here -->
         </div>
     </div>
 
-    <!-- UNIVERSAL APP MODAL (Used for Paint, Snake, etc) -->
-    <div id="appModal" class="modal large-modal hidden">
-        <div class="modal-header"><span id="appTitle">App</span><button onclick="toggleModal('appModal')">✕</button></div>
-        <div class="modal-body" id="appContent"></div>
-    </div>
-
-    <!-- PREVIEW MODAL -->
-    <div id="previewModal" class="modal large-modal hidden">
-        <div class="modal-header"><span>Code Preview</span><button onclick="toggleModal('previewModal')">✕</button></div>
-        <iframe id="previewFrame"></iframe>
+    <!-- SETTINGS MODAL -->
+    <div id="settingsModal" class="modal hidden small-modal">
+        <div class="modal-header"><span>Settings</span><button onclick="toggleSettings()">✕</button></div>
+        <div class="modal-body">
+            <h3>Backgrounds</h3>
+            <div class="bg-grid">
+                <div class="bg-option" onclick="setBg('default')" style="background: #000;">Dark</div>
+                <div class="bg-option" onclick="setBg('blue')" style="background: #00f2ff;">Neon</div>
+                <div class="bg-option" onclick="setBg('pink')" style="background: #ff0055;">Cyber</div>
+            </div>
+            <input type="file" id="customBgInput" style="margin-top:10px;">
+        </div>
     </div>
 
     <script src="script.js"></script>
