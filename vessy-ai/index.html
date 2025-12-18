@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vessy OS 28.3 // LIVING</title>
+    <title>Vessy OS 28.4 // SIDECAR</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
@@ -13,14 +13,36 @@
     <div class="noise-overlay"></div>
     <div class="vignette"></div>
 
-    <!-- APP DRAWER (New) -->
-    <div class="app-drawer">
-        <div class="widget clock-widget">
+    <!-- LEFT WIDGET (Clock Only) -->
+    <div class="left-widget">
+        <div class="glass-card clock-card">
             <div id="clockTime">00:00</div>
-            <div id="clockDate">SYSTEM READY</div>
+            <div id="clockDate">SYSTEM ONLINE</div>
         </div>
-        <div class="widget note-widget">
-            <textarea id="notepad" placeholder="Quick Notes..."></textarea>
+    </div>
+
+    <!-- RIGHT SIDECAR (Hidden by default) -->
+    <div id="sidecar" class="right-sidebar">
+        <div class="sidebar-header">
+            <span>Action Center</span>
+            <button onclick="toggleSidecar()">✕</button>
+        </div>
+        
+        <!-- Feature 1: Notepad -->
+        <div class="widget-box">
+            <div class="widget-title">📝 Neural Notes</div>
+            <textarea id="notepad" placeholder="Write code snippets here..."></textarea>
+        </div>
+
+        <!-- Feature 2: Ambient Core (New) -->
+        <div class="widget-box">
+            <div class="widget-title">🎵 Ambient Core</div>
+            <div class="ambient-controls">
+                <div class="visualizer" id="visualizer">
+                    <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                </div>
+                <button id="ambientBtn" class="glass-btn small-btn" onclick="toggleAmbient()">START ENGINE</button>
+            </div>
         </div>
     </div>
 
@@ -28,16 +50,21 @@
     <header>
         <div class="island">
             <div class="status-light"></div>
-            <span class="title">VESSY OS 28.3</span>
+            <span class="title">VESSY OS 28.4</span>
         </div>
-        <button id="settingsBtn" class="glass-btn icon-only">⚙️</button>
+        
+        <div class="header-controls">
+            <!-- Button to open Right Sidecar -->
+            <button id="sidecarBtn" class="glass-btn icon-only" onclick="toggleSidecar()">📝</button>
+            <button id="settingsBtn" class="glass-btn icon-only">⚙️</button>
+        </div>
     </header>
 
     <!-- CHAT STREAM -->
     <main id="chatWindow">
         <div class="message bot">
             <div class="glass-card">
-                <p><strong>System Restored.</strong><br>Vessy OS 28.3 Online.<br>Memory & Audio Systems Active.</p>
+                <p><strong>Update Complete.</strong><br>Sidecar & Ambient Core installed.<br>Click the 📝 icon to open notes.</p>
             </div>
         </div>
     </main>
@@ -54,10 +81,7 @@
 
     <!-- SETTINGS MODAL -->
     <div id="settingsModal" class="modal hidden">
-        <div class="modal-header">
-            <span>System Control</span>
-            <button onclick="toggleSettings()">✕</button>
-        </div>
+        <div class="modal-header"><span>System Control</span><button onclick="toggleSettings()">✕</button></div>
         <div class="modal-body">
             <h3>Visuals</h3>
             <div class="bg-grid">
@@ -67,8 +91,8 @@
             </div>
             <h3>System</h3>
             <div class="system-controls">
-                <button class="glass-btn" onclick="toggleSound()">🔊 Toggle SFX</button>
-                <button class="glass-btn" onclick="clearMemory()" style="border-color: #ff0055; color: #ff0055;">⚠ Format Memory</button>
+                <button class="glass-btn" onclick="toggleSound()">🔊 UI SFX</button>
+                <button class="glass-btn" onclick="clearMemory()" style="border-color: #ff0055; color: #ff0055;">⚠ Wipe Memory</button>
             </div>
             <h3>Custom Texture</h3>
             <input type="file" id="customBgInput" accept="image/*">
@@ -77,19 +101,13 @@
 
     <!-- PREVIEW MODAL -->
     <div id="previewModal" class="modal hidden">
-        <div class="modal-header">
-            <span>Code Preview</span>
-            <button onclick="closePreview()">✕</button>
-        </div>
+        <div class="modal-header"><span>Code Preview</span><button onclick="closePreview()">✕</button></div>
         <iframe id="previewFrame"></iframe>
     </div>
 
     <!-- GAME OVERLAY -->
     <div id="gameOverlay">
-        <div class="game-bar">
-            <span id="gameTitle">GAME MODE</span>
-            <button onclick="closeGame()">EXIT</button>
-        </div>
+        <div class="game-bar"><span id="gameTitle">GAME MODE</span><button onclick="closeGame()">EXIT</button></div>
         <iframe id="gameFrame" src="" allow="autoplay; fullscreen; pointer-lock; microphone"></iframe>
     </div>
 
