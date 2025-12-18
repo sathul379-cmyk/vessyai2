@@ -4,7 +4,6 @@
     --glass-highlight: rgba(255, 255, 255, 0.1);
     --neon-accent: #00f2ff;
     --text-main: #ffffff;
-    --text-muted: rgba(255, 255, 255, 0.6);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif; }
@@ -20,9 +19,7 @@ body {
 /* --- BACKGROUNDS --- */
 #bgLayer { position: absolute; inset: 0; z-index: -3; transition: background 0.5s ease; background-size: cover; background-position: center; }
 
-.bg-ultra {
-    background: radial-gradient(circle at 50% 50%, #1a0b2e, #000000);
-}
+.bg-ultra { background: radial-gradient(circle at 50% 50%, #1a0b2e, #000000); }
 .bg-ultra::after {
     content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
     background: conic-gradient(from 0deg, transparent, rgba(0, 242, 255, 0.1), transparent, rgba(255, 0, 255, 0.1), transparent);
