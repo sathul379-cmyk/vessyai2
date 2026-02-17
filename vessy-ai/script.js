@@ -261,30 +261,156 @@ document.addEventListener('DOMContentLoaded', () => {
         if(app==='browser'){appTitle.innerText='Browser';appContent.innerHTML='<iframe src="https://www.wikipedia.org"></iframe>';}
     };
 
-    // Image gen
-    function genImg(prompt){const id=Date.now(),div=document.createElement('div');div.className='message bot';div.innerHTML=`<div class="bot-avatar"><i class="fa-solid fa-palette"></i></div><div class="glass-card"><p class="generating-loader" id="is-${id}">🎨 <strong>Generating:</strong> "${prompt}"</p><div class="img-skeleton" id="isk-${id}"><span>Loading...</span></div></div>`;chatWindow.appendChild(div);chatWindow.scrollTop=chatWindow.scrollHeight;const seed=Math.floor(Math.random()*999999),urls=[`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=768&model=flux&nologo=true&seed=${seed}`,`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=512&nologo=true&seed=${seed+1}`,`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&model=turbo&nologo=true&seed=${seed+2}`];let done=false,att=0;function tryN(){if(done||att>=urls.length){if(!done){const s=document.getElementById(`is-${id}`),k=document.getElementById(`isk-${id}`);if(s)s.innerHTML='⚠️ <strong>Timed out.</strong>';if(k)k.remove();}return;}const img=new Image();img.className='generated-media';const to=setTimeout(()=>{if(!done){att++;const s=document.getElementById(`is-${id}`);if(s)s.innerHTML=`🎨 Retrying (${att+1}/3)...`;tryN();}},15000);img.onload=()=>{done=true;clearTimeout(to);const s=document.getElementById(`is-${id}`),k=document.getElementById(`isk-${id}`);if(s)s.innerHTML=`🎨 <strong>Generated:</strong> "${prompt}"`;if(k)k.remove();s?.parentElement?.appendChild(img);img.scrollIntoView({behavior:'smooth'});};img.onerror=()=>{clearTimeout(to);if(!done){att++;tryN();}};img.src=urls[att];}tryN();}
+       // ===================================================
+    //  FIXED IMAGE GENERATION
+    // ===================================================
+    function genImg(prompt) {
+        const id = Date.now();
+        const div = document.createElement('div');
+        div.className = 'message bot';
+        div.innerHTML = `
+            <div class="bot-avatar"><i class="fa-solid fa-palette"></i></div>
+            <div class="glass-card" id="card-${id}">
+                <p class="generating-loader" id="is-${id}">🎨 <strong>Generating:</strong> "${prompt}"</p>
+                <div class="img-skeleton" id="isk-${id}"><span>Loading image...</span></div>
+            </div>`;
+        chatWindow.appendChild(div);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
 
-    // Main chat
-    async function handleSend(){const text=userInput.value.trim();if(!text)return;
-        if(/^(draw|generate image|make an image|create image|imagine)\b/i.test(text)){addMsg(text,'user');userInput.value='';const p=text.replace(/^(draw|generate image|make an image|create image|imagine)\s*(of|a|an|the)?\s*/i,'').trim()||text;genImg(p);saveChat(text,'[Image: '+p+']');return;}
-        if(/^(video|make a video|animate)\b/i.test(text)){addMsg(text,'user');userInput.value='';const p=text.replace(/^(video|make a video|animate)\s*(of|a|an|the)?\s*/i,'').trim()||text;const seed=Math.floor(Math.random()*99999),url=`https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=512&height=512&nologo=true&seed=${seed}`;const div=document.createElement('div');div.className='message bot';div.innerHTML=`<div class="bot-avatar"><i class="fa-solid fa-video"></i></div><div class="glass-card"><p class="generating-loader">🎥 <strong>Rendering:</strong> "${p}"...</p><img src="${url}" class="generated-media" onload="this.previousElementSibling.innerText='🎥 Complete.';this.scrollIntoView({behavior:'smooth'})" onerror="this.previousElementSibling.innerHTML='⚠️ Failed.'"></div>`;chatWindow.appendChild(div);chatWindow.scrollTop=chatWindow.scrollHeight;saveChat(text,'[Video: '+p+']');return;}
-        addMsg(text,'user');userInput.value='';userInput.disabled=true;
-        analyzeUserMessage(text);
-        conversationHistory.push({role:'user',content:text});
-        await triggerAI(text);
+        // Use a single reliable URL with cache-busting
+        const seed = Math.floor(Math.random() * 999999);
+        const encodedPrompt = encodeURIComponent(prompt);
+
+        // Try loading with a proper img element
+        const img = new Image();
+        img.className = 'generated-media';
+        img.alt = prompt;
+
+        let loaded = false;
+        let attempt = 0;
+
+        const urls = [
+            `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=768&seed=${seed}&nologo=true`,
+            `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=512&seed=${seed + 1}&nologo=true`,
+            `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&seed=${seed + 2}&nologo=true`
+        ];
+
+        function tryLoad() {
+            if (loaded || attempt >= urls.length) {
+                if (!loaded) {
+                    const status = document.getElementById(`is-${id}`);
+                    const skel = document.getElementById(`isk-${id}`);
+                    if (status) status.innerHTML = '⚠️ Image generation failed. Try again with a different prompt.';
+                    if (skel) skel.remove();
+                }
+                return;
+            }
+
+            const currentImg = new Image();
+            currentImg.className = 'generated-media';
+            currentImg.alt = prompt;
+
+            // 20 second timeout
+            const timeout = setTimeout(() => {
+                if (!loaded) {
+                    attempt++;
+                    const status = document.getElementById(`is-${id}`);
+                    if (status && attempt < urls.length) {
+                        status.innerHTML = `🎨 <strong>Retrying...</strong> (attempt ${attempt + 1}/${urls.length})`;
+                    }
+                    tryLoad();
+                }
+            }, 20000);
+
+            currentImg.onload = function() {
+                if (loaded) return;
+                loaded = true;
+                clearTimeout(timeout);
+
+                const status = document.getElementById(`is-${id}`);
+                const skel = document.getElementById(`isk-${id}`);
+                const card = document.getElementById(`card-${id}`);
+
+                if (status) status.innerHTML = `🎨 <strong>Generated:</strong> "${prompt}"`;
+                if (skel) skel.remove();
+                if (card) card.appendChild(currentImg);
+
+                setTimeout(() => {
+                    currentImg.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                }, 100);
+            };
+
+            currentImg.onerror = function() {
+                clearTimeout(timeout);
+                if (!loaded) {
+                    attempt++;
+                    const status = document.getElementById(`is-${id}`);
+                    if (status && attempt < urls.length) {
+                        status.innerHTML = `🎨 <strong>Retrying...</strong> (attempt ${attempt + 1}/${urls.length})`;
+                    }
+                    tryLoad();
+                }
+            };
+
+            currentImg.src = urls[attempt];
+        }
+
+        tryLoad();
     }
+            // VIDEO / IMAGE from prompt
+        if (/^(video|make a video|animate)\b/i.test(text)) {
+            addMsg(text, 'user');
+            userInput.value = '';
+            const p = text.replace(/^(video|make a video|animate)\s*(of|a|an|the)?\s*/i, '').trim() || text;
+            const seed = Math.floor(Math.random() * 99999);
+            const encodedP = encodeURIComponent(p);
+            const url = `https://image.pollinations.ai/prompt/${encodedP}?width=512&height=512&seed=${seed}&nologo=true`;
 
-    function addMsg(text,sender){const div=document.createElement('div');div.className=`message ${sender}`;div.innerHTML=sender==='bot'?`<div class="bot-avatar"><i class="fa-solid fa-robot"></i></div><div class="glass-card">${marked.parse(text)}</div>`:`<div class="glass-card">${marked.parse(text)}</div>`;chatWindow.appendChild(div);chatWindow.scrollTop=chatWindow.scrollHeight;}
+            const id = Date.now();
+            const div = document.createElement('div');
+            div.className = 'message bot';
+            div.innerHTML = `
+                <div class="bot-avatar"><i class="fa-solid fa-video"></i></div>
+                <div class="glass-card" id="vcard-${id}">
+                    <p class="generating-loader" id="vs-${id}">🎥 <strong>Rendering:</strong> "${p}"...</p>
+                    <div class="img-skeleton" id="vsk-${id}"><span>Rendering video frame...</span></div>
+                </div>`;
+            chatWindow.appendChild(div);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
 
-    async function triggerAI(prompt){const ld=document.createElement('div');ld.className='message bot';ld.innerHTML=`<div class="bot-avatar"><i class="fa-solid fa-robot"></i></div><div class="glass-card"><span class="generating-loader">Thinking...</span></div>`;chatWindow.appendChild(ld);
-        try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,username:currentUsername,history:conversationHistory.slice(-20),token:sessionToken,personalization:personalizationEnabled?getPersonalizationPrompt():''})});const d=await r.json();chatWindow.removeChild(ld);
-        if(d.error)addMsg('⚠️ '+d.error,'bot');
-        else{addMsg(d.reply,'bot');conversationHistory.push({role:'assistant',content:d.reply});saveChat(prompt,d.reply);}}
-        catch{chatWindow.removeChild(ld);addMsg('❌ Connection failed.','bot');}
-        userInput.disabled=false;userInput.focus();}
+            const vimg = new Image();
+            vimg.className = 'generated-media';
+            vimg.alt = p;
 
-    async function saveChat(um,am){try{await fetch('/api/save-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:currentUsername,userMessage:um,aiMessage:am,timestamp:new Date().toISOString(),token:sessionToken})});}catch{}}
+            const vTimeout = setTimeout(() => {
+                const vs = document.getElementById(`vs-${id}`);
+                const vsk = document.getElementById(`vsk-${id}`);
+                if (vs && !vimg.complete) {
+                    vs.innerHTML = '⚠️ Rendering timed out. Try a simpler prompt.';
+                    if (vsk) vsk.remove();
+                }
+            }, 25000);
 
-    sendBtn.addEventListener('click',handleSend);
-    userInput.addEventListener('keypress',e=>{if(e.key==='Enter')handleSend();});
-});
+            vimg.onload = function() {
+                clearTimeout(vTimeout);
+                const vs = document.getElementById(`vs-${id}`);
+                const vsk = document.getElementById(`vsk-${id}`);
+                const vc = document.getElementById(`vcard-${id}`);
+                if (vs) vs.innerHTML = `🎥 <strong>Rendered:</strong> "${p}"`;
+                if (vsk) vsk.remove();
+                if (vc) vc.appendChild(vimg);
+                setTimeout(() => vimg.scrollIntoView({ behavior: 'smooth', block: 'end' }), 100);
+            };
+
+            vimg.onerror = function() {
+                clearTimeout(vTimeout);
+                const vs = document.getElementById(`vs-${id}`);
+                const vsk = document.getElementById(`vsk-${id}`);
+                if (vs) vs.innerHTML = '⚠️ Rendering failed. Try a different prompt.';
+                if (vsk) vsk.remove();
+            };
+
+            vimg.src = url;
+            saveChat(text, '[Video: ' + p + ']');
+            return;
+        }
