@@ -3,26 +3,51 @@ export async function onRequestPost(context) {
         const { request, env } = context;
         const { adminPassword } = await request.json();
 
-        if (adminPassword !== 'vessy@2015') {
-            return json({ error: 'Access denied.' }, 403);
+        // Verify password
+        if (!adminPassword || adminPassword !== 'vessy@2015') {
+            return json({ error: 'Invalid password. Access denied.' }, 403);
         }
 
         const kv = env.VESSY_CHATS;
-        if (!kv) return json({ error: 'KV not connected.' }, 500);
+        if (!kv) {
+            return json({ error: 'Database not connected. Bind VESSY_CHATS KV namespace in Cloudflare Pages → Settings → Functions → KV namespace bindings.' }, 500);
+        }
 
-        const registry = await kv.get('usernames:registry', 'json') || [];
-        const users = registry.filter(u => u.toLowerCase() !== 'admin');
+        // Get all registered usernames
+        let registry = [];
+        try {
+            registry = await kv.get('usernames:registry', 'json') || [];
+        } catch {
+            registry = [];
+        }
+
+        // Filter out any admin accounts
+        const users = registry.filter(u => u && u.toLowerCase() !== 'admin');
+
+        // Get all chats
         const chats = {};
-
         for (const user of users) {
-            try { chats[user] = await kv.get(`chats:${user.toLowerCase()}`, 'json') || []; }
-            catch { chats[user] = []; }
+            try {
+                const userChats = await kv.get(`chats:${user.toLowerCase()}`, 'json');
+                chats[user] = userChats || [];
+            } catch {
+                chats[user] = [];
+            }
         }
 
         return json({ users, chats });
+
     } catch (error) {
-        return json({ error: error.message }, 500);
+        return json({ error: 'Server error: ' + error.message }, 500);
     }
 }
 
-function json(d, s = 200) { return new Response(JSON.stringify(d), { status: s, headers: { 'Content-Type': 'application/json' } }); }
+function json(data, status = 200) {
+    return new Response(JSON.stringify(data), {
+        status,
+        headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+        }
+    });
+}
