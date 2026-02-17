@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vessy AI 31.1</title>
+    <title>Vessy OS 31.1</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -17,7 +17,7 @@
         <div class="cookie-inner">
             <div class="cookie-text">
                 <i class="fa-solid fa-cookie-bite"></i>
-                <p>Vessy AI uses cookies to keep you signed in and improve your experience.</p>
+                <p>Vessy OS uses cookies to keep you signed in and improve your experience.</p>
             </div>
             <div class="cookie-actions">
                 <button id="cookieAcceptAll" class="cookie-btn primary">Accept All</button>
@@ -26,14 +26,14 @@
         </div>
     </div>
 
-    <!-- TERMS & CONDITIONS -->
+    <!-- TERMS -->
     <div id="termsOverlay" class="overlay-screen">
         <div class="overlay-backdrop"></div>
         <div class="overlay-modal">
             <div class="overlay-glow"></div>
             <div class="overlay-header">
                 <div class="overlay-icon"><i class="fa-solid fa-shield-halved"></i></div>
-                <h1>Welcome to Vessy AI</h1>
+                <h1>Welcome to Vessy OS</h1>
                 <p class="overlay-subtitle">Version 31.1 — Please review our terms</p>
             </div>
             <div class="overlay-body">
@@ -41,21 +41,21 @@
                     <div class="terms-section-icon"><i class="fa-solid fa-database"></i></div>
                     <div>
                         <h3>Private Data Storage & Chat Logs</h3>
-                        <p>All chat messages, prompts, usernames, and AI responses are stored <strong>privately and securely on Vessy AI's Cloudflare servers</strong>. Chat logs are stored server-side only — they are <strong>not downloadable by users</strong>. Only authorized Vessy AI administrators have access to chat data for quality assurance and AI training purposes.</p>
+                        <p>All chat messages, prompts, usernames, and AI responses are stored <strong>privately and securely on Vessy OS's Cloudflare servers</strong>. Chat logs are stored server-side only and are <strong>not downloadable by users</strong>. Only authorized administrators have access.</p>
                     </div>
                 </div>
                 <div class="terms-section">
                     <div class="terms-section-icon"><i class="fa-solid fa-brain"></i></div>
                     <div>
                         <h3>Personalized AI Training</h3>
-                        <p>Your conversations are used to <strong>train and personalize Vessy AI</strong> specifically for your needs. The AI learns from your previous interactions to provide more relevant, contextual, and personalized responses over time. This training data is stored privately and used exclusively to improve your experience.</p>
+                        <p>Vessy OS learns your <strong>tone, writing style, interests, and preferences</strong> from your conversations to provide increasingly personalized responses. This includes detecting your mood, communication style, and topics of interest. You can <strong>disable and delete all personalization data</strong> at any time from Settings.</p>
                     </div>
                 </div>
                 <div class="terms-section">
                     <div class="terms-section-icon"><i class="fa-solid fa-lock"></i></div>
                     <div>
                         <h3>Privacy & Security</h3>
-                        <p>Passwords are hashed with SHA-256. Data is encrypted in transit and at rest. We do <strong>not</strong> sell or share your data. Chat logs are private server-side records used solely for AI improvement.</p>
+                        <p>Passwords are hashed with SHA-256. Data is encrypted in transit and at rest. We do <strong>not</strong> sell or share your data.</p>
                     </div>
                 </div>
                 <div class="terms-section">
@@ -68,15 +68,15 @@
                 <div class="terms-section">
                     <div class="terms-section-icon"><i class="fa-solid fa-cloud"></i></div>
                     <div>
-                        <h3>Cloudflare Infrastructure</h3>
-                        <p>All services run on <strong>Cloudflare Workers, Pages, and KV Storage</strong> with enterprise-grade security and DDoS protection.</p>
+                        <h3>Infrastructure</h3>
+                        <p>All services run on <strong>Cloudflare Workers, Pages, and KV Storage</strong> with enterprise-grade security.</p>
                     </div>
                 </div>
                 <div class="terms-section">
                     <div class="terms-section-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
                     <div>
                         <h3>AI Accuracy & Liability</h3>
-                        <p><strong>Vessy AI can make mistakes.</strong> Always double-check responses. Any legal, medical, or financial advice is <strong>educational only</strong>. Vessy AI accepts no liability for decisions based on AI content.</p>
+                        <p><strong>Vessy OS can make mistakes.</strong> Always double-check responses. Any advice is <strong>educational only</strong>. Vessy OS accepts no liability for decisions based on AI content.</p>
                     </div>
                 </div>
                 <div class="terms-section">
@@ -89,7 +89,7 @@
                 <div class="terms-divider"></div>
                 <div class="terms-summary">
                     <i class="fa-solid fa-circle-info"></i>
-                    <p><strong>Summary:</strong> All chats are stored privately on our servers (not downloadable by users) and used to personalize and train Vessy AI for your needs. AI can make mistakes — verify important info. Illegal activity is the user's responsibility.</p>
+                    <p><strong>Summary:</strong> Chats are private and server-side. Vessy OS learns your tone and style to personalize responses (you can disable this). AI can make mistakes. Illegal activity is the user's responsibility.</p>
                 </div>
             </div>
             <div class="overlay-footer">
@@ -106,102 +106,64 @@
         </div>
     </div>
 
-    <!-- LOGIN / SIGNUP -->
+    <!-- AUTH -->
     <div id="authOverlay" class="overlay-screen hidden">
         <div class="overlay-backdrop"></div>
         <div class="overlay-modal auth-modal">
             <div class="overlay-glow"></div>
-
-            <!-- LOGIN -->
             <div id="loginView" class="auth-view">
                 <div class="overlay-header">
-                    <div class="overlay-icon" style="background:linear-gradient(135deg,rgba(0,242,255,0.15),rgba(0,242,255,0.05));border-color:rgba(0,242,255,0.2);">
+                    <div class="overlay-icon" style="background:linear-gradient(135deg,rgba(0,242,255,.15),rgba(0,242,255,.05));border-color:rgba(0,242,255,.2);">
                         <i class="fa-solid fa-right-to-bracket" style="color:#00f2ff;"></i>
                     </div>
                     <h1>Sign In</h1>
-                    <p class="overlay-subtitle">Welcome back to Vessy AI 31.1</p>
+                    <p class="overlay-subtitle">Welcome back to Vessy OS 31.1</p>
                 </div>
                 <div class="auth-body">
                     <div class="auth-field">
                         <label>Username</label>
-                        <div class="auth-input-wrap">
-                            <i class="fa-solid fa-user"></i>
-                            <input type="text" id="loginUsername" placeholder="Your username" autocomplete="username" spellcheck="false">
-                        </div>
+                        <div class="auth-input-wrap"><i class="fa-solid fa-user"></i><input type="text" id="loginUsername" placeholder="Your username" autocomplete="username" spellcheck="false"></div>
                     </div>
                     <div class="auth-field">
                         <label>Password</label>
-                        <div class="auth-input-wrap">
-                            <i class="fa-solid fa-lock"></i>
-                            <input type="password" id="loginPassword" placeholder="Your password" autocomplete="current-password">
-                            <button class="toggle-pw-btn" onclick="togglePw('loginPassword',this)" type="button"><i class="fa-solid fa-eye"></i></button>
-                        </div>
+                        <div class="auth-input-wrap"><i class="fa-solid fa-lock"></i><input type="password" id="loginPassword" placeholder="Your password" autocomplete="current-password"><button class="toggle-pw-btn" onclick="togglePw('loginPassword',this)" type="button"><i class="fa-solid fa-eye"></i></button></div>
                     </div>
-                    <label class="remember-me-wrap">
-                        <input type="checkbox" id="rememberMe" checked>
-                        <span>Remember me</span>
-                    </label>
+                    <label class="remember-me-wrap"><input type="checkbox" id="rememberMe" checked><span>Remember me</span></label>
                     <div id="loginError" class="auth-error"></div>
-                    <button id="loginBtn" class="primary-btn">
-                        <span>Sign In</span><i class="fa-solid fa-arrow-right"></i>
-                    </button>
-                    <div class="auth-switch">
-                        Don't have an account? <button onclick="switchAuth('signup')">Create one</button>
-                    </div>
+                    <button id="loginBtn" class="primary-btn"><span>Sign In</span><i class="fa-solid fa-arrow-right"></i></button>
+                    <div class="auth-switch">Don't have an account? <button onclick="switchAuth('signup')">Create one</button></div>
                 </div>
             </div>
-
-            <!-- SIGNUP -->
             <div id="signupView" class="auth-view hidden">
                 <div class="overlay-header">
-                    <div class="overlay-icon" style="background:linear-gradient(135deg,rgba(255,0,255,0.15),rgba(255,0,255,0.05));border-color:rgba(255,0,255,0.2);">
+                    <div class="overlay-icon" style="background:linear-gradient(135deg,rgba(255,0,255,.15),rgba(255,0,255,.05));border-color:rgba(255,0,255,.2);">
                         <i class="fa-solid fa-user-plus" style="color:#ff00ff;"></i>
                     </div>
                     <h1>Create Account</h1>
-                    <p class="overlay-subtitle">Join Vessy AI 31.1</p>
+                    <p class="overlay-subtitle">Join Vessy OS 31.1</p>
                 </div>
                 <div class="auth-body">
                     <div class="auth-field">
                         <label>Username</label>
-                        <div class="auth-input-wrap">
-                            <i class="fa-solid fa-user"></i>
-                            <input type="text" id="signupUsername" placeholder="Choose a username" maxlength="24" autocomplete="off" spellcheck="false">
-                        </div>
+                        <div class="auth-input-wrap"><i class="fa-solid fa-user"></i><input type="text" id="signupUsername" placeholder="Choose a username" maxlength="24" autocomplete="off" spellcheck="false"></div>
                         <div id="signupUsernameStatus" class="field-status"></div>
                     </div>
                     <div class="auth-field">
                         <label>Email <span class="optional-tag">(optional)</span></label>
-                        <div class="auth-input-wrap">
-                            <i class="fa-solid fa-envelope"></i>
-                            <input type="email" id="signupEmail" placeholder="your@email.com" autocomplete="email">
-                        </div>
+                        <div class="auth-input-wrap"><i class="fa-solid fa-envelope"></i><input type="email" id="signupEmail" placeholder="your@email.com" autocomplete="email"></div>
                     </div>
                     <div class="auth-field">
                         <label>Password</label>
-                        <div class="auth-input-wrap">
-                            <i class="fa-solid fa-lock"></i>
-                            <input type="password" id="signupPassword" placeholder="Min 6 characters" autocomplete="new-password">
-                            <button class="toggle-pw-btn" onclick="togglePw('signupPassword',this)" type="button"><i class="fa-solid fa-eye"></i></button>
-                        </div>
+                        <div class="auth-input-wrap"><i class="fa-solid fa-lock"></i><input type="password" id="signupPassword" placeholder="Min 6 characters" autocomplete="new-password"><button class="toggle-pw-btn" onclick="togglePw('signupPassword',this)" type="button"><i class="fa-solid fa-eye"></i></button></div>
                     </div>
                     <div class="auth-field">
                         <label>Confirm Password</label>
-                        <div class="auth-input-wrap">
-                            <i class="fa-solid fa-lock"></i>
-                            <input type="password" id="signupConfirm" placeholder="Re-enter password" autocomplete="new-password">
-                        </div>
+                        <div class="auth-input-wrap"><i class="fa-solid fa-lock"></i><input type="password" id="signupConfirm" placeholder="Re-enter password" autocomplete="new-password"></div>
                     </div>
-                    <div class="password-strength">
-                        <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
-                        <span id="strengthText"></span>
-                    </div>
+                    <div class="password-strength"><div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div><span id="strengthText"></span></div>
                     <div id="signupError" class="auth-error"></div>
-                    <button id="signupBtn" class="primary-btn purple">
-                        <span>Create Account</span><i class="fa-solid fa-rocket"></i>
-                    </button>
-                    <div class="auth-switch">
-                        Already have an account? <button onclick="switchAuth('login')">Sign in</button>
-                    </div>
+                    <button id="signupBtn" class="primary-btn purple"><span>Create Account</span><i class="fa-solid fa-rocket"></i></button>
+                    <div class="auth-switch">Already have an account? <button onclick="switchAuth('login')">Sign in</button></div>
                 </div>
             </div>
         </div>
@@ -214,13 +176,10 @@
             <div id="clock">00:00</div>
         </div>
         <div class="center-title">
-            <span class="title-icon">◆</span> VESSY AI <span class="title-version">v31.1</span>
+            <span class="title-icon">◆</span> VESSY OS <span class="title-version">v31.1</span>
         </div>
         <div class="right-controls">
-            <div class="user-badge" id="userBadge">
-                <i class="fa-solid fa-user"></i>
-                <span id="userBadgeName">---</span>
-            </div>
+            <div class="user-badge" id="userBadge"><i class="fa-solid fa-user"></i><span id="userBadgeName">---</span></div>
             <div class="status-indicator"><span class="status-dot"></span></div>
             <button id="settingsBtn" class="glass-btn icon-only"><i class="fa-solid fa-gear"></i></button>
         </div>
@@ -233,24 +192,8 @@
             <button class="app-grid-close" onclick="document.getElementById('appGrid').classList.add('hidden')"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="app-grid-items">
-            <div class="app-item" onclick="launchApp('paint')">
-                <div class="app-icon" style="background:rgba(255,0,85,0.15);"><i class="fa-solid fa-palette" style="color:#ff0055"></i></div><span>Paint</span>
-            </div>
-            <div class="app-item" onclick="launchApp('snake')">
-                <div class="app-icon" style="background:rgba(0,255,0,0.1);"><i class="fa-solid fa-worm" style="color:#00ff00"></i></div><span>Snake</span>
-            </div>
-            <div class="app-item" onclick="launchApp('calc')">
-                <div class="app-icon" style="background:rgba(0,242,255,0.1);"><i class="fa-solid fa-calculator" style="color:#00f2ff"></i></div><span>Calc</span>
-            </div>
-            <div class="app-item" onclick="launchApp('minecraft')">
-                <div class="app-icon" style="background:rgba(255,170,0,0.1);"><i class="fa-solid fa-cube" style="color:#ffaa00"></i></div><span>Voxel</span>
-            </div>
             <div class="app-item" onclick="launchApp('browser')">
                 <div class="app-icon" style="background:rgba(255,255,255,0.05);"><i class="fa-solid fa-globe" style="color:#fff"></i></div><span>Browser</span>
-            </div>
-            <!-- ADMIN ONLY: shows conditionally -->
-            <div class="app-item admin-only-app hidden" onclick="launchApp('admin')">
-                <div class="app-icon" style="background:rgba(255,0,85,0.15);"><i class="fa-solid fa-user-shield" style="color:#ff0055"></i></div><span>Admin</span>
             </div>
         </div>
     </div>
@@ -260,7 +203,7 @@
         <div class="message bot">
             <div class="bot-avatar"><i class="fa-solid fa-robot"></i></div>
             <div class="glass-card">
-                <p><strong>Vessy AI 31.1 Online.</strong><br>All modules loaded. Type <code>Draw a cat</code> or ask me anything.<br>I learn from our conversations to give you better, personalized responses.</p>
+                <p><strong>Vessy OS 31.1 Online.</strong><br>Type <code>Draw a cat</code>, <code>Video a sunset</code>, or ask me anything.<br>I learn from our conversations to personalize your experience. You can manage this in Settings.</p>
             </div>
         </div>
     </main>
@@ -269,14 +212,14 @@
     <footer>
         <div class="dock">
             <div class="dock-inner">
-                <input type="text" id="userInput" placeholder="Ask Vessy AI anything..." autocomplete="off">
+                <input type="text" id="userInput" placeholder="Ask Vessy OS anything..." autocomplete="off">
                 <button id="sendBtn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
             <div class="dock-disclaimer">
                 <i class="fa-solid fa-triangle-exclamation"></i>
-                Vessy AI can make mistakes. Double-check important info. Advice is educational only. User assumes all responsibility.
+                Vessy OS can make mistakes. Double-check important info. Advice is educational only. User assumes all responsibility.
             </div>
-            <div class="dock-copyright">© 2026 Vessy AI. All Rights Reserved.</div>
+            <div class="dock-copyright">© 2026 Vessy OS. All Rights Reserved.</div>
         </div>
     </footer>
 
@@ -311,6 +254,28 @@
                     <i class="fa-solid fa-right-from-bracket"></i> Sign Out
                 </button>
             </div>
+
+            <!-- PERSONALIZATION TOGGLE -->
+            <div class="settings-section">
+                <h3><i class="fa-solid fa-brain"></i> AI Personalization</h3>
+                <div class="personalization-info">
+                    <p>Vessy OS learns your tone, mood, and style to give personalized responses.</p>
+                </div>
+                <div class="toggle-row">
+                    <span class="toggle-label">Enable Personalization</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="personalizationToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="personalization-status" id="personalizationStatus">
+                    <i class="fa-solid fa-circle-check"></i> Active — Learning your preferences
+                </div>
+                <button class="settings-link-btn danger-link" id="deletePersonalizationBtn">
+                    <i class="fa-solid fa-trash"></i> Delete All Personalization Data
+                </button>
+            </div>
+
             <div class="settings-section">
                 <h3><i class="fa-solid fa-image"></i> Backgrounds</h3>
                 <div class="bg-grid">
@@ -329,8 +294,8 @@
                 <button class="settings-link-btn" onclick="showTermsAgain()"><i class="fa-solid fa-shield-halved"></i> View Terms</button>
             </div>
             <div class="settings-footer">
-                Vessy AI v31.1 • Cloudflare<br>
-                <span class="copyright-text">© 2026 Vessy AI. All Rights Reserved.</span>
+                Vessy OS v31.1 • Cloudflare<br>
+                <span class="copyright-text">© 2026 Vessy OS. All Rights Reserved.</span>
             </div>
         </div>
     </div>
