@@ -7,15 +7,18 @@ export async function onRequestPost(context) {
         const kv = env.VESSY_CHATS;
         if (kv) {
             const key = `chats:${username.toLowerCase()}`;
-            let existing = await kv.get(key, 'json') || [];
+            let existing = [];
+            try { existing = await kv.get(key, 'json') || []; } catch { existing = []; }
+
             existing.push({ role: 'user', content: userMessage, timestamp });
             existing.push({ role: 'assistant', content: aiMessage, timestamp });
             if (existing.length > 200) existing = existing.slice(-200);
             await kv.put(key, JSON.stringify(existing));
         }
+
         return json({ success: true });
     } catch (error) {
-        return json({ error: error.message }, 500);
+        return json({ success: false, error: error.message }, 500);
     }
 }
 
