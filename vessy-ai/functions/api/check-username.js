@@ -3,9 +3,7 @@ export async function onRequestPost(context) {
         const { request, env } = context;
         const { username } = await request.json();
 
-        if (!username || username.length < 3) {
-            return json({ available: false });
-        }
+        if (!username || username.length < 3) return json({ available: false });
 
         const kv = env.VESSY_CHATS;
         if (kv) {
@@ -13,6 +11,7 @@ export async function onRequestPost(context) {
             return json({ available: !existing });
         }
 
+        // No KV — assume available
         return json({ available: true });
     } catch {
         return json({ available: true });
@@ -20,7 +19,5 @@ export async function onRequestPost(context) {
 }
 
 function json(data) {
-    return new Response(JSON.stringify(data), {
-        headers: { 'Content-Type': 'application/json' }
-    });
+    return new Response(JSON.stringify(data), { headers: { 'Content-Type': 'application/json' } });
 }
