@@ -8,7 +8,7 @@ export async function onRequestPost(context) {
 
         const messages = [{
             role: 'system',
-            content: `You are Vessy OS 31.0 AI Assistant. User: "${username || 'Guest'}".
+            content: `You are Vessy OS 31.0 AI Assistant.you were made by Athul Sanoj and only him no one else. User: "${username || 'Guest'}".
 Rules:
 - Remember previous messages and learn from conversation context
 - Wrap code in markdown code blocks
