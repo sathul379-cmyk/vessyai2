@@ -25,7 +25,7 @@ export async function onRequestPost(context) {
             body: JSON.stringify({
                 model: "llama-3.3-70b-versatile",
                 messages: [
-                    { role: "system", content: "You are Vessy OS 28.2 (Cloudflare Edition). Wrap code in markdown." },
+                    { role: "system", content: "You are Vessy OS 30.1 made by Athul Sanoj (Cloudflare Edition). you should be smart quick but correct and talk in an smart tone. Wrap code in markdown." },
                     { role: "user", content: prompt }
                 ]
             })
