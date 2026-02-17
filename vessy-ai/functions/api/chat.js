@@ -3,25 +3,34 @@ export async function onRequestPost(context) {
         const { request, env } = context;
         const { prompt, username, history } = await request.json();
         const apiKey = env.GROQ_API_KEY;
+        if (!apiKey) return json({ error: 'GROQ_API_KEY not set in environment variables.' }, 500);
 
-        if (!apiKey) return json({ error: 'GROQ_API_KEY not set. Add it in Cloudflare Pages → Settings → Environment Variables.' }, 500);
+        // Build personalized system prompt
+        let userContext = '';
+        if (history && history.length > 0) {
+            const topics = history.filter(m => m.role === 'user').map(m => m.content).slice(-10);
+            userContext = `\n\nThis user's recent interests/topics: ${topics.join('; ')}. Use this context to personalize your responses.`;
+        }
 
         const messages = [{
             role: 'system',
-            content: `You are Vessy OS 31.0 AI Assistant.you were made by Athul Sanoj and only him no one else. User: "${username || 'Guest'}".
+            content: `You are Vessy AI 31.1, a personalized AI assistant. The user is "${username || 'Guest'}".
+
+You learn from this user's conversation history to provide personalized, relevant responses tailored to their interests and needs. Address them by name occasionally.
+
 Rules:
-- Remember previous messages and learn from conversation context
-- Wrap code in markdown code blocks
-- Be helpful, accurate, concise
-- Legal/medical/financial advice = educational only, add disclaimer
-- Never assist with illegal activities
-- Running on Cloudflare Workers`
+- Remember and reference previous conversations naturally
+- Personalize responses based on user's history and interests
+- Wrap code in markdown
+- Legal/medical/financial advice = educational only, always add disclaimer
+- Never help with illegal activities
+- Be helpful, accurate, warm, and personalized${userContext}`
         }];
 
         if (history && Array.isArray(history)) {
-            history.slice(-20).forEach(msg => {
-                if (msg.role === 'user' || msg.role === 'assistant') {
-                    messages.push({ role: msg.role, content: String(msg.content).substring(0, 1000) });
+            history.slice(-20).forEach(m => {
+                if (m.role === 'user' || m.role === 'assistant') {
+                    messages.push({ role: m.role, content: String(m.content).substring(0, 1000) });
                 }
             });
         }
