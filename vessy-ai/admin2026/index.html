@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vessy OS — Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:#0a0a0e;color:#e8e8e8;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+        ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:10px}
+
+        .admin-login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;width:100%;padding:20px}
+        .admin-login{width:100%;max-width:400px;background:#111114;border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:40px 30px;text-align:center;box-shadow:0 25px 80px rgba(0,0,0,.8)}
+        .admin-login h1{font-size:20px;margin-bottom:6px;background:linear-gradient(135deg,#ff0055,#ff4488);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .admin-login p{font-size:12px;color:#666;margin-bottom:24px}
+        .admin-login .icon{width:56px;height:56px;margin:0 auto 18px;background:rgba(255,0,85,.1);border:1px solid rgba(255,0,85,.2);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#ff0055}
+        .admin-input{width:100%;background:rgba(255,255,255,.03);border:1.5px solid rgba(255,255,255,.08);border-radius:10px;padding:12px 14px;color:white;font-size:14px;outline:none;font-family:inherit;margin-bottom:12px}
+        .admin-input:focus{border-color:rgba(255,0,85,.4)}
+        .admin-input::placeholder{color:rgba(255,255,255,.18)}
+        .admin-submit{width:100%;padding:13px;background:linear-gradient(135deg,#ff0055,#cc0044);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:.3s}
+        .admin-submit:hover{box-shadow:0 6px 25px rgba(255,0,85,.3)}
+        .admin-submit.loading{opacity:.5;pointer-events:none}
+        .admin-error{font-size:12px;color:#ff0055;min-height:20px;margin-bottom:8px}
+
+        .admin-panel{width:100%;max-width:1000px;padding:20px;display:none}
+        .admin-panel.show{display:block}
+        .admin-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.08);flex-wrap:wrap;gap:10px}
+        .admin-topbar h1{font-size:18px;display:flex;align-items:center;gap:10px}.admin-topbar h1 i{color:#ff0055}
+        .admin-topbar .ver{font-size:10px;color:#555;background:rgba(255,255,255,.04);padding:3px 8px;border-radius:4px}
+
+        .admin-stats{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+        .stat-card{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);padding:18px 22px;border-radius:12px;flex:1;min-width:120px;text-align:center}
+        .stat-card .num{font-size:32px;font-weight:800;color:#00f2ff;display:block}
+        .stat-card .lbl{font-size:9px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-top:4px;display:block}
+
+        .admin-actions{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+        .dl-btn{padding:10px 20px;background:linear-gradient(135deg,#ff0055,#cc0044);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;transition:.2s}
+        .dl-btn:hover{box-shadow:0 4px 15px rgba(255,0,85,.3);transform:translateY(-1px)}
+        .dl-btn.sec{background:rgba(255,255,255,.04);color:#888;border:1px solid rgba(255,255,255,.08)}
+        .dl-btn.sec:hover{color:#fff}
+
+        .user-card{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:12px;margin-bottom:8px;overflow:hidden}
+        .user-card-head{padding:14px 18px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:.2s}
+        .user-card-head:hover{background:rgba(255,255,255,.03)}
+        .uname{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}.uname i{color:#00f2ff;font-size:8px}
+        .umeta{font-size:10px;color:#555;font-family:monospace}
+        .uchats{padding:16px 18px;border-top:1px solid rgba(255,255,255,.04);display:none;max-height:400px;overflow-y:auto}
+        .uchats.open{display:block}
+        .ce{padding:8px 0;border-bottom:1px solid rgba(255,255,255,.02)}.ce:last-child{border:none}
+        .cr{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+        .cr.u{color:#ff00ff}.cr.a{color:#00f2ff}
+        .cc{font-size:12px;color:#999;line-height:1.5;word-break:break-word}
+        .ct{font-size:9px;color:#333;font-family:monospace;margin-top:2px}
+
+        .admin-foot{text-align:center;padding:30px 0;font-size:10px;color:rgba(255,255,255,.1)}
+        .ld{text-align:center;padding:40px;color:#555}
+        .spinner{display:inline-block;width:20px;height:20px;border:2px solid rgba(255,255,255,.1);border-top-color:#ff0055;border-radius:50%;animation:spin .6s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @media(max-width:600px){.admin-stats{flex-direction:column}.admin-panel{padding:12px}}
+    </style>
+</head>
+<body>
+    <div class="admin-login-wrap" id="lw">
+        <div class="admin-login">
+            <div class="icon"><i class="fa-solid fa-user-shield"></i></div>
+            <h1>Admin Panel</h1>
+            <p>Vessy OS 31.1 — Authorized Access Only</p>
+            <input type="password" class="admin-input" id="apw" placeholder="Enter admin password" autocomplete="off">
+            <div class="admin-error" id="aerr"></div>
+            <button class="admin-submit" id="abtn" onclick="doLogin()">Authenticate</button>
+        </div>
+    </div>
+
+    <div class="admin-panel" id="ap">
+        <div class="admin-topbar">
+            <h1><i class="fa-solid fa-user-shield"></i> Vessy OS Admin <span class="ver">v31.1</span></h1>
+            <button class="dl-btn sec" onclick="location.href='/'"><i class="fa-solid fa-arrow-left"></i> Back</button>
+        </div>
+        <div class="admin-stats" id="as"></div>
+        <div class="admin-actions" id="aa"></div>
+        <div id="ul"></div>
+        <div class="admin-foot">© 2026 Vessy OS. All Rights Reserved.</div>
+    </div>
+
+    <script>
+    document.getElementById('apw').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+    let allUsers = [];
+    let allChats = {};
+
+    async function doLogin() {
+        const pw = document.getElementById('apw').value;
+        const err = document.getElementById('aerr');
+        const btn = document.getElementById('abtn');
+        err.textContent = '';
+
+        if (!pw) { err.textContent = 'Enter password.'; return; }
+
+        btn.classList.add('loading');
+        btn.textContent = 'Authenticating...';
+
+        try {
+            const r = await fetch('/api/admin-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminPassword: pw })
+            });
+            const d = await r.json();
+
+            if (d.error) {
+                err.textContent = d.error;
+                btn.classList.remove('loading');
+                btn.textContent = 'Authenticate';
+                return;
+            }
+
+            // Success
+            document.getElementById('lw').style.display = 'none';
+            document.getElementById('ap').classList.add('show');
+
+            allUsers = d.users || [];
+            allChats = d.chats || {};
+            renderPanel();
+
+        } catch(e) {
+            err.textContent = 'Connection failed: ' + e.message;
+            btn.classList.remove('loading');
+            btn.textContent = 'Authenticate';
+        }
+    }
+
+    function renderPanel() {
+        let totalMsgs = 0;
+        Object.values(allChats).forEach(c => totalMsgs += (c||[]).length);
+
+        document.getElementById('as').innerHTML = `
+            <div class="stat-card"><span class="num">${allUsers.length}</span><span class="lbl">Users</span></div>
+            <div class="stat-card"><span class="num">${totalMsgs}</span><span class="lbl">Messages</span></div>
+            <div class="stat-card"><span class="num">${Object.keys(allChats).filter(k=>(allChats[k]||[]).length>0).length}</span><span class="lbl">Active Logs</span></div>
+        `;
+
+        document.getElementById('aa').innerHTML = `
+            <button class="dl-btn" onclick="dlTXT()"><i class="fa-solid fa-download"></i> Download All (TXT)</button>
+            <button class="dl-btn sec" onclick="dlJSON()"><i class="fa-solid fa-code"></i> Download All (JSON)</button>
+        `;
+
+        let html = '';
+        allUsers.forEach(u => {
+            const uc = allChats[u] || [];
+            html += `<div class="user-card">
+                <div class="user-card-head" onclick="this.nextElementSibling.classList.toggle('open')">
+                    <div class="uname"><i class="fa-solid fa-circle"></i> ${esc(u)}</div>
+                    <div class="umeta">${uc.length} msgs</div>
+                </div>
+                <div class="uchats">`;
+
+            if (uc.length === 0) {
+                html += '<div style="color:#444;font-size:11px;padding:8px 0;">No messages yet.</div>';
+            } else {
+                uc.forEach(m => {
+                    const who = m.role === 'user' ? u : 'Vessy OS';
+                    const rc = m.role === 'user' ? 'u' : 'a';
+                    const time = m.timestamp ? new Date(m.timestamp).toLocaleString() : '';
+                    html += `<div class="ce">
+                        <div class="cr ${rc}">${esc(who)}</div>
+                        <div class="cc">${esc((m.content||'').substring(0,1000))}</div>
+                        <div class="ct">${time}</div>
+                    </div>`;
+                });
+            }
+            html += '</div></div>';
+        });
+
+        if (allUsers.length === 0) {
+            html = '<div class="ld">No users registered yet.</div>';
+        }
+
+        document.getElementById('ul').innerHTML = html;
+    }
+
+    function dlTXT() {
+        let totalMsgs = 0;
+        Object.values(allChats).forEach(c => totalMsgs += (c||[]).length);
+
+        let txt = '';
+        txt += '='.repeat(50) + '\n';
+        txt += 'VESSY OS 31.1 — ALL USER CHAT LOGS\n';
+        txt += 'Downloaded: ' + new Date().toLocaleString() + '\n';
+        txt += 'Total Users: ' + allUsers.length + '\n';
+        txt += 'Total Messages: ' + totalMsgs + '\n';
+        txt += '='.repeat(50) + '\n\n';
+
+        allUsers.forEach(u => {
+            const uc = allChats[u] || [];
+            if (!uc.length) return;
+
+            txt += '\n' + '-'.repeat(40) + '\n';
+            txt += 'USER: ' + u + ' (' + uc.length + ' messages)\n';
+            txt += '-'.repeat(40) + '\n\n';
+
+            uc.forEach(m => {
+                const who = m.role === 'user' ? u : 'Vessy OS';
+                const time = m.timestamp ? '[' + new Date(m.timestamp).toLocaleString() + '] ' : '';
+                txt += time + who + ':\n' + m.content + '\n\n';
+            });
+        });
+
+        txt += '\n' + '='.repeat(50) + '\n';
+        txt += '© 2026 Vessy OS. All Rights Reserved.\n';
+        txt += '='.repeat(50) + '\n';
+
+        download(txt, 'vessy-os-all-chats-' + today() + '.txt', 'text/plain');
+    }
+
+    function dlJSON() {
+        let totalMsgs = 0;
+        Object.values(allChats).forEach(c => totalMsgs += (c||[]).length);
+
+        const data = {
+            version: '31.1',
+            exported: new Date().toISOString(),
+            totalUsers: allUsers.length,
+            totalMessages: totalMsgs,
+            users: {}
+        };
+        allUsers.forEach(u => { data.users[u] = allChats[u] || []; });
+        download(JSON.stringify(data, null, 2), 'vessy-os-chats-' + today() + '.json', 'application/json');
+    }
+
+    function download(content, filename, type) {
+        const blob = new Blob([content], { type });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+    }
+
+    function today() { return new Date().toISOString().slice(0, 10); }
+    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    </script>
+</body>
+</html>
