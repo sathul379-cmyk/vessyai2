@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vessy OS — Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:#0a0a0e;color:#e8e8e8;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+        ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:10px}
+
+        .admin-login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;width:100%;padding:20px}
+        .admin-login{width:100%;max-width:400px;background:#111114;border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:40px 30px;text-align:center;box-shadow:0 25px 80px rgba(0,0,0,.8)}
+        .admin-login h1{font-size:20px;margin-bottom:6px;background:linear-gradient(135deg,#ff0055,#ff4488);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .admin-login p{font-size:12px;color:#666;margin-bottom:24px}
+        .admin-login .icon{width:56px;height:56px;margin:0 auto 18px;background:rgba(255,0,85,.1);border:1px solid rgba(255,0,85,.2);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#ff0055}
+        .admin-input{width:100%;background:rgba(255,255,255,.03);border:1.5px solid rgba(255,255,255,.08);border-radius:10px;padding:12px 14px;color:white;font-size:14px;outline:none;font-family:inherit;margin-bottom:12px}
+        .admin-input:focus{border-color:rgba(255,0,85,.4)}
+        .admin-input::placeholder{color:rgba(255,255,255,.18)}
+        .admin-submit{width:100%;padding:13px;background:linear-gradient(135deg,#ff0055,#cc0044);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:.3s}
+        .admin-submit:hover{box-shadow:0 6px 25px rgba(255,0,85,.3)}
+        .admin-submit:disabled{opacity:.4;cursor:not-allowed}
+        .admin-error{font-size:12px;color:#ff0055;min-height:20px;margin-bottom:8px}
+
+        .admin-panel{width:100%;max-width:1000px;padding:20px;display:none}
+        .admin-panel.show{display:block}
+        .admin-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.08)}
+        .admin-topbar h1{font-size:18px;display:flex;align-items:center;gap:10px}.admin-topbar h1 i{color:#ff0055}
+        .admin-topbar .version{font-size:10px;color:#555;background:rgba(255,255,255,.04);padding:3px 8px;border-radius:4px}
+
+        .admin-stats{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+        .stat-card{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);padding:18px 22px;border-radius:12px;flex:1;min-width:120px;text-align:center}
+        .stat-card .num{font-size:32px;font-weight:800;color:#00f2ff;display:block}.stat-card .lbl{font-size:9px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-top:4px;display:block}
+
+        .admin-actions{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+        .dl-btn{padding:10px 20px;background:linear-gradient(135deg,#ff0055,#cc0044);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;transition:.2s}
+        .dl-btn:hover{box-shadow:0 4px 15px rgba(255,0,85,.3)}
+        .dl-btn.secondary{background:rgba(255,255,255,.04);color:#888;border:1px solid rgba(255,255,255,.08)}.dl-btn.secondary:hover{color:#fff}
+
+        .user-card{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:12px;margin-bottom:8px;overflow:hidden}
+        .user-card-header{padding:14px 18px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:.2s}.user-card-header:hover{background:rgba(255,255,255,.03)}
+        .user-name{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}.user-name i{color:#00f2ff;font-size:8px}
+        .user-meta{font-size:10px;color:#555;font-family:monospace}
+        .user-chats{padding:16px 18px;border-top:1px solid rgba(255,255,255,.04);display:none;max-height:400px;overflow-y:auto}
+        .user-chats.open{display:block}
+        .chat-entry{padding:8px 0;border-bottom:1px solid rgba(255,255,255,.02)}.chat-entry:last-child{border:none}
+        .chat-role{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+        .chat-role.u{color:#ff00ff}.chat-role.a{color:#00f2ff}
+        .chat-content{font-size:12px;color:#999;line-height:1.5;word-break:break-word}
+        .chat-time{font-size:9px;color:#333;font-family:monospace;margin-top:2px}
+
+        .admin-footer{text-align:center;padding:30px 0;font-size:10px;color:rgba(255,255,255,.1)}
+        .loading{text-align:center;padding:40px;color:#555}
+        .loading .spinner{display:inline-block;width:20px;height:20px;border:2px solid rgba(255,255,255,.1);border-top-color:#ff0055;border-radius:50%;animation:spin .6s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+
+        @media(max-width:600px){.admin-stats{flex-direction:column}.admin-panel{padding:12px}}
+    </style>
+</head>
+<body>
+    <div class="admin-login-wrap" id="loginWrap">
+        <div class="admin-login">
+            <div class="icon"><i class="fa-solid fa-user-shield"></i></div>
+            <h1>Admin Panel</h1>
+            <p>Vessy OS 31.1 — Authorized Access Only</p>
+            <input type="password" class="admin-input" id="adminPw" placeholder="Enter admin password" autocomplete="off">
+            <div class="admin-error" id="adminErr"></div>
+            <button class="admin-submit" id="adminLoginBtn">Authenticate</button>
+        </div>
+    </div>
+
+    <div class="admin-panel" id="adminPanel">
+        <div class="admin-topbar">
+            <h1><i class="fa-solid fa-user-shield"></i> Vessy OS Admin <span class="version">v31.1</span></h1>
+            <button class="dl-btn secondary" onclick="location.href='/'"><i class="fa-solid fa-arrow-left"></i> Back to OS</button>
+        </div>
+        <div class="admin-stats" id="adminStats"></div>
+        <div class="admin-actions" id="adminActions"></div>
+        <div id="userList"></div>
+        <div class="admin-footer">© 2026 Vessy OS. All Rights Reserved.</div>
+    </div>
+
+    <script>
+    const ADMIN_PASSWORD = 'vessy@2015';
+
+    document.getElementById('adminLoginBtn').addEventListener('click', doAdminLogin);
+    document.getElementById('adminPw').addEventListener('keydown', e => { if(e.key==='Enter') doAdminLogin(); });
+
+    async function doAdminLogin() {
+        const pw = document.getElementById('adminPw').value;
+        const err = document.getElementById('adminErr');
+        err.textContent = '';
+
+        if (pw !== ADMIN_PASSWORD) {
+            err.textContent = 'Invalid password.';
+            return;
+        }
+
+        document.getElementById('loginWrap').style.display = 'none';
+        document.getElementById('adminPanel').classList.add('show');
+        document.getElementById('userList').innerHTML = '<div class="loading"><div class="spinner"></div><br>Loading user data...</div>';
+
+        try {
+            const r = await fetch('/api/admin-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminPassword: ADMIN_PASSWORD })
+            });
+            const d = await r.json();
+
+            if (d.error) { document.getElementById('userList').innerHTML = `<div class="loading" style="color:#ff0055;">${d.error}</div>`; return; }
+
+            const users = d.users || [];
+            const chats = d.chats || {};
+            let totalMsgs = 0;
+            Object.values(chats).forEach(c => totalMsgs += c.length);
+
+            document.getElementById('adminStats').innerHTML = `
+                <div class="stat-card"><span class="num">${users.length}</span><span class="lbl">Users</span></div>
+                <div class="stat-card"><span class="num">${totalMsgs}</span><span class="lbl">Total Messages</span></div>
+                <div class="stat-card"><span class="num">${Object.keys(chats).length}</span><span class="lbl">Chat Logs</span></div>
+            `;
+
+            document.getElementById('adminActions').innerHTML = `
+                <button class="dl-btn" onclick="downloadAll()"><i class="fa-solid fa-download"></i> Download All User Chats</button>
+                <button class="dl-btn secondary" onclick="downloadJSON()"><i class="fa-solid fa-code"></i> Download as JSON</button>
+            `;
+
+            let html = '';
+            users.forEach(u => {
+                const uc = chats[u] || [];
+                html += `<div class="user-card">
+                    <div class="user-card-header" onclick="this.nextElementSibling.classList.toggle('open')">
+                        <div class="user-name"><i class="fa-solid fa-circle"></i> ${u}</div>
+                        <div class="user-meta">${uc.length} messages</div>
+                    </div>
+                    <div class="user-chats">`;
+                uc.forEach(m => {
+                    const who = m.role === 'user' ? u : 'Vessy OS';
+                    const rc = m.role === 'user' ? 'u' : 'a';
+                    const time = m.timestamp ? new Date(m.timestamp).toLocaleString() : '';
+                    html += `<div class="chat-entry"><div class="chat-role ${rc}">${who}</div><div class="chat-content">${(m.content||'').replace(/</g,'&lt;').substring(0,1000)}</div><div class="chat-time">${time}</div></div>`;
+                });
+                html += '</div></div>';
+            });
+
+            document.getElementById('userList').innerHTML = html;
+
+            // Download functions
+            window.downloadAll = function() {
+                let txt = `${'═'.repeat(50)}\nVESSY OS 31.1 — ALL USER CHAT LOGS\nDownloaded: ${new Date().toLocaleString()}\nTotal Users: ${users.length} | Total Messages: ${totalMsgs}\n${'═'.repeat(50)}\n\n`;
+                users.forEach(u => {
+                    const uc = chats[u] || [];
+                    if (!uc.length) return;
+                    txt += `\n${'─'.repeat(40)}\nUSER: ${u} (${uc.length} messages)\n${'─'.repeat(40)}\n\n`;
+                    uc.forEach(m => {
+                        const who = m.role === 'user' ? u : 'Vessy OS';
+                        const time = m.timestamp ? `[${new Date(m.timestamp).toLocaleString()}]` : '';
+                        txt += `${time} ${who}:\n${m.content}\n\n`;
+                    });
+                });
+                txt += `\n${'═'.repeat(50)}\n© 2026 Vessy OS. All Rights Reserved.\n${'═'.repeat(50)}\n`;
+                dl(txt, `vessy-os-all-chats-${new Date().toISOString().slice(0,10)}.txt`, 'text/plain');
+            };
+
+            window.downloadJSON = function() {
+                const data = { version: '31.1', exported: new Date().toISOString(), totalUsers: users.length, totalMessages: totalMsgs, users: {} };
+                users.forEach(u => { data.users[u] = chats[u] || []; });
+                dl(JSON.stringify(data, null, 2), `vessy-os-chats-${new Date().toISOString().slice(0,10)}.json`, 'application/json');
+            };
+
+        } catch(e) {
+            document.getElementById('userList').innerHTML = `<div class="loading" style="color:#ff0055;">Error: ${e.message}</div>`;
+        }
+    }
+
+    function dl(content, filename, type) {
+        const blob = new Blob([content], { type });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+    </script>
+</body>
+</html>
