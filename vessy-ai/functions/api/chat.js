@@ -1,22 +1,21 @@
 export async function onRequestPost(context) {
     try {
         const { request, env } = context;
-        const { prompt, username, history, token } = await request.json();
+        const { prompt, username, history } = await request.json();
         const apiKey = env.GROQ_API_KEY;
 
-        if (!apiKey) return json({ error: 'API Key missing.' }, 500);
+        if (!apiKey) return json({ error: 'GROQ_API_KEY not set. Add it in Cloudflare Pages → Settings → Environment Variables.' }, 500);
 
-        // Build messages with history for AI memory
         const messages = [{
             role: 'system',
-            content: `You are Vessy OS 31.0 AI Assistant. The user is "${username || 'Guest'}".
+            content: `You are Vessy OS 31.0 AI Assistant. User: "${username || 'Guest'}".
 Rules:
-- You remember previous messages in this conversation and learn from context
+- Remember previous messages and learn from conversation context
 - Wrap code in markdown code blocks
-- Be helpful, accurate, and concise
-- If giving legal/medical/financial advice, add: "This is for educational purposes only"
+- Be helpful, accurate, concise
+- Legal/medical/financial advice = educational only, add disclaimer
 - Never assist with illegal activities
-- You are running on Cloudflare infrastructure`
+- Running on Cloudflare Workers`
         }];
 
         if (history && Array.isArray(history)) {
@@ -27,10 +26,8 @@ Rules:
             });
         }
 
-        const lastMsg = messages[messages.length - 1];
-        if (!lastMsg || lastMsg.content !== prompt) {
-            messages.push({ role: 'user', content: prompt });
-        }
+        const last = messages[messages.length - 1];
+        if (!last || last.content !== prompt) messages.push({ role: 'user', content: prompt });
 
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
@@ -40,7 +37,6 @@ Rules:
 
         const data = await response.json();
         if (data.error) throw new Error(data.error.message);
-
         return json({ reply: data.choices[0].message.content });
     } catch (error) {
         return json({ error: error.message }, 500);
