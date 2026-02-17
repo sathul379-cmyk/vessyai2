@@ -6,9 +6,11 @@ export async function onRequestPost(context) {
 
         const kv = env.VESSY_CHATS;
         if (kv) {
-            const history = await kv.get(`chats:${username.toLowerCase()}`, 'json') || [];
+            let history = [];
+            try { history = await kv.get(`chats:${username.toLowerCase()}`, 'json') || []; } catch { history = []; }
             return json({ history });
         }
+
         return json({ history: [] });
     } catch {
         return json({ history: [] });
