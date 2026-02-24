@@ -1,14 +1,160 @@
-<!-- In your main index.html, make sure you have: -->
-<div id="termsOverlay" class="overlay">
-    <div class="overlay-content">
-        <h2>Terms & Conditions</h2>
-        
-        <!-- Checkbox with CORRECT ID -->
-        <input type="checkbox" id="termsCheckbox">
-        <label for="termsCheckbox">I accept the terms and conditions</label>
-        
-        <!-- Button with CORRECT ID -->
-        <button type="button" id="termsAcceptBtn" disabled>Accept Terms & Conditions</button>
-        <button type="button" id="termsDeclineBtn">Decline</button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vessy OS 31.1</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div id="bgLayer" class="bg-default"></div>
+    <div class="vignette"></div>
+
+    <!-- COOKIE BANNER -->
+    <div id="cookieBanner" class="cookie-banner hidden">
+        <div class="cookie-inner">
+            <div class="cookie-text">
+                <i class="fa-solid fa-cookie-bite"></i>
+                <p>Vessy OS uses cookies to keep you signed in and improve your experience.</p>
+            </div>
+            <div class="cookie-actions">
+                <button id="cookieAcceptAll" class="cookie-btn primary">Accept All</button>
+                <button id="cookieEssentialOnly" class="cookie-btn secondary">Essential Only</button>
+            </div>
+        </div>
     </div>
-</div>
+
+    <!-- TERMS & CONDITIONS OVERLAY -->
+    <div id="termsOverlay" class="overlay-screen">
+        <div class="overlay-backdrop"></div>
+        <div class="overlay-modal">
+            <div class="overlay-glow"></div>
+            <div class="overlay-header">
+                <div class="overlay-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <h1>Welcome to Vessy OS</h1>
+                <p class="overlay-subtitle">Version 31.1 — Please review our terms</p>
+            </div>
+            <div class="overlay-body">
+                <div class="terms-section">
+                    <div class="terms-section-icon"><i class="fa-solid fa-database"></i></div>
+                    <div>
+                        <h3>Private Data Storage</h3>
+                        <p>All chats are stored <strong>privately on Vessy OS servers</strong>. Chat logs are server-side only and <strong>not downloadable by users</strong>.</p>
+                    </div>
+                </div>
+                <div class="terms-section">
+                    <div class="terms-section-icon"><i class="fa-solid fa-brain"></i></div>
+                    <div>
+                        <h3>AI Personalization</h3>
+                        <p>Vessy OS learns your <strong>tone and interests</strong> to personalize responses. You can disable this in Settings.</p>
+                    </div>
+                </div>
+                <div class="terms-section">
+                    <div class="terms-section-icon"><i class="fa-solid fa-gavel"></i></div>
+                    <div>
+                        <h3>Responsibility</h3>
+                        <p><strong>Any illegal activities conducted by the user are entirely the user's fault.</strong> Vessy OS accepts no liability. AI advice is educational only.</p>
+                    </div>
+                </div>
+                <div class="terms-divider"></div>
+                <div class="terms-summary">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <p><strong>Summary:</strong> Chats are private. AI learns from you. You are responsible for your actions.</p>
+                </div>
+            </div>
+            <div class="overlay-footer">
+                <label class="terms-checkbox-wrap" id="termsCheckWrap">
+                    <input type="checkbox" id="termsCheckbox">
+                    <span class="terms-checkmark"></span>
+                    <span class="terms-checkbox-label">I agree to the Terms & Conditions</span>
+                </label>
+                <button id="termsAcceptBtn" class="primary-btn" disabled>
+                    <span>Accept & Continue</span><i class="fa-solid fa-arrow-right"></i>
+                </button>
+                <button id="termsDeclineBtn" class="ghost-btn">Decline</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUTH OVERLAY -->
+    <div id="authOverlay" class="overlay-screen hidden">
+        <div class="overlay-backdrop"></div>
+        <div class="overlay-modal auth-modal">
+            <div class="overlay-glow"></div>
+            <!-- LOGIN -->
+            <div id="loginView" class="auth-view">
+                <div class="overlay-header">
+                    <div class="overlay-icon" style="border-color:rgba(0,242,255,.2);"><i class="fa-solid fa-right-to-bracket" style="color:#00f2ff;"></i></div>
+                    <h1>Sign In</h1>
+                    <p class="overlay-subtitle">Welcome back to Vessy OS 31.1</p>
+                </div>
+                <div class="auth-body">
+                    <div class="auth-field"><label>Username</label><div class="auth-input-wrap"><i class="fa-solid fa-user"></i><input type="text" id="loginUsername" placeholder="Username" autocomplete="off"></div></div>
+                    <div class="auth-field"><label>Password</label><div class="auth-input-wrap"><i class="fa-solid fa-lock"></i><input type="password" id="loginPassword" placeholder="Password"><button class="toggle-pw-btn" onclick="togglePw('loginPassword',this)"><i class="fa-solid fa-eye"></i></button></div></div>
+                    <div id="loginError" class="auth-error"></div>
+                    <button id="loginBtn" class="primary-btn">Sign In <i class="fa-solid fa-arrow-right"></i></button>
+                    <div class="auth-switch">No account? <button onclick="switchAuth('signup')">Create one</button></div>
+                </div>
+            </div>
+            <!-- SIGNUP -->
+            <div id="signupView" class="auth-view hidden">
+                <div class="overlay-header">
+                    <div class="overlay-icon" style="border-color:rgba(255,0,255,.2);"><i class="fa-solid fa-user-plus" style="color:#ff00ff;"></i></div>
+                    <h1>Create Account</h1>
+                </div>
+                <div class="auth-body">
+                    <div class="auth-field"><label>Username</label><div class="auth-input-wrap"><i class="fa-solid fa-user"></i><input type="text" id="signupUsername" placeholder="Choose username" maxlength="24"></div><div id="signupUsernameStatus" class="field-status"></div></div>
+                    <div class="auth-field"><label>Email (Optional)</label><div class="auth-input-wrap"><i class="fa-solid fa-envelope"></i><input type="email" id="signupEmail" placeholder="Email"></div></div>
+                    <div class="auth-field"><label>Password</label><div class="auth-input-wrap"><i class="fa-solid fa-lock"></i><input type="password" id="signupPassword" placeholder="Min 6 chars"><button class="toggle-pw-btn" onclick="togglePw('signupPassword',this)"><i class="fa-solid fa-eye"></i></button></div></div>
+                    <div id="signupError" class="auth-error"></div>
+                    <button id="signupBtn" class="primary-btn purple">Create Account <i class="fa-solid fa-rocket"></i></button>
+                    <div class="auth-switch">Has account? <button onclick="switchAuth('login')">Sign in</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN UI -->
+    <header>
+        <div class="left-controls"><button id="menuBtn" class="glass-btn"><i class="fa-solid fa-bars"></i> APPS</button><div id="clock">00:00</div></div>
+        <div class="center-title"><span class="title-icon">◆</span> VESSY OS <span class="title-version">v31.1</span></div>
+        <div class="right-controls"><div class="user-badge" id="userBadge"><i class="fa-solid fa-user"></i><span id="userBadgeName">---</span></div><button id="settingsBtn" class="glass-btn icon-only"><i class="fa-solid fa-gear"></i></button></div>
+    </header>
+
+    <div id="appGrid" class="app-grid hidden">
+        <div class="app-grid-header"><span>Applications</span><button class="app-grid-close" onclick="document.getElementById('appGrid').classList.add('hidden')"><i class="fa-solid fa-xmark"></i></button></div>
+        <div class="app-grid-items">
+            <div class="app-item" onclick="launchApp('browser')"><div class="app-icon" style="background:rgba(255,255,255,0.05);"><i class="fa-solid fa-globe" style="color:#fff"></i></div><span>Browser</span></div>
+        </div>
+    </div>
+
+    <main id="chatWindow">
+        <div class="message bot"><div class="bot-avatar"><i class="fa-solid fa-robot"></i></div><div class="glass-card"><p><strong>Vessy OS 31.1 Online.</strong><br>Type <code>Draw a cat</code> or <code>Video a sunset</code>.</p></div></div>
+    </main>
+
+    <footer>
+        <div class="dock">
+            <div class="dock-inner"><input type="text" id="userInput" placeholder="Ask Vessy OS..." autocomplete="off"><button id="sendBtn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button></div>
+            <div class="dock-copyright">© 2026 Vessy OS. All Rights Reserved.</div>
+        </div>
+    </footer>
+
+    <div id="appModal" class="modal hidden">
+        <div class="modal-header"><div class="modal-dots"><span class="dot red" onclick="closeApp()"></span><span class="dot yellow"></span><span class="dot green"></span></div><span id="appTitle">App</span><button class="modal-close-btn" onclick="closeApp()">✕</button></div>
+        <div class="modal-body" id="appContent"></div>
+    </div>
+
+    <div id="settingsModal" class="modal hidden small-modal">
+        <div class="modal-header"><span>Settings</span><button class="modal-close-btn" onclick="toggleSettings()">✕</button></div>
+        <div class="modal-body settings-body">
+            <div class="settings-section"><h3>Account</h3><div class="settings-user-card"><div class="settings-avatar"><i class="fa-solid fa-user"></i></div><div><div class="settings-user-name" id="settingsUsername">---</div></div></div><button class="settings-link-btn danger-link" onclick="logoutUser()">Sign Out</button></div>
+            <div class="settings-section"><h3>Personalization</h3><div class="toggle-row"><span class="toggle-label">Enable Learning</span><label class="toggle-switch"><input type="checkbox" id="personalizationToggle" checked><span class="toggle-slider"></span></label></div><button class="settings-link-btn danger-link" id="deletePersonalizationBtn">Delete Learned Data</button></div>
+            <div class="settings-section"><h3>Background</h3><div class="bg-grid"><div class="bg-option" onclick="setBg('default')">Dark</div><div class="bg-option" onclick="setBg('blue')">Neon</div><div class="bg-option" onclick="setBg('pink')">Cyber</div></div></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
