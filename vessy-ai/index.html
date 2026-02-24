@@ -1,10 +1,14 @@
-<button type="button" id="accept-button">Accept Terms & Conditions</button>
-
-<script>
-const checkbox = document.getElementById('terms-checkbox');
-const button = document.getElementById('accept-button');
-
-checkbox.addEventListener('change', () => {
-    button.disabled = !checkbox.checked;
-});
-</script>
+<!-- In your main index.html, make sure you have: -->
+<div id="termsOverlay" class="overlay">
+    <div class="overlay-content">
+        <h2>Terms & Conditions</h2>
+        
+        <!-- Checkbox with CORRECT ID -->
+        <input type="checkbox" id="termsCheckbox">
+        <label for="termsCheckbox">I accept the terms and conditions</label>
+        
+        <!-- Button with CORRECT ID -->
+        <button type="button" id="termsAcceptBtn" disabled>Accept Terms & Conditions</button>
+        <button type="button" id="termsDeclineBtn">Decline</button>
+    </div>
+</div>
