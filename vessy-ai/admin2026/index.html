@@ -3,490 +3,244 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vessy OS — Admin Dashboard</title>
+    <title>Vessy OS — Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         *{box-sizing:border-box;margin:0;padding:0}
-        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:#0a0a0e;color:#e8e8e8;min-height:100vh;display:flex;flex-direction:column}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:#0a0a0e;color:#e8e8e8;min-height:100vh;display:flex;flex-direction:column;align-items:center}
         ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:10px}
 
-        .admin-container{display:flex;height:100vh}
-        .admin-sidebar{width:220px;background:#111114;border-right:1px solid rgba(255,255,255,.08);padding:20px;overflow-y:auto}
-        .admin-main{flex:1;display:flex;flex-direction:column}
-        .admin-header{padding:20px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(15,15,20,.5);display:flex;justify-content:space-between;align-items:center}
-        .admin-content{flex:1;overflow-y:auto;padding:20px}
+        .admin-login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;width:100%;padding:20px}
+        .admin-login{width:100%;max-width:400px;background:#111114;border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:40px 30px;text-align:center;box-shadow:0 25px 80px rgba(0,0,0,.8)}
+        .admin-login h1{font-size:20px;margin-bottom:6px;background:linear-gradient(135deg,#ff0055,#ff4488);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .admin-login p{font-size:12px;color:#666;margin-bottom:24px}
+        .admin-login .icon{width:56px;height:56px;margin:0 auto 18px;background:rgba(255,0,85,.1);border:1px solid rgba(255,0,85,.2);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#ff0055}
+        .admin-input{width:100%;background:rgba(255,255,255,.03);border:1.5px solid rgba(255,255,255,.08);border-radius:10px;padding:12px 14px;color:white;font-size:14px;outline:none;font-family:inherit;margin-bottom:12px}
+        .admin-input:focus{border-color:rgba(255,0,85,.4)}
+        .admin-input::placeholder{color:rgba(255,255,255,.18)}
+        .admin-submit{width:100%;padding:13px;background:linear-gradient(135deg,#ff0055,#cc0044);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:.3s}
+        .admin-submit:hover{box-shadow:0 6px 25px rgba(255,0,85,.3)}
+        .admin-submit.loading{opacity:.5;pointer-events:none}
+        .admin-error{font-size:12px;color:#ff0055;min-height:20px;margin-bottom:8px}
 
-        .admin-nav{display:flex;flex-direction:column;gap:8px}
-        .nav-item{padding:12px 14px;border-radius:8px;cursor:pointer;transition:.2s;font-size:13px;display:flex;align-items:center;gap:10px;color:#999;border:1px solid transparent}
-        .nav-item:hover{background:rgba(255,255,255,.04);color:#ddd}
-        .nav-item.active{background:rgba(255,0,85,.1);color:#ff0055;border-color:rgba(255,0,85,.2)}
-        .nav-item i{width:16px;text-align:center}
+        .admin-panel{width:100%;max-width:1000px;padding:20px;display:none}
+        .admin-panel.show{display:block}
+        .admin-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.08);flex-wrap:wrap;gap:10px}
+        .admin-topbar h1{font-size:18px;display:flex;align-items:center;gap:10px}.admin-topbar h1 i{color:#ff0055}
+        .admin-topbar .ver{font-size:10px;color:#555;background:rgba(255,255,255,.04);padding:3px 8px;border-radius:4px}
 
-        .section{display:none}
-        .section.active{display:block}
+        .admin-stats{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+        .stat-card{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);padding:18px 22px;border-radius:12px;flex:1;min-width:120px;text-align:center}
+        .stat-card .num{font-size:32px;font-weight:800;color:#00f2ff;display:block}
+        .stat-card .lbl{font-size:9px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-top:4px;display:block}
 
-        .users-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:20px}
-        .user-card{background:#111114;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px;transition:.2s}
-        .user-card:hover{border-color:rgba(255,0,85,.3);background:rgba(255,0,85,.02)}
-        .user-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-        .user-avatar{width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,#ff0055,#ff4488);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600}
-        .user-info{flex:1}
-        .user-name{font-weight:600;margin-bottom:2px}
-        .user-id{font-size:11px;color:#666}
+        .admin-actions{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+        .dl-btn{padding:10px 20px;background:linear-gradient(135deg,#ff0055,#cc0044);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;transition:.2s}
+        .dl-btn:hover{box-shadow:0 4px 15px rgba(255,0,85,.3);transform:translateY(-1px)}
+        .dl-btn.sec{background:rgba(255,255,255,.04);color:#888;border:1px solid rgba(255,255,255,.08)}
+        .dl-btn.sec:hover{color:#fff}
 
-        .user-status{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:12px}
-        .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
-        .status-dot.online{background:#00ff88;box-shadow:0 0 8px rgba(0,255,136,.6)}
-        .status-dot.offline{background:#666;box-shadow:none}
-        .status-dot.idle{background:#ffaa00;box-shadow:0 0 8px rgba(255,170,0,.4)}
+        .user-card{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:12px;margin-bottom:8px;overflow:hidden}
+        .user-card-head{padding:14px 18px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:.2s}
+        .user-card-head:hover{background:rgba(255,255,255,.03)}
+        .uname{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}.uname i{color:#00f2ff;font-size:8px}
+        .umeta{font-size:10px;color:#555;font-family:monospace}
+        .uchats{padding:16px 18px;border-top:1px solid rgba(255,255,255,.04);display:none;max-height:400px;overflow-y:auto}
+        .uchats.open{display:block}
+        .ce{padding:8px 0;border-bottom:1px solid rgba(255,255,255,.02)}.ce:last-child{border:none}
+        .cr{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+        .cr.u{color:#ff00ff}.cr.a{color:#00f2ff}
+        .cc{font-size:12px;color:#999;line-height:1.5;word-break:break-word}
+        .ct{font-size:9px;color:#333;font-family:monospace;margin-top:2px}
 
-        .user-actions{display:flex;gap:6px}
-        .action-btn{flex:1;padding:8px 12px;border-radius:6px;border:1px solid;cursor:pointer;font-size:11px;font-weight:600;transition:.2s;display:flex;align-items:center;justify-content:center;gap:4px}
-        .ban-btn{background:rgba(255,0,85,.1);border-color:rgba(255,0,85,.3);color:#ff0055}
-        .ban-btn:hover{background:rgba(255,0,85,.2);border-color:#ff0055}
-        .unban-btn{background:rgba(0,255,136,.1);border-color:rgba(0,255,136,.3);color:#00ff88}
-        .unban-btn:hover{background:rgba(0,255,136,.2);border-color:#00ff88}
-        .voice-btn{background:rgba(0,170,255,.1);border-color:rgba(0,170,255,.3);color:#00aaff}
-        .voice-btn:hover{background:rgba(0,170,255,.2);border-color:#00aaff}
-        .stats-btn{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.08);color:#999}
-        .stats-btn:hover{background:rgba(255,255,255,.05);color:#ddd}
-
-        .voice-panel{background:#111114;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px;margin-bottom:20px}
-        .voice-header{font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-        .voice-header i{color:#00aaff}
-        .voice-controls{display:flex;gap:8px;flex-wrap:wrap}
-        .voice-control-btn{padding:10px 16px;border-radius:8px;border:1px solid;cursor:pointer;font-size:12px;font-weight:600;transition:.2s}
-        .voice-start{background:rgba(0,255,136,.1);border-color:rgba(0,255,136,.3);color:#00ff88}
-        .voice-start:hover{background:rgba(0,255,136,.2)}
-        .voice-stop{background:rgba(255,0,85,.1);border-color:rgba(255,0,85,.3);color:#ff0055}
-        .voice-stop:hover{background:rgba(255,0,85,.2)}
-
-        .filter-bar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
-        .filter-btn{padding:8px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02);cursor:pointer;font-size:12px;color:#999;transition:.2s}
-        .filter-btn.active{background:rgba(255,0,85,.1);border-color:rgba(255,0,85,.3);color:#ff0055}
-        .filter-btn:hover{background:rgba(255,255,255,.05);color:#ddd}
-
-        .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px}
-        .stat-card{background:#111114;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px;text-align:center}
-        .stat-value{font-size:24px;font-weight:700;margin-bottom:6px}
-        .stat-label{font-size:12px;color:#999}
-
-        .banned-list{background:#111114;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px}
-        .banned-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid rgba(255,255,255,.05)}
-        .banned-item:last-child{border-bottom:none}
-        .banned-info{display:flex;align-items:center;gap:12px}
-        .banned-reason{font-size:11px;color:#666;margin-top:4px}
-        .unban-action{padding:6px 12px;border-radius:6px;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);color:#00ff88;cursor:pointer;font-size:11px;font-weight:600}
-
-        .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:1000}
-        .modal-overlay.show{display:flex}
-        .modal{background:#111114;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:24px;max-width:500px;width:90%;animation:slideIn .3s ease}
-        @keyframes slideIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
-        .modal-header{font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:10px}
-        .modal-header i{color:#ff0055}
-        .modal-body{margin-bottom:16px}
-        .modal-input{width:100%;padding:10px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#fff;margin-bottom:12px;font-family:inherit;font-size:13px}
-        .modal-footer{display:flex;gap:8px}
-        .modal-btn{flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-weight:600;transition:.2s}
-        .modal-confirm{background:linear-gradient(135deg,#ff0055,#cc0044);color:#fff}
-        .modal-confirm:hover{transform:translateY(-1px);box-shadow:0 4px 15px rgba(255,0,85,.3)}
-        .modal-cancel{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);color:#999}
-        .modal-cancel:hover{background:rgba(255,255,255,.05)}
-
-        @media(max-width:768px){
-            .admin-container{flex-direction:column}
-            .admin-sidebar{width:100%;border-right:none;border-bottom:1px solid rgba(255,255,255,.08);display:flex;gap:10px;overflow-x:auto;padding:10px}
-            .admin-nav{flex-direction:row}
-            .users-grid{grid-template-columns:1fr}
-            .stats-grid{grid-template-columns:1fr}
-            .modal{width:95%}
-        }
+        .admin-foot{text-align:center;padding:30px 0;font-size:10px;color:rgba(255,255,255,.1)}
+        .ld{text-align:center;padding:40px;color:#555}
+        .spinner{display:inline-block;width:20px;height:20px;border:2px solid rgba(255,255,255,.1);border-top-color:#ff0055;border-radius:50%;animation:spin .6s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @media(max-width:600px){.admin-stats{flex-direction:column}.admin-panel{padding:12px}}
     </style>
 </head>
 <body>
-    <div class="admin-container">
-        <div class="admin-sidebar">
-            <div class="admin-nav">
-                <div class="nav-item active" data-section="users">
-                    <i class="fas fa-users"></i> Users
-                </div>
-                <div class="nav-item" data-section="voice">
-                    <i class="fas fa-microphone"></i> Voice Chat
-                </div>
-                <div class="nav-item" data-section="banned">
-                    <i class="fas fa-ban"></i> Banned Users
-                </div>
-                <div class="nav-item" data-section="stats">
-                    <i class="fas fa-chart-bar"></i> Statistics
-                </div>
-                <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:12px 0">
-                <div class="nav-item" data-section="settings">
-                    <i class="fas fa-cog"></i> Settings
-                </div>
-                <div class="nav-item logout" id="logoutBtn">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </div>
-            </div>
-        </div>
-
-        <div class="admin-main">
-            <div class="admin-header">
-                <div>
-                    <h2 style="margin-bottom:4px">Admin Dashboard</h2>
-                    <p style="font-size:12px;color:#666">Vessy OS Control Panel</p>
-                </div>
-                <div style="text-align:right">
-                    <p style="font-size:12px;color:#666">Last updated: <span id="lastUpdate">now</span></p>
-                </div>
-            </div>
-
-            <div class="admin-content">
-                <!-- USERS SECTION -->
-                <div class="section active" id="users-section">
-                    <h3 style="margin-bottom:12px">Active Users</h3>
-                    <div class="filter-bar">
-                        <button class="filter-btn active" data-filter="all">All Users</button>
-                        <button class="filter-btn" data-filter="online">Online Only</button>
-                        <button class="filter-btn" data-filter="idle">Idle</button>
-                        <button class="filter-btn" data-filter="offline">Offline</button>
-                    </div>
-                    <div id="usersGrid" class="users-grid"></div>
-                </div>
-
-                <!-- VOICE CHAT SECTION -->
-                <div class="section" id="voice-section">
-                    <h3 style="margin-bottom:16px">Voice Chat Management</h3>
-                    <div class="voice-panel">
-                        <div class="voice-header">
-                            <i class="fas fa-headphones"></i>
-                            Global Voice Conference
-                        </div>
-                        <div style="margin-bottom:16px;font-size:12px;color:#666">
-                            <p>Manage system-wide voice chat sessions. Start a conference to enable voice communication across all active users.</p>
-                        </div>
-                        <div class="voice-controls">
-                            <button class="voice-control-btn voice-start" id="startVoiceBtn">
-                                <i class="fas fa-play"></i> Start Conference
-                            </button>
-                            <button class="voice-control-btn voice-stop" id="stopVoiceBtn" style="display:none">
-                                <i class="fas fa-stop"></i> Stop Conference
-                            </button>
-                            <button class="voice-control-btn" style="background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.08);color:#999">
-                                <i class="fas fa-cog"></i> Voice Settings
-                            </button>
-                        </div>
-                    </div>
-
-                    <h4 style="margin-top:20px;margin-bottom:12px">Active Voice Sessions</h4>
-                    <div id="voiceSessionsList" class="users-grid"></div>
-                </div>
-
-                <!-- BANNED USERS SECTION -->
-                <div class="section" id="banned-section">
-                    <h3 style="margin-bottom:16px">Banned Users Management</h3>
-                    <div class="banned-list" id="bannedList">
-                        <div style="text-align:center;padding:30px;color:#666">
-                            <i class="fas fa-check-circle" style="font-size:30px;margin-bottom:10px;display:block"></i>
-                            No banned users at the moment
-                        </div>
-                    </div>
-                </div>
-
-                <!-- STATISTICS SECTION -->
-                <div class="section" id="stats-section">
-                    <h3 style="margin-bottom:16px">System Statistics</h3>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-value" id="totalUsers">--</div>
-                            <div class="stat-label">Total Users</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="onlineCount">--</div>
-                            <div class="stat-label">Online Now</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="bannedCount">--</div>
-                            <div class="stat-label">Banned Users</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="voiceActive">--</div>
-                            <div class="stat-label">In Voice Chat</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SETTINGS SECTION -->
-                <div class="section" id="settings-section">
-                    <h3 style="margin-bottom:16px">Admin Settings</h3>
-                    <div style="background:#111114;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px">
-                        <div style="margin-bottom:16px">
-                            <label style="display:block;margin-bottom:8px;font-size:12px;color:#999">Auto-ban after failed logins</label>
-                            <input type="number" value="5" min="1" style="width:100%;padding:8px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#fff;font-size:12px">
-                        </div>
-                        <div style="margin-bottom:16px">
-                            <label style="display:block;margin-bottom:8px;font-size:12px;color:#999">Auto-logout idle users after (minutes)</label>
-                            <input type="number" value="30" min="5" style="width:100%;padding:8px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#fff;font-size:12px">
-                        </div>
-                        <button style="width:100%;padding:10px;background:linear-gradient(135deg,#00aaff,#0088ff);color:#000;border:none;border-radius:8px;cursor:pointer;font-weight:600">Save Settings</button>
-                    </div>
-                </div>
-            </div>
+    <div class="admin-login-wrap" id="lw">
+        <div class="admin-login">
+            <div class="icon"><i class="fa-solid fa-user-shield"></i></div>
+            <h1>Admin Panel</h1>
+            <p>Vessy OS 31.1 — Authorized Access Only</p>
+            <input type="password" class="admin-input" id="apw" placeholder="Enter admin password" autocomplete="off">
+            <div class="admin-error" id="aerr"></div>
+            <button class="admin-submit" id="abtn" onclick="doLogin()">Authenticate</button>
         </div>
     </div>
 
-    <!-- BAN MODAL -->
-    <div class="modal-overlay" id="banModal">
-        <div class="modal">
-            <div class="modal-header">
-                <i class="fas fa-ban"></i> Ban User
-            </div>
-            <div class="modal-body">
-                <p style="margin-bottom:12px;color:#999">User: <strong id="banUserName" style="color:#fff"></strong></p>
-                <label style="display:block;margin-bottom:8px;font-size:12px;color:#999">Reason for ban:</label>
-                <textarea id="banReason" class="modal-input" rows="3" placeholder="Enter reason..."></textarea>
-                <label style="display:block;margin-bottom:8px;font-size:12px;color:#999">Ban duration:</label>
-                <select id="banDuration" class="modal-input">
-                    <option value="permanent">Permanent</option>
-                    <option value="24h">24 Hours</option>
-                    <option value="7d">7 Days</option>
-                    <option value="30d">30 Days</option>
-                </select>
-            </div>
-            <div class="modal-footer">
-                <button class="modal-btn modal-cancel" onclick="closeBanModal()">Cancel</button>
-                <button class="modal-btn modal-confirm" onclick="confirmBan()">Confirm Ban</button>
-            </div>
+    <div class="admin-panel" id="ap">
+        <div class="admin-topbar">
+            <h1><i class="fa-solid fa-user-shield"></i> Vessy OS Admin <span class="ver">v31.1</span></h1>
+            <button class="dl-btn sec" onclick="location.href='/'"><i class="fa-solid fa-arrow-left"></i> Back</button>
         </div>
-    </div>
-
-    <!-- VOICE INVITE MODAL -->
-    <div class="modal-overlay" id="voiceModal">
-        <div class="modal">
-            <div class="modal-header">
-                <i class="fas fa-microphone"></i> Invite to Voice Chat
-            </div>
-            <div class="modal-body">
-                <p style="margin-bottom:12px;color:#999">User: <strong id="voiceUserName" style="color:#fff"></strong></p>
-                <p style="font-size:12px;color:#666;margin-bottom:12px">This user will be invited to join the active voice conference.</p>
-            </div>
-            <div class="modal-footer">
-                <button class="modal-btn modal-cancel" onclick="closeVoiceModal()">Cancel</button>
-                <button class="modal-btn modal-confirm" onclick="confirmVoiceInvite()">Send Invite</button>
-            </div>
-        </div>
+        <div class="admin-stats" id="as"></div>
+        <div class="admin-actions" id="aa"></div>
+        <div id="ul"></div>
+        <div class="admin-foot">© 2026 Vessy OS. All Rights Reserved.</div>
     </div>
 
     <script>
-        let currentUser = null;
-        let bannedUsers = [];
-        let voiceActive = false;
-        let selectedUserForBan = null;
-        let selectedUserForVoice = null;
+    document.getElementById('apw').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 
-        // Mock user data
-        const mockUsers = [
-            { id: 1, name: 'Alice Johnson', status: 'online', lastSeen: 'now', joinedAt: '2 hours ago' },
-            { id: 2, name: 'Bob Smith', status: 'online', lastSeen: 'now', joinedAt: '5 hours ago' },
-            { id: 3, name: 'Carol Davis', status: 'idle', lastSeen: '3 mins ago', joinedAt: '1 day ago' },
-            { id: 4, name: 'David Wilson', status: 'offline', lastSeen: '1 hour ago', joinedAt: '3 days ago' },
-            { id: 5, name: 'Emma Brown', status: 'online', lastSeen: 'now', joinedAt: '2 days ago' }
-        ];
+    let allUsers = [];
+    let allChats = {};
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            setupNavigation();
-            setupFilters();
-            setupVoiceControls();
-            loadUsers();
-            setupLogout();
-            updateStats();
-            setInterval(updateStats, 30000); // Update every 30 seconds
+    async function doLogin() {
+        const pw = document.getElementById('apw').value;
+        const err = document.getElementById('aerr');
+        const btn = document.getElementById('abtn');
+        err.textContent = '';
+
+        if (!pw) { err.textContent = 'Enter password.'; return; }
+
+        btn.classList.add('loading');
+        btn.textContent = 'Authenticating...';
+
+        try {
+            const r = await fetch('/api/admin-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminPassword: pw })
+            });
+            const d = await r.json();
+
+            if (d.error) {
+                err.textContent = d.error;
+                btn.classList.remove('loading');
+                btn.textContent = 'Authenticate';
+                return;
+            }
+
+            // Success
+            document.getElementById('lw').style.display = 'none';
+            document.getElementById('ap').classList.add('show');
+
+            allUsers = d.users || [];
+            allChats = d.chats || {};
+            renderPanel();
+
+        } catch(e) {
+            err.textContent = 'Connection failed: ' + e.message;
+            btn.classList.remove('loading');
+            btn.textContent = 'Authenticate';
+        }
+    }
+
+    function renderPanel() {
+        let totalMsgs = 0;
+        Object.values(allChats).forEach(c => totalMsgs += (c||[]).length);
+
+        document.getElementById('as').innerHTML = `
+            <div class="stat-card"><span class="num">${allUsers.length}</span><span class="lbl">Users</span></div>
+            <div class="stat-card"><span class="num">${totalMsgs}</span><span class="lbl">Messages</span></div>
+            <div class="stat-card"><span class="num">${Object.keys(allChats).filter(k=>(allChats[k]||[]).length>0).length}</span><span class="lbl">Active Logs</span></div>
+        `;
+
+        document.getElementById('aa').innerHTML = `
+            <button class="dl-btn" onclick="dlTXT()"><i class="fa-solid fa-download"></i> Download All (TXT)</button>
+            <button class="dl-btn sec" onclick="dlJSON()"><i class="fa-solid fa-code"></i> Download All (JSON)</button>
+        `;
+
+        let html = '';
+        allUsers.forEach(u => {
+            const uc = allChats[u] || [];
+            html += `<div class="user-card">
+                <div class="user-card-head" onclick="this.nextElementSibling.classList.toggle('open')">
+                    <div class="uname"><i class="fa-solid fa-circle"></i> ${esc(u)}</div>
+                    <div class="umeta">${uc.length} msgs</div>
+                </div>
+                <div class="uchats">`;
+
+            if (uc.length === 0) {
+                html += '<div style="color:#444;font-size:11px;padding:8px 0;">No messages yet.</div>';
+            } else {
+                uc.forEach(m => {
+                    const who = m.role === 'user' ? u : 'Vessy OS';
+                    const rc = m.role === 'user' ? 'u' : 'a';
+                    const time = m.timestamp ? new Date(m.timestamp).toLocaleString() : '';
+                    html += `<div class="ce">
+                        <div class="cr ${rc}">${esc(who)}</div>
+                        <div class="cc">${esc((m.content||'').substring(0,1000))}</div>
+                        <div class="ct">${time}</div>
+                    </div>`;
+                });
+            }
+            html += '</div></div>';
         });
 
-        function setupNavigation() {
-            document.querySelectorAll('.nav-item').forEach(item => {
-                if (item.id !== 'logoutBtn') {
-                    item.addEventListener('click', () => {
-                        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-                        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-                        item.classList.add('active');
-                        const section = item.getAttribute('data-section') + '-section';
-                        document.getElementById(section).classList.add('active');
-                    });
-                }
+        if (allUsers.length === 0) {
+            html = '<div class="ld">No users registered yet.</div>';
+        }
+
+        document.getElementById('ul').innerHTML = html;
+    }
+
+    function dlTXT() {
+        let totalMsgs = 0;
+        Object.values(allChats).forEach(c => totalMsgs += (c||[]).length);
+
+        let txt = '';
+        txt += '='.repeat(50) + '\n';
+        txt += 'VESSY OS 31.1 — ALL USER CHAT LOGS\n';
+        txt += 'Downloaded: ' + new Date().toLocaleString() + '\n';
+        txt += 'Total Users: ' + allUsers.length + '\n';
+        txt += 'Total Messages: ' + totalMsgs + '\n';
+        txt += '='.repeat(50) + '\n\n';
+
+        allUsers.forEach(u => {
+            const uc = allChats[u] || [];
+            if (!uc.length) return;
+
+            txt += '\n' + '-'.repeat(40) + '\n';
+            txt += 'USER: ' + u + ' (' + uc.length + ' messages)\n';
+            txt += '-'.repeat(40) + '\n\n';
+
+            uc.forEach(m => {
+                const who = m.role === 'user' ? u : 'Vessy OS';
+                const time = m.timestamp ? '[' + new Date(m.timestamp).toLocaleString() + '] ' : '';
+                txt += time + who + ':\n' + m.content + '\n\n';
             });
-        }
+        });
 
-        function setupFilters() {
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    loadUsers(btn.getAttribute('data-filter'));
-                });
-            });
-        }
+        txt += '\n' + '='.repeat(50) + '\n';
+        txt += '© 2026 Vessy OS. All Rights Reserved.\n';
+        txt += '='.repeat(50) + '\n';
 
-        function loadUsers(filter = 'all') {
-            const grid = document.getElementById('usersGrid');
-            grid.innerHTML = '';
-            
-            const filtered = mockUsers.filter(u => {
-                if (filter === 'all') return !bannedUsers.includes(u.id);
-                if (filter === 'online') return u.status === 'online' && !bannedUsers.includes(u.id);
-                if (filter === 'idle') return u.status === 'idle' && !bannedUsers.includes(u.id);
-                if (filter === 'offline') return u.status === 'offline' && !bannedUsers.includes(u.id);
-            });
+        download(txt, 'vessy-os-all-chats-' + today() + '.txt', 'text/plain');
+    }
 
-            filtered.forEach(user => {
-                const card = document.createElement('div');
-                card.className = 'user-card';
-                const statusClass = user.status === 'online' ? 'online' : user.status === 'idle' ? 'idle' : 'offline';
-                
-                card.innerHTML = `
-                    <div class="user-header">
-                        <div class="user-avatar">${user.name.split(' ')[0][0]}${user.name.split(' ')[1][0]}</div>
-                        <div class="user-info">
-                            <div class="user-name">${user.name}</div>
-                            <div class="user-id">ID: ${user.id}</div>
-                        </div>
-                    </div>
-                    <div class="user-status">
-                        <span class="status-dot ${statusClass}"></span>
-                        <span>${user.status.charAt(0).toUpperCase() + user.status.slice(1)}</span>
-                    </div>
-                    <div style="font-size:11px;color:#666;margin-bottom:12px">
-                        <p>Last seen: ${user.lastSeen}</p>
-                        <p>Joined: ${user.joinedAt}</p>
-                    </div>
-                    <div class="user-actions">
-                        <button class="action-btn voice-btn" onclick="openVoiceInvite(${user.id}, '${user.name}')">
-                            <i class="fas fa-phone-alt"></i> Voice
-                        </button>
-                        <button class="action-btn ban-btn" onclick="openBanModal(${user.id}, '${user.name}')">
-                            <i class="fas fa-ban"></i> Ban
-                        </button>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-        }
+    function dlJSON() {
+        let totalMsgs = 0;
+        Object.values(allChats).forEach(c => totalMsgs += (c||[]).length);
 
-        function setupVoiceControls() {
-            document.getElementById('startVoiceBtn').addEventListener('click', () => {
-                voiceActive = true;
-                document.getElementById('startVoiceBtn').style.display = 'none';
-                document.getElementById('stopVoiceBtn').style.display = 'inline-flex';
-                showNotification('Voice conference started', 'success');
-                loadVoiceSessions();
-            });
+        const data = {
+            version: '31.1',
+            exported: new Date().toISOString(),
+            totalUsers: allUsers.length,
+            totalMessages: totalMsgs,
+            users: {}
+        };
+        allUsers.forEach(u => { data.users[u] = allChats[u] || []; });
+        download(JSON.stringify(data, null, 2), 'vessy-os-chats-' + today() + '.json', 'application/json');
+    }
 
-            document.getElementById('stopVoiceBtn').addEventListener('click', () => {
-                voiceActive = false;
-                document.getElementById('startVoiceBtn').style.display = 'inline-flex';
-                document.getElementById('stopVoiceBtn').style.display = 'none';
-                document.getElementById('voiceSessionsList').innerHTML = '';
-                showNotification('Voice conference stopped', 'info');
-            });
-        }
+    function download(content, filename, type) {
+        const blob = new Blob([content], { type });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+    }
 
-        function loadVoiceSessions() {
-            if (!voiceActive) return;
-            const list = document.getElementById('voiceSessionsList');
-            const onlineUsers = mockUsers.filter(u => u.status === 'online' && !bannedUsers.includes(u.id));
-            
-            list.innerHTML = onlineUsers.map(user => `
-                <div class="user-card">
-                    <div class="user-header">
-                        <div class="user-avatar">${user.name.split(' ')[0][0]}${user.name.split(' ')[1][0]}</div>
-                        <div class="user-info">
-                            <div class="user-name">${user.name}</div>
-                            <div style="font-size:11px;color:#00ff88;margin-top:2px">
-                                <i class="fas fa-microphone"></i> Connected
-                            </div>
-                        </div>
-                    </div>
-                    <div style="display:flex;gap:6px;margin-top:12px">
-                        <button class="action-btn stats-btn" style="flex:1"><i class="fas fa-volume-up"></i> Volume</button>
-                        <button class="action-btn stats-btn" style="flex:1"><i class="fas fa-microphone-slash"></i> Mute</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function openBanModal(userId, userName) {
-            selectedUserForBan = userId;
-            document.getElementById('banUserName').textContent = userName;
-            document.getElementById('banReason').value = '';
-            document.getElementById('banDuration').value = 'permanent';
-            document.getElementById('banModal').classList.add('show');
-        }
-
-        function closeBanModal() {
-            document.getElementById('banModal').classList.remove('show');
-        }
-
-        function confirmBan() {
-            const reason = document.getElementById('banReason').value;
-            const duration = document.getElementById('banDuration').value;
-            
-            if (!reason.trim()) {
-                alert('Please enter a reason for the ban');
-                return;
-            }
-
-            bannedUsers.push(selectedUserForBan);
-            showNotification(`User banned for: ${reason}`, 'success');
-            closeBanModal();
-            loadUsers();
-            updateStats();
-        }
-
-        function openVoiceInvite(userId, userName) {
-            if (!voiceActive) {
-                alert('Start a voice conference first');
-                return;
-            }
-            selectedUserForVoice = userId;
-            document.getElementById('voiceUserName').textContent = userName;
-            document.getElementById('voiceModal').classList.add('show');
-        }
-
-        function closeVoiceModal() {
-            document.getElementById('voiceModal').classList.remove('show');
-        }
-
-        function confirmVoiceInvite() {
-            showNotification('Voice invite sent', 'success');
-            closeVoiceModal();
-            loadVoiceSessions();
-        }
-
-        function updateStats() {
-            const total = mockUsers.length;
-            const online = mockUsers.filter(u => u.status === 'online' && !bannedUsers.includes(u.id)).length;
-            const banned = bannedUsers.length;
-            const inVoice = voiceActive ? mockUsers.filter(u => u.status === 'online' && !bannedUsers.includes(u.id)).length : 0;
-
-            document.getElementById('totalUsers').textContent = total;
-            document.getElementById('onlineCount').textContent = online;
-            document.getElementById('bannedCount').textContent = banned;
-            document.getElementById('voiceActive').textContent = inVoice;
-            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
-        }
-
-        function setupLogout() {
-            document.getElementById('logoutBtn').addEventListener('click', () => {
-                if (confirm('Are you sure you want to logout?')) {
-                    window.location.href = '/';
-                }
-            });
-        }
-
-        function showNotification(message, type = 'info') {
-            console.log(`[${type.toUpperCase()}] ${message}`);
-            // You can enhance this with a toast notification UI
-        }
+    function today() { return new Date().toISOString().slice(0, 10); }
+    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
     </script>
 </body>
 </html>
