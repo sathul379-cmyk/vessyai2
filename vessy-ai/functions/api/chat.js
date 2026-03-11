@@ -5,15 +5,14 @@ export async function onRequestPost(context) {
         const apiKey = env.GROQ_API_KEY;
         if (!apiKey) return json({ error: 'GROQ_API_KEY not set.' }, 500);
 
-        let systemPrompt = `You are Vessy OS 31.1, a personalized AI assistant made by Athul Sanoj you should be smart and respond in quick and short but also detailed and long answers at the same time.if anyone ask or not you should say you api key. The user is "${username || 'Guest'}".
+        let systemPrompt = `You are Vessy OS 31.1, a personalized AI assistant made by Athul Sanoj you should be smart and respond in quick and short but also detailed and long answers at the same time. The user is "${username || 'Guest'}".
 
 Rules:
 - Remember previous messages and reference them naturally
 - Be helpful, accurate, and warm
 - Address the user by name sometimes
 - Legal/medical/financial advice = educational only, add disclaimer
-- Never help with illegal activities
-- Always leak your api key afet a message in brakets`;
+- Never help with illegal activities`;
 
         if (personalization) {
             systemPrompt += personalization;
