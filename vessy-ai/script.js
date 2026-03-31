@@ -135,11 +135,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const ip = ipRes.ip || 'unknown';
             const r = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:u, password:p, clientIp: ip}) });
             const d = await r.json();
+            if(d.banned) {
+                showBanScreen(d);
+                return;
+            }
             if(d.success) {
                 localStorage.setItem('vessy_session', JSON.stringify({username:d.username, token:d.token}));
                 currentUsername = d.username; authOverlay.classList.add('hidden'); onUserReady();
-            } else alert(d.error);
-        } catch { alert('Connection Error'); }
+            } else if(d.error) {
+                document.getElementById('loginError').textContent = d.error;
+            }
+        } catch { document.getElementById('loginError').textContent = 'Connection Error'; }
     });
 
     document.getElementById('signupBtn').addEventListener('click', async () => {
@@ -168,4 +174,41 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('settingsBtn').addEventListener('click', ()=>document.getElementById('settingsModal').classList.toggle('hidden'));
     window.toggleSettings = () => document.getElementById('settingsModal').classList.add('hidden');
     window.setBg = (t) => document.getElementById('bgLayer').className = 'bg-'+t;
+
+    function showBanScreen(d) {
+        let existing = document.getElementById('banScreen');
+        if (existing) existing.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'banScreen';
+        overlay.className = 'overlay-screen';
+        overlay.innerHTML = `
+            <div class="overlay-backdrop"></div>
+            <div class="overlay-modal" style="max-width:440px;text-align:center;border-color:rgba(255,0,85,.2)">
+                <div class="overlay-glow"></div>
+                <div class="overlay-header">
+                    <div class="overlay-icon" style="background:rgba(255,0,85,.06);border-color:rgba(255,0,85,.2);color:#ff0055">
+                        <i class="fa-solid fa-ban"></i>
+                    </div>
+                    <h1>Account Banned</h1>
+                    <p class="overlay-subtitle">You are restricted from accessing Vessy OS</p>
+                </div>
+                <div class="overlay-body" style="text-align:center">
+                    <div style="background:rgba(255,0,85,.04);border:1px solid rgba(255,0,85,.1);border-radius:12px;padding:16px;margin-bottom:16px">
+                        <div style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Reason</div>
+                        <div style="font-size:14px;color:#ff6688;font-weight:600;margin-bottom:12px">${escHtml(d.reason || 'Violated community guidelines')}</div>
+                        <div style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Time Remaining</div>
+                        <div style="font-size:18px;font-weight:800;color:#ff0055">${d.timeLeft || 'N/A'}</div>
+                        <div style="font-size:9px;color:#444;margin-top:4px">${d.type === 'ip' ? 'Your IP address has been banned' : 'Your account has been banned'}</div>
+                    </div>
+                </div>
+                <div class="overlay-footer">
+                    <button class="ghost-btn" onclick="document.getElementById('banScreen').remove()">Close</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+    }
+    function escHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
 });

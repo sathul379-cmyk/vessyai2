@@ -19,6 +19,7 @@ export async function onRequestPost(context) {
 
             await kv.put(`ban:${username.toLowerCase()}`, JSON.stringify({
                 type: banType,
+                reason: banReason || 'Violated community guidelines',
                 byAdmin: 'admin',
                 createdAt: new Date().toISOString(),
                 expiresAt

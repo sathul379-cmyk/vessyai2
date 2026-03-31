@@ -335,21 +335,26 @@
         let existing = document.getElementById('banModal');
         if (existing) existing.remove();
 
-        const durOptions = mode === 'perma'
-            ? `<option value="0" selected>Permanent Ban</option>`
-            : `<option value="30">30 min</option><option value="120" selected>2 hours</option><option value="480">8 hours</option><option value="1440">24 hours</option><option value="10080">7 days</option><option value="43200">30 days</option>`;
+        const presetOptions = mode === 'perma' ? '' :
+            `<option value="30">30 min</option><option value="120" selected>2 hours</option><option value="480">8 hours</option><option value="1440">24 hours</option><option value="10080">7 days</option><option value="custom">Custom time...</option>`;
 
         const div = document.createElement('div');
         div.className = 'ban-modal';
         div.id = 'banModal';
         div.innerHTML = `<div class="ban-modal-content">
             <h2><i class="fa-solid fa-gavel" style="color:#ff0055"></i> Ban User</h2>
-            <div class="subtitle">Action: <strong>${mode === 'temp' ? '🟡 Temporary Ban' : '🔴 Permanent Ban'}</strong> — Target: <strong>${esc(user)}</strong></div>
-            ${mode === 'temp' ? `<select id="banDur">${durOptions}</select>` : `<input type="hidden" id="banDur" value="0">`}
+            <div class="subtitle">Target: <strong>${esc(user)}</strong> — Action: <strong>${mode === 'temp' ? '🟡 Temporary' : '🔴 Permanent'}</strong></div>
+            ${mode === 'perma'
+                ? `<input type="hidden" id="banDur" value="0">`
+                : `<div style="font-size:11px;color:#555;margin-bottom:4px">Duration:</div>
+                   <select id="banDurSelect" onchange="durChanged()">${presetOptions}</select>
+                   <input type="text" id="banDurCustom" placeholder="e.g. 15 sec, 1 min, 4 hours" style="display:none;font-size:12px" oninput="durInputChanged()">`}
+            ${mode === 'perma'
+                ? `<input type="hidden" id="banDur" value="0">`
+                : ``}
             <div style="margin-bottom:16px">
-                <label style="display:flex;align-items:center;gap:8px;font-size:11px;color:#888;cursor:pointer">
-                    <input type="checkbox" id="ipBanToggle" style="margin:0;width:14px;height:14px;accent-color:#ff0055"> Also ban their IP
-                </label>
+                <div style="font-size:11px;color:#555;margin-bottom:4px">Reason (optional):</div>
+                <input type="text" id="banReason" placeholder="e.g. Spam, Toxic behavior" maxlength="200" style="font-size:12px">
             </div>
             <div class="ban-modal-row">
                 <button class="btn cancel" onclick="closeBanModal()">Cancel</button>
@@ -360,19 +365,58 @@
         div.addEventListener('click', e => { if (e.target === div) closeBanModal(); });
     }
 
+    function durChanged() {
+        const sel = document.getElementById('banDurSelect');
+        const custom = document.getElementById('banDurCustom');
+        custom.style.display = sel.value === 'custom' ? 'block' : 'none';
+        if (sel.value !== 'custom') custom.value = '';
+    }
+
+    function durInputChanged() {
+        const raw = document.getElementById('banDurCustom').value.toLowerCase().trim();
+        let mins = parseDuration(raw);
+        if (mins !== null) {
+            document.getElementById('banDur').value = mins;
+        }
+    }
+
+    function parseDuration(s) {
+        if (!s) return null;
+        const secs = s.match(/^(\d+)\s*(s|sec|sec|secs|second|seconds)$/);
+        if (secs) return Math.max((parseInt(secs[1]) / 60) || 0.02, 0.02);
+        const mins = s.match(/^(\d+)\s*(m|min|mins|minutes|minute)$/);
+        if (mins) return parseInt(mins[1]);
+        const hrs = s.match(/^(\d+)\s*(h|hr|hrs|hour|hours)$/);
+        if (hrs) return parseInt(hrs[1]) * 60;
+        const days = s.match(/^(\d+)\s*(d|day|days)$/);
+        if (days) return parseInt(days[1]) * 1440;
+        return null;
+    }
+
     function closeBanModal() {
         const el = document.getElementById('banModal');
         if (el) el.remove();
         banTarget = ''; banMode = '';
     }
 
+    function getBanDur() {
+        if (banMode === 'perma') return 0;
+        const sel = document.getElementById('banDurSelect');
+        if (!sel || sel.value !== 'custom') return parseInt(sel ? sel.value : 120) || 120;
+        const raw = document.getElementById('banDurCustom').value;
+        const mins = parseDuration(raw);
+        return mins !== null ? mins : null;
+    }
+
     async function execBan() {
         const user = banTarget;
         const mode = banMode;
-        const dur = parseInt(document.getElementById('banDur').value) || 0;
-        const alsoIp = document.getElementById('ipBanToggle').checked;
-        const btn = document.querySelector('#banModal .btn.exec');
+        const dur = getBanDur();
+        const reason = document.getElementById('banReason').value.trim();
 
+        if (mode === 'temp' && dur === null) { alert('Enter a valid duration (e.g. 15 sec, 5 min, 4 hours)'); return; }
+
+        const btn = document.querySelector('#banModal .btn.exec');
         btn.disabled = true;
         btn.textContent = 'Banning...';
 
@@ -385,35 +429,19 @@
                     action: 'ban-user',
                     username: user,
                     banType: mode === 'temp' ? 'temp' : 'perma',
-                    durationMinutes: dur
+                    durationMinutes: mode === 'temp' ? dur : 0,
+                    banReason: reason
                 })
             });
             const d = await r.json();
             if (d.error) { alert(d.error); return; }
-
-            // Also ban IP?
-            if (alsoIp) {
-                const ipRes = await fetch('https://api.ipify.org?format=json').catch(() => null);
-                if (ipRes) {
-                    const ipData = await ipRes.json();
-                    // Ban user's IP — we need to get it from session data or use the current client approach
-                    alert('Note: IP is logged server-side. Use client fetch for ban.');
-                }
-            }
-
             closeBanModal();
-            alert(d.message || 'Done!');
-            // Refresh data
-            const r2 = await fetch('/api/admin-data', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({adminPassword: adminPw}) });
-            const d2 = await r2.json();
-            allChats = d2.chats || {};
-            userBans = d2.userBans || [];
-            bannedIps = d2.bannedIps || [];
-            renderPanel();
+            alert(d.message || 'Banned!');
+            refreshData();
         } catch(e) {
             alert('Failed: ' + e.message);
             btn.disabled = false;
-            btn.textContent = banMode === 'temp' ? 'Temp Ban' : 'Permanent Ban';
+            btn.textContent = mode === 'temp' ? 'Temp Ban' : 'Permanent Ban';
         }
     }
 
@@ -427,11 +455,7 @@
             });
             const d = await r.json();
             alert(d.error || d.message);
-            const r2 = await fetch('/api/admin-data', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({adminPassword: adminPw}) });
-            const d2 = await r2.json();
-            userBans = d2.userBans || [];
-            bannedIps = d2.bannedIps || [];
-            renderPanel();
+            refreshData();
         } catch(e) { alert('Failed: ' + e.message); }
     }
 
@@ -453,9 +477,14 @@
     }
 
     function copyIp(ip) {
-        navigator.clipboard.writeText(ip).then(() => {
-            alert('IP copied: ' + ip);
-        });
+        navigator.clipboard.writeText(ip).then(() => alert('IP copied: ' + ip));
+    }
+
+    function refreshData() {
+        fetch('/api/admin-data', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({adminPassword: adminPw}) })
+            .then(r => r.json())
+            .then(d => { allChats = d.chats || {}; userBans = d.userBans || []; bannedIps = d.bannedIps || []; renderPanel(); })
+            .catch(e => console.error(e));
     }
     </script>
 </body>
