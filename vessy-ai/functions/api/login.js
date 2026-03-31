@@ -1,13 +1,46 @@
 export async function onRequestPost(context) {
     try {
         const { request, env } = context;
-        const { username, password } = await request.json();
+        const { username, password, clientIp } = await request.json();
 
         if (!username || !password) {
             return json({ error: 'Username and password required.' }, 400);
         }
 
         const kv = env.VESSY_CHATS;
+
+        // CHECK IP BAN
+        if (kv && clientIp) {
+            const ipBan = await kv.get(`ban-ip:${clientIp}`, 'json');
+            if (ipBan) {
+                if (ipBan.expiresAt && new Date() > new Date(ipBan.expiresAt)) {
+                    await kv.delete(`ban-ip:${clientIp}`);
+                    let registry = await kv.get('banned-ips:registry', 'json') || [];
+                    registry = registry.filter(x => x !== clientIp);
+                    await kv.put('banned-ips:registry', JSON.stringify(registry));
+                } else {
+                    const remaining = ipBan.expiresAt
+                        ? `${Math.ceil((new Date(ipBan.expiresAt) - Date.now()) / 60000)} min left`
+                        : 'permanent';
+                    return json({ error: `Your IP is banned (${remaining}). Contact support.` }, 403);
+                }
+            }
+        }
+
+        if (kv) {
+            // CHECK USER BAN
+            const banData = await kv.get(`ban:${username.toLowerCase()}`, 'json');
+            if (banData) {
+                if (banData.expiresAt && new Date() > new Date(banData.expiresAt)) {
+                    await kv.delete(`ban:${username.toLowerCase()}`);
+                } else {
+                    const remaining = banData.expiresAt
+                        ? `${Math.ceil((new Date(banData.expiresAt) - Date.now()) / 60000)} min left`
+                        : 'permanent';
+                    return json({ error: `Account banned (${remaining}). Contact support.` }, 403);
+                }
+            }
+        }
 
         if (kv) {
             const userData = await kv.get(`user:${username.toLowerCase()}`, 'json');

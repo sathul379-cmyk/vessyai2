@@ -131,7 +131,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const u = document.getElementById('loginUsername').value;
         const p = document.getElementById('loginPassword').value;
         try {
-            const r = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:u, password:p}) });
+            const ipRes = await fetch('https://api.ipify.org?format=json').catch(() => ({ ip: 'unknown' }));
+            const ip = ipRes.ip || 'unknown';
+            const r = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:u, password:p, clientIp: ip}) });
             const d = await r.json();
             if(d.success) {
                 localStorage.setItem('vessy_session', JSON.stringify({username:d.username, token:d.token}));
