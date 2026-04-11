@@ -46,6 +46,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const userInput = document.getElementById('userInput');
     let conversationHistory = [];
 
+    // Kick check every 30 seconds
+    const kickInterval = setInterval(async () => {
+        if (!currentUsername) return;
+        try {
+            const r = await fetch('/api/ban-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'check-kick', username: currentUsername, adminPassword: 'vessy@2015' })
+            });
+            const d = await r.json();
+            if (d.kicked) {
+                addMsg(`<p style="color:#ff0055;font-weight:700"><i class="fa-solid fa-arrow-right-from-bracket"></i> You have been kicked from Vessy OS. Reason: ${escHtml(d.reason)}</p>`, 'bot');
+                userInput.disabled = true;
+                userInput.placeholder = 'You have been kicked.';
+                clearInterval(kickInterval);
+            }
+        } catch {}
+    }, 30000);
+
     document.getElementById('sendBtn').addEventListener('click', handleSend);
     userInput.addEventListener('keypress', e => { if(e.key==='Enter') handleSend(); });
 

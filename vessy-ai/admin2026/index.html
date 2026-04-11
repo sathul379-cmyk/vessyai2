@@ -65,6 +65,7 @@
         .ban-btn.temp{background:rgba(255,170,0,.12);color:#ffaa00}.ban-btn.temp:hover{background:rgba(255,170,0,.22)}
         .ban-btn.perma{background:rgba(255,0,85,.12);color:#ff0055}.ban-btn.perma:hover{background:rgba(255,0,85,.22)}
         .ban-btn.unban{background:rgba(0,255,136,.1);color:#00ff88}.unban:hover{background:rgba(0,255,136,.18)}
+        .ban-btn.kick{background:rgba(255,255,255,.06);color:#888}.kick:hover{background:rgba(255,255,255,.1);color:#aaa}
         .banned-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:5px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
         .banned-badge.t{background:rgba(255,170,0,.08);color:#ffaa00}.banned-badge.t::before{content:'⏳'}
         .banned-badge.p{background:rgba(255,0,85,.08);color:#ff0055}.banned-badge.p::before{content:'🚫'}
@@ -232,7 +233,8 @@
                         <div class="ban-actions">`;
 
             if (!isBanned) {
-                html += `<button class="ban-btn temp" onclick="event.stopPropagation();openBanModal('${esc(u)}','temp')"><i class="fa-solid fa-clock"></i> Temp Ban</button>
+                html += `<button class="ban-btn kick" onclick="event.stopPropagation();doKick('${esc(u)}')"><i class="fa-solid fa-arrow-right-from-bracket"></i> Kick</button>
+                         <button class="ban-btn temp" onclick="event.stopPropagation();openBanModal('${esc(u)}','temp')"><i class="fa-solid fa-clock"></i> Temp Ban</button>
                          <button class="ban-btn perma" onclick="event.stopPropagation();openBanModal('${esc(u)}','perma')"><i class="fa-solid fa-ban"></i> Perma Ban</button>`;
             } else {
                 html += `<button class="ban-btn unban" onclick="event.stopPropagation();doUnbanUser('${esc(u)}')"><i class="fa-solid fa-check"></i> Unban</button>`;
@@ -480,6 +482,18 @@
         navigator.clipboard.writeText(ip).then(() => alert('IP copied: ' + ip));
     }
 
+    async function doKick(user) {
+        if (!confirm(`Kick "${user}" from Vessy OS?`)) return;
+        try {
+            const r = await fetch('/api/ban-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminPassword: adminPw, action: 'kick-user', username: user })
+            });
+            const d = await r.json();
+            alert(d.error || d.message);
+        } catch(e) { alert('Failed: ' + e.message); }
+    }
     function refreshData() {
         fetch('/api/admin-data', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({adminPassword: adminPw}) })
             .then(r => r.json())

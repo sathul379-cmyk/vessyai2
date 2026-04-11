@@ -1,7 +1,7 @@
 export async function onRequestPost(context) {
     try {
         const { request, env } = context;
-        const { adminPassword, action, username, ip, banType, durationMinutes } = await request.json();
+        const { adminPassword, action, username, ip, banType, durationMinutes, banReason } = await request.json();
 
         // Verify admin password
         if (!adminPassword || adminPassword !== 'vessy@2015') {
@@ -64,6 +64,25 @@ export async function onRequestPost(context) {
             registry = registry.filter(x => x !== ip);
             await kv.put('banned-ips:registry', JSON.stringify(registry));
             return json({ success: true, message: `IP ${ip} unbanned.` });
+        }
+
+        // KICK USER
+        if (action === 'kick-user' && username) {
+            await kv.put(`kick:${username.toLowerCase()}`, JSON.stringify({
+                by: 'admin',
+                time: new Date().toISOString(),
+                reason: reason || 'Kicked by admin'
+            }), { expirationTtl: 3600 });
+            return json({ success: true, message: `${username} kicked!` });
+        }
+
+        // CHECK KICK STATUS
+        if (action === 'check-kick' && username) {
+            const kick = await kv.get(`kick:${username.toLowerCase()}`, 'json');
+            if (kick) {
+                return json({ kicked: true, reason: kick.reason || 'You were kicked.' });
+            }
+            return json({ kicked: false });
         }
 
         return json({ error: 'Unknown action.' }, 400);
