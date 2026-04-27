@@ -12,7 +12,6 @@
     <div id="bgLayer" class="bg-default"></div>
     <div class="vignette"></div>
 
-    <!-- COOKIE BANNER -->
     <div id="cookieBanner" class="cookie-banner hidden">
         <div class="cookie-inner">
             <div class="cookie-text">
@@ -26,7 +25,6 @@
         </div>
     </div>
 
-    <!-- TERMS & CONDITIONS OVERLAY -->
     <div id="termsOverlay" class="overlay-screen">
         <div class="overlay-backdrop"></div>
         <div class="overlay-modal">
@@ -34,7 +32,7 @@
             <div class="overlay-header">
                 <div class="overlay-icon"><i class="fa-solid fa-shield-halved"></i></div>
                 <h1>Welcome to Vessy OS</h1>
-                <p class="overlay-subtitle">Version 31.1 — Please review our terms</p>
+                <p class="overlay-subtitle">Version 31.1 - Please review our terms</p>
             </div>
             <div class="overlay-body">
                 <div class="terms-section">
@@ -68,22 +66,20 @@
                 <label class="terms-checkbox-wrap" id="termsCheckWrap">
                     <input type="checkbox" id="termsCheckbox">
                     <span class="terms-checkmark"></span>
-                    <span class="terms-checkbox-label">I agree to the Terms & Conditions</span>
+                    <span class="terms-checkbox-label">I agree to the Terms &amp; Conditions</span>
                 </label>
                 <button id="termsAcceptBtn" class="primary-btn" disabled>
-                    <span>Accept & Continue</span><i class="fa-solid fa-arrow-right"></i>
+                    <span>Accept &amp; Continue</span><i class="fa-solid fa-arrow-right"></i>
                 </button>
                 <button id="termsDeclineBtn" class="ghost-btn">Decline</button>
             </div>
         </div>
     </div>
 
-    <!-- AUTH OVERLAY -->
     <div id="authOverlay" class="overlay-screen hidden">
         <div class="overlay-backdrop"></div>
         <div class="overlay-modal auth-modal">
             <div class="overlay-glow"></div>
-            <!-- LOGIN -->
             <div id="loginView" class="auth-view">
                 <div class="overlay-header">
                     <div class="overlay-icon" style="border-color:rgba(0,242,255,.2);"><i class="fa-solid fa-right-to-bracket" style="color:#00f2ff;"></i></div>
@@ -98,7 +94,6 @@
                     <div class="auth-switch">No account? <button onclick="switchAuth('signup')">Create one</button></div>
                 </div>
             </div>
-            <!-- SIGNUP -->
             <div id="signupView" class="auth-view hidden">
                 <div class="overlay-header">
                     <div class="overlay-icon" style="border-color:rgba(255,0,255,.2);"><i class="fa-solid fa-user-plus" style="color:#ff00ff;"></i></div>
@@ -116,10 +111,9 @@
         </div>
     </div>
 
-    <!-- MAIN UI -->
     <header>
         <div class="left-controls"><button id="menuBtn" class="glass-btn"><i class="fa-solid fa-bars"></i> APPS</button><div id="clock">00:00</div></div>
-        <div class="center-title"><span class="title-icon">◆</span> VESSY OS <span class="title-version">v31.1</span></div>
+        <div class="center-title"><span class="title-icon">&#9670;</span> VESSY OS <span class="title-version">v31.1</span></div>
         <div class="right-controls"><div class="user-badge" id="userBadge"><i class="fa-solid fa-user"></i><span id="userBadgeName">---</span></div><button id="settingsBtn" class="glass-btn icon-only"><i class="fa-solid fa-gear"></i></button></div>
     </header>
 
@@ -136,18 +130,31 @@
 
     <footer>
         <div class="dock">
-            <div class="dock-inner"><input type="text" id="userInput" placeholder="Ask Vessy OS..." autocomplete="off"><button id="sendBtn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button></div>
-            <div class="dock-copyright">© 2026 Vessy OS. All Rights Reserved.</div>
+            <div id="composerStatus" class="composer-status hidden"></div>
+            <div id="attachmentTray" class="attachment-tray hidden"></div>
+            <div class="dock-inner">
+                <div class="composer-tools">
+                    <button id="voiceBtn" class="tool-btn" type="button" title="Voice input"><i class="fa-solid fa-microphone"></i></button>
+                    <button id="voiceReplyBtn" class="tool-btn" type="button" title="Voice replies"><i class="fa-solid fa-volume-high"></i></button>
+                    <button id="fileUploadBtn" class="tool-btn" type="button" title="Upload file"><i class="fa-solid fa-paperclip"></i></button>
+                    <button id="imageUploadBtn" class="tool-btn" type="button" title="Upload image"><i class="fa-solid fa-image"></i></button>
+                </div>
+                <input type="file" id="fileUploadInput" class="hidden-input" multiple accept=".txt,.md,.json,.csv,.js,.ts,.html,.css,.xml,.rtf,text/*,application/json,text/csv">
+                <input type="file" id="imageUploadInput" class="hidden-input" multiple accept="image/*">
+                <input type="text" id="userInput" placeholder="Ask Vessy OS..." autocomplete="off">
+                <button id="sendBtn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+            <div class="dock-copyright">&copy; 2026 Vessy OS. All Rights Reserved.</div>
         </div>
     </footer>
 
     <div id="appModal" class="modal hidden">
-        <div class="modal-header"><div class="modal-dots"><span class="dot red" onclick="closeApp()"></span><span class="dot yellow"></span><span class="dot green"></span></div><span id="appTitle">App</span><button class="modal-close-btn" onclick="closeApp()">✕</button></div>
+        <div class="modal-header"><div class="modal-dots"><span class="dot red" onclick="closeApp()"></span><span class="dot yellow"></span><span class="dot green"></span></div><span id="appTitle">App</span><button class="modal-close-btn" onclick="closeApp()">&times;</button></div>
         <div class="modal-body" id="appContent"></div>
     </div>
 
     <div id="settingsModal" class="modal hidden small-modal">
-        <div class="modal-header"><span>Settings</span><button class="modal-close-btn" onclick="toggleSettings()">✕</button></div>
+        <div class="modal-header"><span>Settings</span><button class="modal-close-btn" onclick="toggleSettings()">&times;</button></div>
         <div class="modal-body settings-body">
             <div class="settings-section"><h3>Account</h3><div class="settings-user-card"><div class="settings-avatar"><i class="fa-solid fa-user"></i></div><div><div class="settings-user-name" id="settingsUsername">---</div></div></div><button class="settings-link-btn danger-link" onclick="logoutUser()">Sign Out</button></div>
             <div class="settings-section"><h3>Personalization</h3><div class="toggle-row"><span class="toggle-label">Enable Learning</span><label class="toggle-switch"><input type="checkbox" id="personalizationToggle" checked><span class="toggle-slider"></span></label></div><button class="settings-link-btn danger-link" id="deletePersonalizationBtn">Delete Learned Data</button></div>
