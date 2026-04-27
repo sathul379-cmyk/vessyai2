@@ -112,17 +112,75 @@
     </div>
 
     <header>
-        <div class="left-controls"><button id="menuBtn" class="glass-btn"><i class="fa-solid fa-bars"></i> APPS</button><div id="clock">00:00</div></div>
+        <div class="left-controls"><button id="menuBtn" class="glass-btn"><i class="fa-solid fa-bars"></i> MENU</button><div id="clock">00:00</div></div>
         <div class="center-title"><span class="title-icon">&#9670;</span> VESSY OS <span class="title-version">v31.1</span></div>
         <div class="right-controls"><div class="user-badge" id="userBadge"><i class="fa-solid fa-user"></i><span id="userBadgeName">---</span></div><button id="settingsBtn" class="glass-btn icon-only"><i class="fa-solid fa-gear"></i></button></div>
     </header>
 
-    <div id="appGrid" class="app-grid hidden">
-        <div class="app-grid-header"><span>Applications</span><button class="app-grid-close" onclick="document.getElementById('appGrid').classList.add('hidden')"><i class="fa-solid fa-xmark"></i></button></div>
-        <div class="app-grid-items">
-            <div class="app-item" onclick="launchApp('browser')"><div class="app-icon" style="background:rgba(255,255,255,0.05);"><i class="fa-solid fa-globe" style="color:#fff"></i></div><span>Browser</span></div>
+    <div id="drawerBackdrop" class="drawer-backdrop hidden"></div>
+    <aside id="sideDrawer" class="side-drawer hidden">
+        <div class="drawer-header">
+            <div>
+                <div class="drawer-title">Workspace</div>
+                <div class="drawer-subtitle">History and settings</div>
+            </div>
+            <button id="drawerCloseBtn" class="drawer-close"><i class="fa-solid fa-xmark"></i></button>
         </div>
-    </div>
+        <div class="drawer-tabs">
+            <button class="drawer-tab active" data-panel="historyPanel">History</button>
+            <button class="drawer-tab" data-panel="settingsPanel">Settings</button>
+        </div>
+        <div class="drawer-body">
+            <section id="historyPanel" class="drawer-panel">
+                <div class="drawer-section-label">Recent Chats</div>
+                <div id="historyList" class="history-list"></div>
+            </section>
+            <section id="settingsPanel" class="drawer-panel hidden">
+                <div class="drawer-section">
+                    <div class="drawer-section-label">Account</div>
+                    <div class="settings-user-card">
+                        <div class="settings-avatar"><i class="fa-solid fa-user"></i></div>
+                        <div>
+                            <div class="settings-user-name" id="drawerUsername">---</div>
+                            <div class="settings-user-email" id="drawerUserEmail">No email</div>
+                        </div>
+                    </div>
+                    <div class="settings-meta" id="drawerUserCreated">Created: --</div>
+                </div>
+
+                <div class="drawer-section">
+                    <div class="drawer-section-label">Voice</div>
+                    <div class="toggle-row"><span class="toggle-label">Voice Replies</span><label class="toggle-switch"><input type="checkbox" id="voiceReplyToggle"><span class="toggle-slider"></span></label></div>
+                    <div class="settings-field">
+                        <label for="voiceSelect">Voice</label>
+                        <select id="voiceSelect" class="settings-select"></select>
+                    </div>
+                </div>
+
+                <div class="drawer-section">
+                    <div class="drawer-section-label">Personalization</div>
+                    <div class="toggle-row"><span class="toggle-label">Enable Learning</span><label class="toggle-switch"><input type="checkbox" id="personalizationToggle" checked><span class="toggle-slider"></span></label></div>
+                    <div id="personalizationStatus" class="personalization-status inactive">Learning is currently off.</div>
+                    <button class="settings-link-btn danger-link" id="deletePersonalizationBtn">Delete Learned Data</button>
+                </div>
+
+                <div class="drawer-section">
+                    <div class="drawer-section-label">Background</div>
+                    <div class="bg-grid">
+                        <div class="bg-option" data-bg="default">Dark</div>
+                        <div class="bg-option" data-bg="blue">Neon</div>
+                        <div class="bg-option" data-bg="pink">Cyber</div>
+                    </div>
+                </div>
+
+                <div class="drawer-section">
+                    <div class="drawer-section-label">Account Actions</div>
+                    <button class="settings-link-btn" id="logoutBtn">Log Out</button>
+                    <button class="settings-link-btn danger-link" id="deleteAccountBtn">Delete Account</button>
+                </div>
+            </section>
+        </div>
+    </aside>
 
     <main id="chatWindow">
         <div class="message bot"><div class="bot-avatar"><i class="fa-solid fa-robot"></i></div><div class="glass-card"><p><strong>Vessy OS 31.1 Online.</strong><br>Type <code>Draw a cat</code> or <code>Video a sunset</code>.</p></div></div>
@@ -132,13 +190,16 @@
         <div class="dock">
             <div id="composerStatus" class="composer-status hidden"></div>
             <div id="attachmentTray" class="attachment-tray hidden"></div>
+            <div id="composerMenu" class="composer-menu hidden">
+                <button class="composer-menu-item" id="generateImageBtn"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Create image</span></button>
+                <button class="composer-menu-item" id="generateVideoBtn"><i class="fa-solid fa-film"></i><span>Create video</span></button>
+                <button class="composer-menu-item" id="fileUploadBtn"><i class="fa-solid fa-file-arrow-up"></i><span>Upload file</span></button>
+                <button class="composer-menu-item" id="imageUploadBtn"><i class="fa-solid fa-image"></i><span>Upload image</span></button>
+                <button class="composer-menu-item" id="cameraOpenBtn"><i class="fa-solid fa-camera"></i><span>Use camera</span></button>
+            </div>
             <div class="dock-inner">
-                <div class="composer-tools">
-                    <button id="voiceBtn" class="tool-btn" type="button" title="Voice input"><i class="fa-solid fa-microphone"></i></button>
-                    <button id="voiceReplyBtn" class="tool-btn" type="button" title="Voice replies"><i class="fa-solid fa-volume-high"></i></button>
-                    <button id="fileUploadBtn" class="tool-btn" type="button" title="Upload file"><i class="fa-solid fa-paperclip"></i></button>
-                    <button id="imageUploadBtn" class="tool-btn" type="button" title="Upload image"><i class="fa-solid fa-image"></i></button>
-                </div>
+                <button id="voiceBtn" class="tool-btn" type="button" title="Voice call"><i class="fa-solid fa-microphone"></i></button>
+                <button id="plusBtn" class="tool-btn plus-btn" type="button" title="More actions"><i class="fa-solid fa-plus"></i></button>
                 <input type="file" id="fileUploadInput" class="hidden-input" multiple accept=".txt,.md,.json,.csv,.js,.ts,.html,.css,.xml,.rtf,text/*,application/json,text/csv">
                 <input type="file" id="imageUploadInput" class="hidden-input" multiple accept="image/*">
                 <input type="text" id="userInput" placeholder="Ask Vessy OS..." autocomplete="off">
@@ -153,12 +214,15 @@
         <div class="modal-body" id="appContent"></div>
     </div>
 
-    <div id="settingsModal" class="modal hidden small-modal">
-        <div class="modal-header"><span>Settings</span><button class="modal-close-btn" onclick="toggleSettings()">&times;</button></div>
-        <div class="modal-body settings-body">
-            <div class="settings-section"><h3>Account</h3><div class="settings-user-card"><div class="settings-avatar"><i class="fa-solid fa-user"></i></div><div><div class="settings-user-name" id="settingsUsername">---</div></div></div><button class="settings-link-btn danger-link" onclick="logoutUser()">Sign Out</button></div>
-            <div class="settings-section"><h3>Personalization</h3><div class="toggle-row"><span class="toggle-label">Enable Learning</span><label class="toggle-switch"><input type="checkbox" id="personalizationToggle" checked><span class="toggle-slider"></span></label></div><button class="settings-link-btn danger-link" id="deletePersonalizationBtn">Delete Learned Data</button></div>
-            <div class="settings-section"><h3>Background</h3><div class="bg-grid"><div class="bg-option" onclick="setBg('default')">Dark</div><div class="bg-option" onclick="setBg('blue')">Neon</div><div class="bg-option" onclick="setBg('pink')">Cyber</div></div></div>
+    <div id="cameraModal" class="modal hidden camera-modal">
+        <div class="modal-header"><span>Camera</span><button class="modal-close-btn" id="cameraCloseBtn">&times;</button></div>
+        <div class="modal-body camera-body">
+            <video id="cameraPreview" autoplay playsinline muted></video>
+            <canvas id="cameraCanvas" class="hidden-canvas"></canvas>
+            <div class="camera-actions">
+                <button class="glass-btn" id="switchCameraBtn"><i class="fa-solid fa-rotate"></i> Switch Camera</button>
+                <button class="primary-btn camera-capture-btn" id="capturePhotoBtn"><span>Capture Photo</span><i class="fa-solid fa-camera"></i></button>
+            </div>
         </div>
     </div>
 

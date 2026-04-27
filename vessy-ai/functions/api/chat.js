@@ -10,6 +10,10 @@ export async function onRequestPost(context) {
         const model = hasVisionInput
             ? 'meta-llama/llama-4-scout-17b-16e-instruct'
             : 'llama-3.3-70b-versatile';
+        const kv = env.VESSY_CHATS;
+        const normalizedUsername = typeof username === 'string' ? username.toLowerCase() : '';
+        const storedSettings = kv && normalizedUsername ? await kv.get(`settings:${normalizedUsername}`, 'json') || {} : {};
+        const storedMemory = kv && normalizedUsername ? await kv.get(`memory:${normalizedUsername}`, 'json') || { snippets: [] } : { snippets: [] };
 
         let systemPrompt = `You are Vessy OS 31.1, a personalized AI assistant made by Athul Sanoj. The user is "${username || 'Guest'}".
 
@@ -20,11 +24,16 @@ Rules:
 - Only use the user's name when it genuinely adds warmth or clarity, and never in back-to-back replies.
 - If the user shares files or images, analyze them directly and talk about what you found.
 - For voice-call replies, sound like a real conversation: short natural sentences first, then details if needed.
+- Avoid filler phrases like "you know", "as an AI", or repeated generic compliments unless they truly fit.
 - Legal, medical, or financial advice must stay educational only and include a brief disclaimer.
 - Never help with illegal activities.`;
 
         if (personalization) {
             systemPrompt += `\n\nPersonalization:\n${personalization}`;
+        }
+
+        if (storedSettings.personalizationEnabled !== false && storedMemory.snippets?.length) {
+            systemPrompt += `\n\nLearned user details:\n- ${storedMemory.snippets.join('\n- ')}`;
         }
 
         if (mode === 'voice_call') {

@@ -1,22 +1,81 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const termsOverlay = document.getElementById('termsOverlay');
-    const termsCheckbox = document.getElementById('termsCheckbox');
-    const termsAcceptBtn = document.getElementById('termsAcceptBtn');
-    const authOverlay = document.getElementById('authOverlay');
-    const chatWindow = document.getElementById('chatWindow');
-    const userInput = document.getElementById('userInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const voiceBtn = document.getElementById('voiceBtn');
-    const voiceReplyBtn = document.getElementById('voiceReplyBtn');
-    const fileUploadBtn = document.getElementById('fileUploadBtn');
-    const imageUploadBtn = document.getElementById('imageUploadBtn');
-    const fileUploadInput = document.getElementById('fileUploadInput');
-    const imageUploadInput = document.getElementById('imageUploadInput');
-    const attachmentTray = document.getElementById('attachmentTray');
-    const composerStatus = document.getElementById('composerStatus');
-    const clockEl = document.getElementById('clock');
-    const restrictionStorageKey = 'vessy_restriction_notice';
-    const voiceReplyStorageKey = 'vessy_voice_reply_enabled';
+    const byId = id => document.getElementById(id);
+
+    const els = {
+        termsOverlay: byId('termsOverlay'),
+        termsCheckbox: byId('termsCheckbox'),
+        termsAcceptBtn: byId('termsAcceptBtn'),
+        authOverlay: byId('authOverlay'),
+        cookieBanner: byId('cookieBanner'),
+        cookieAcceptAll: byId('cookieAcceptAll'),
+        cookieEssentialOnly: byId('cookieEssentialOnly'),
+        chatWindow: byId('chatWindow'),
+        userInput: byId('userInput'),
+        sendBtn: byId('sendBtn'),
+        voiceBtn: byId('voiceBtn'),
+        plusBtn: byId('plusBtn'),
+        composerMenu: byId('composerMenu'),
+        fileUploadBtn: byId('fileUploadBtn'),
+        imageUploadBtn: byId('imageUploadBtn'),
+        generateImageBtn: byId('generateImageBtn'),
+        generateVideoBtn: byId('generateVideoBtn'),
+        cameraOpenBtn: byId('cameraOpenBtn'),
+        fileUploadInput: byId('fileUploadInput'),
+        imageUploadInput: byId('imageUploadInput'),
+        attachmentTray: byId('attachmentTray'),
+        composerStatus: byId('composerStatus'),
+        menuBtn: byId('menuBtn'),
+        settingsBtn: byId('settingsBtn'),
+        userBadge: byId('userBadge'),
+        drawerBackdrop: byId('drawerBackdrop'),
+        sideDrawer: byId('sideDrawer'),
+        drawerCloseBtn: byId('drawerCloseBtn'),
+        drawerTabs: Array.from(document.querySelectorAll('.drawer-tab')),
+        historyList: byId('historyList'),
+        drawerUsername: byId('drawerUsername'),
+        drawerUserEmail: byId('drawerUserEmail'),
+        drawerUserCreated: byId('drawerUserCreated'),
+        voiceReplyToggle: byId('voiceReplyToggle'),
+        voiceSelect: byId('voiceSelect'),
+        personalizationToggle: byId('personalizationToggle'),
+        personalizationStatus: byId('personalizationStatus'),
+        deletePersonalizationBtn: byId('deletePersonalizationBtn'),
+        logoutBtn: byId('logoutBtn'),
+        deleteAccountBtn: byId('deleteAccountBtn'),
+        bgOptions: Array.from(document.querySelectorAll('.bg-option')),
+        userBadgeName: byId('userBadgeName'),
+        settingsUsername: byId('settingsUsername'),
+        loginBtn: byId('loginBtn'),
+        signupBtn: byId('signupBtn'),
+        loginUsername: byId('loginUsername'),
+        loginPassword: byId('loginPassword'),
+        loginError: byId('loginError'),
+        signupUsername: byId('signupUsername'),
+        signupPassword: byId('signupPassword'),
+        signupError: byId('signupError'),
+        cameraModal: byId('cameraModal'),
+        cameraCloseBtn: byId('cameraCloseBtn'),
+        capturePhotoBtn: byId('capturePhotoBtn'),
+        switchCameraBtn: byId('switchCameraBtn'),
+        cameraPreview: byId('cameraPreview'),
+        cameraCanvas: byId('cameraCanvas'),
+        bgLayer: byId('bgLayer'),
+        appModal: byId('appModal'),
+        appTitle: byId('appTitle'),
+        appContent: byId('appContent'),
+        clock: byId('clock')
+    };
+
+    const STORAGE_KEYS = {
+        terms: 'vessy_terms_accepted',
+        cookies: 'vessy_cookies_choice',
+        session: 'vessy_session',
+        restriction: 'vessy_restriction_notice',
+        background: 'vessy_background',
+        voiceReply: 'vessy_voice_reply_enabled',
+        voiceName: 'vessy_voice_name'
+    };
+
     const MAX_ATTACHMENTS = 5;
     const MAX_TEXT_ATTACHMENT_CHARS = 6000;
     const MAX_IMAGE_ANALYSIS_BYTES = 3.5 * 1024 * 1024;
@@ -24,324 +83,141 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentUsername = null;
     let sessionToken = null;
+    let accountData = null;
     let restrictionTriggered = false;
-    let conversationHistory = [];
     let pendingAttachments = [];
+    let conversationHistory = [];
+    let voiceReplyEnabled = localStorage.getItem(STORAGE_KEYS.voiceReply) !== 'false';
+    let selectedVoiceName = localStorage.getItem(STORAGE_KEYS.voiceName) || '';
+    let availableVoices = [];
     let recognition = null;
     let recognitionActive = false;
     let voiceCallMode = false;
-    let isAssistantSpeaking = false;
-    let voiceReplyEnabled = localStorage.getItem(voiceReplyStorageKey) !== 'false';
-    let voiceInputSupported = false;
-    let voiceReplySupported = 'speechSynthesis' in window;
     let callModeResponsePending = false;
+    let isAssistantSpeaking = false;
+    let currentCameraStream = null;
+    let cameraDevices = [];
+    let currentCameraIndex = 0;
 
     initClock();
+    initCookieBanner();
     initTerms();
+    initBackground();
+    initDrawer();
+    initVoice();
+    initComposer();
+    initAuth();
+    initCameraModal();
+    initChromeActions();
+    consumeStoredRestrictionNotice();
     initSession();
-    initVoiceFeatures();
-    initUploadFeatures();
-    updateVoiceReplyButton();
-
-    sendBtn.addEventListener('click', () => handleSend({ fromVoice: false }));
-    userInput.addEventListener('keypress', event => {
-        if (event.key === 'Enter') handleSend({ fromVoice: false });
-    });
-
-    document.getElementById('loginBtn').addEventListener('click', async () => {
-        const username = document.getElementById('loginUsername').value;
-        const password = document.getElementById('loginPassword').value;
-
-        try {
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await response.json();
-
-            if (data.banned || data.restricted) {
-                showRestrictionScreen(data);
-                return;
-            }
-
-            if (data.success) {
-                localStorage.setItem('vessy_session', JSON.stringify({ username: data.username, token: data.token }));
-                currentUsername = data.username;
-                sessionToken = data.token;
-                authOverlay.classList.add('hidden');
-                onUserReady();
-            } else if (data.error) {
-                document.getElementById('loginError').textContent = data.error;
-            }
-        } catch {
-            document.getElementById('loginError').textContent = 'Connection Error';
-        }
-    });
-
-    document.getElementById('signupBtn').addEventListener('click', async () => {
-        const username = document.getElementById('signupUsername').value;
-        const password = document.getElementById('signupPassword').value;
-
-        if (username.toLowerCase() === 'admin') {
-            alert('Reserved username');
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/signup', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                localStorage.setItem('vessy_session', JSON.stringify({ username: data.username, token: data.token }));
-                currentUsername = data.username;
-                sessionToken = data.token;
-                authOverlay.classList.add('hidden');
-                onUserReady();
-            } else {
-                alert(data.error);
-            }
-        } catch {
-            alert('Connection Error');
-        }
-    });
 
     function initClock() {
-        updateClock();
-        setInterval(updateClock, 1000);
+        const update = () => {
+            if (els.clock) {
+                els.clock.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+        };
+        update();
+        setInterval(update, 1000);
     }
 
-    function updateClock() {
-        if (!clockEl) return;
-        const now = new Date();
-        clockEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    function initCookieBanner() {
+        if (!localStorage.getItem(STORAGE_KEYS.cookies)) {
+            els.cookieBanner.classList.remove('hidden');
+        }
+        els.cookieAcceptAll?.addEventListener('click', () => {
+            localStorage.setItem(STORAGE_KEYS.cookies, 'all');
+            els.cookieBanner.classList.add('hidden');
+        });
+        els.cookieEssentialOnly?.addEventListener('click', () => {
+            localStorage.setItem(STORAGE_KEYS.cookies, 'essential');
+            els.cookieBanner.classList.add('hidden');
+        });
     }
 
     function initTerms() {
-        if (!termsCheckbox || !termsAcceptBtn) return;
+        if (!els.termsCheckbox || !els.termsAcceptBtn) return;
 
-        termsCheckbox.checked = false;
-        termsAcceptBtn.disabled = true;
-
-        termsCheckbox.addEventListener('change', function () {
-            termsAcceptBtn.disabled = !this.checked;
-            termsAcceptBtn.style.opacity = this.checked ? '1' : '0.3';
+        els.termsCheckbox.checked = false;
+        els.termsAcceptBtn.disabled = true;
+        els.termsCheckbox.addEventListener('change', function () {
+            els.termsAcceptBtn.disabled = !this.checked;
+            els.termsAcceptBtn.style.opacity = this.checked ? '1' : '0.3';
         });
 
-        termsAcceptBtn.addEventListener('click', () => {
-            if (!termsCheckbox.checked) return;
-            localStorage.setItem('vessy_terms_accepted', 'true');
-            termsOverlay.classList.add('hidden');
-            if (!checkSession()) authOverlay.classList.remove('hidden');
+        els.termsAcceptBtn.addEventListener('click', () => {
+            if (!els.termsCheckbox.checked) return;
+            localStorage.setItem(STORAGE_KEYS.terms, 'true');
+            els.termsOverlay.classList.add('hidden');
+            if (!checkSession()) els.authOverlay.classList.remove('hidden');
         });
     }
 
-    function initSession() {
-        if (localStorage.getItem('vessy_terms_accepted') === 'true') {
-            termsOverlay.classList.add('hidden');
-            if (!checkSession()) authOverlay.classList.remove('hidden');
-        }
+    function initBackground() {
+        const storedBg = localStorage.getItem(STORAGE_KEYS.background) || 'default';
+        setBackground(storedBg);
+        els.bgOptions.forEach(option => {
+            option.addEventListener('click', () => setBackground(option.dataset.bg));
+        });
+    }
 
-        setInterval(() => {
-            if (currentUsername) checkRestrictionStatus(false);
-        }, 5000);
+    function setBackground(theme) {
+        els.bgLayer.className = `bg-${theme}`;
+        localStorage.setItem(STORAGE_KEYS.background, theme);
+        els.bgOptions.forEach(option => option.classList.toggle('selected-bg', option.dataset.bg === theme));
+    }
 
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible' && currentUsername) checkRestrictionStatus(false);
+    function initDrawer() {
+        const openDrawer = panelId => {
+            els.sideDrawer.classList.remove('hidden');
+            els.drawerBackdrop.classList.remove('hidden');
+            setDrawerPanel(panelId);
+        };
+        const closeDrawer = () => {
+            els.sideDrawer.classList.add('hidden');
+            els.drawerBackdrop.classList.add('hidden');
+        };
+
+        els.menuBtn?.addEventListener('click', () => openDrawer('historyPanel'));
+        els.settingsBtn?.addEventListener('click', () => openDrawer('settingsPanel'));
+        els.userBadge?.addEventListener('click', () => openDrawer('settingsPanel'));
+        els.drawerCloseBtn?.addEventListener('click', closeDrawer);
+        els.drawerBackdrop?.addEventListener('click', closeDrawer);
+        els.drawerTabs.forEach(tab => {
+            tab.addEventListener('click', () => setDrawerPanel(tab.dataset.panel));
         });
 
-        window.addEventListener('focus', () => {
-            if (currentUsername) checkRestrictionStatus(false);
+        window.toggleSettings = () => openDrawer('settingsPanel');
+    }
+
+    function setDrawerPanel(panelId) {
+        els.drawerTabs.forEach(tab => tab.classList.toggle('active', tab.dataset.panel === panelId));
+        ['historyPanel', 'settingsPanel'].forEach(id => {
+            byId(id)?.classList.toggle('hidden', id !== panelId);
         });
-
-        consumeStoredRestrictionNotice();
     }
 
-    function checkSession() {
-        try {
-            const session = JSON.parse(localStorage.getItem('vessy_session'));
-            if (session && session.username) {
-                currentUsername = session.username;
-                sessionToken = session.token;
-                onUserReady();
-                return true;
-            }
-        } catch {}
-        return false;
-    }
-
-    function onUserReady() {
-        document.getElementById('userBadgeName').textContent = currentUsername;
-        document.getElementById('settingsUsername').textContent = currentUsername;
-        checkRestrictionStatus(Boolean(readStoredRestrictionNotice()));
-    }
-
-    async function handleSend({ fromVoice }) {
-        const text = userInput.value.trim();
-        if (!text && pendingAttachments.length === 0) return;
-
-        if (text && pendingAttachments.length === 0 && /^(draw|generate image|image)/i.test(text)) {
-            addMsg(`<p>${escHtml(text)}</p>`, 'user');
-            userInput.value = '';
-            clearComposerStatus();
-            await generateImage(text.replace(/^(draw|generate image|image)\s*/i, ''));
-            return;
+    function initVoice() {
+        populateVoices();
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = populateVoices;
         }
 
-        if (text && pendingAttachments.length === 0 && /^(video|animate)/i.test(text)) {
-            addMsg(`<p>${escHtml(text)}</p>`, 'user');
-            userInput.value = '';
-            clearComposerStatus();
-            await generateVideo(text.replace(/^(video|animate)\s*/i, ''));
-            return;
-        }
-
-        const attachments = pendingAttachments.map(attachment => ({ ...attachment }));
-        const payload = buildMessagePayload(text, attachments, fromVoice);
-        addMsg(payload.userHtml, 'user');
-        clearComposer();
-        conversationHistory.push({ role: 'user', content: payload.historyText });
-        await triggerAI(payload.prompt, payload.historyText, payload.attachments, fromVoice ? 'voice_call' : 'chat');
-    }
-
-    async function triggerAI(prompt, historyText, attachments = [], mode = 'chat') {
-        const id = Date.now();
-        addMsg('...', 'bot', id);
-
-        try {
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    prompt,
-                    username: currentUsername,
-                    history: conversationHistory.slice(-10),
-                    attachments,
-                    mode
-                })
-            });
-            const data = await response.json();
-            const messageEl = document.getElementById(`msg-${id}`);
-            if (messageEl) {
-                messageEl.innerHTML = marked.parse(data.reply || data.error);
-                conversationHistory.push({ role: 'assistant', content: data.reply || data.error });
-                await maybeSpeakReply(data.reply, mode);
-                saveChat(historyText || prompt, data.reply || data.error || '');
-            }
-        } catch {
-            const messageEl = document.getElementById(`msg-${id}`);
-            if (messageEl) messageEl.textContent = 'Connection failed.';
-        } finally {
-            callModeResponsePending = false;
-            resumeVoiceCallIfNeeded();
-        }
-    }
-
-    async function generateImage(prompt) {
-        const id = Date.now();
-        addMsg(`<p>Generating "${escHtml(prompt)}"...</p><div class="img-skeleton" id="skel-${id}">Loading...</div>`, 'bot');
-        const imageUrl = `https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}?width=1024&height=768&nologo=true`;
-        const img = new Image();
-        img.className = 'generated-media';
-        img.alt = prompt;
-        img.src = imageUrl;
-
-        img.onload = () => {
-            const skeleton = document.getElementById(`skel-${id}`);
-            if (skeleton) skeleton.replaceWith(img);
-            saveChat(prompt, `[Image: ${prompt}]`);
-        };
-
-        img.onerror = () => {
-            const skeleton = document.getElementById(`skel-${id}`);
-            if (skeleton) skeleton.innerHTML = 'Image generation failed. Please try again.';
-        };
-    }
-
-    async function generateVideo(prompt) {
-        const id = Date.now();
-        addMsg(`<p>Rendering "${escHtml(prompt)}"...</p><div class="img-skeleton" id="skel-${id}">Rendering...</div>`, 'bot');
-        const videoUrl = `https://gen.pollinations.ai/video/${encodeURIComponent(prompt)}`;
-        const posterUrl = `https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}?width=1024&height=576&nologo=true`;
-        const video = document.createElement('video');
-        video.className = 'generated-media';
-        video.controls = true;
-        video.autoplay = true;
-        video.loop = true;
-        video.muted = true;
-        video.playsInline = true;
-        video.poster = posterUrl;
-        video.src = videoUrl;
-
-        video.onloadeddata = () => {
-            const skeleton = document.getElementById(`skel-${id}`);
-            if (skeleton) skeleton.replaceWith(video);
-            saveChat(prompt, `[Video: ${prompt}]`);
-        };
-
-        video.onerror = () => {
-            const skeleton = document.getElementById(`skel-${id}`);
-            if (!skeleton) return;
-            skeleton.innerHTML = `
-                <div style="display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;text-align:center;padding:18px">
-                    <div>Video generation failed.</div>
-                    <img src="${posterUrl}" alt="${escHtml(prompt)}" class="generated-media">
-                </div>`;
-        };
-    }
-
-    function addMsg(html, role, id) {
-        const wrapper = document.createElement('div');
-        wrapper.className = `message ${role}`;
-        if (role === 'bot') {
-            wrapper.innerHTML = `
-                <div class="bot-avatar"><i class="fa-solid fa-robot"></i></div>
-                <div class="glass-card" ${id ? `id="msg-${id}"` : ''}>${html}</div>`;
-        } else {
-            wrapper.innerHTML = `<div class="glass-card" ${id ? `id="msg-${id}"` : ''}>${html}</div>`;
-        }
-        chatWindow.appendChild(wrapper);
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-    }
-
-    async function saveChat(userMessage, aiMessage) {
-        try {
-            await fetch('/api/save-chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username: currentUsername,
-                    userMessage,
-                    aiMessage,
-                    timestamp: new Date()
-                })
-            });
-        } catch {}
-    }
-
-    function initVoiceFeatures() {
-        if (!voiceReplySupported) voiceReplyBtn.disabled = true;
-
-        voiceReplyBtn.addEventListener('click', () => {
-            if (!voiceReplySupported) return;
-            voiceReplyEnabled = !voiceReplyEnabled;
-            localStorage.setItem(voiceReplyStorageKey, String(voiceReplyEnabled));
-            updateVoiceReplyButton();
+        els.voiceReplyToggle.checked = voiceReplyEnabled;
+        els.voiceReplyToggle.addEventListener('change', () => {
+            voiceReplyEnabled = els.voiceReplyToggle.checked;
+            localStorage.setItem(STORAGE_KEYS.voiceReply, String(voiceReplyEnabled));
             setComposerStatus(voiceReplyEnabled ? 'Voice replies enabled.' : 'Voice replies disabled.', voiceReplyEnabled ? 'active' : '');
         });
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
-            voiceBtn.disabled = true;
+            els.voiceBtn.disabled = true;
             setComposerStatus('Voice call is not supported in this browser.', 'warn');
             return;
         }
 
-        voiceInputSupported = true;
         recognition = new SpeechRecognition();
         recognition.lang = 'en-US';
         recognition.interimResults = true;
@@ -349,14 +225,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         recognition.addEventListener('start', () => {
             recognitionActive = true;
-            voiceBtn.classList.add('recording');
-            setComposerStatus(voiceCallMode ? 'Voice call live. Say "Hey Vessy" or speak normally.' : 'Listening...', 'active');
+            els.voiceBtn.classList.add('recording');
+            setComposerStatus(voiceCallMode ? 'Voice call live. Say "Hey Vessy".' : 'Listening...', 'active');
         });
 
         recognition.addEventListener('end', () => {
             recognitionActive = false;
-            voiceBtn.classList.remove('recording');
-            if (voiceCallMode && !callModeResponsePending && !isAssistantSpeaking) {
+            els.voiceBtn.classList.remove('recording');
+            if (voiceCallMode && !callModeResponsePending && !isAssistantSpeaking && !els.userInput.disabled) {
                 startRecognition();
             } else if (!pendingAttachments.length) {
                 clearComposerStatus();
@@ -365,54 +241,74 @@ document.addEventListener('DOMContentLoaded', () => {
 
         recognition.addEventListener('error', event => {
             recognitionActive = false;
-            voiceBtn.classList.remove('recording');
+            els.voiceBtn.classList.remove('recording');
             setComposerStatus(`Voice input error: ${event.error}.`, 'warn');
         });
 
         recognition.addEventListener('result', event => {
             let finalTranscript = '';
             let interimTranscript = '';
-
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 const transcript = event.results[i][0].transcript;
-                if (event.results[i].isFinal) {
-                    finalTranscript += transcript;
-                } else {
-                    interimTranscript += transcript;
-                }
+                if (event.results[i].isFinal) finalTranscript += transcript;
+                else interimTranscript += transcript;
             }
 
             if (interimTranscript.trim()) {
-                setComposerStatus(voiceCallMode ? `Voice call live: ${interimTranscript.trim()}` : interimTranscript.trim(), 'active');
+                setComposerStatus(`Voice call live: ${interimTranscript.trim()}`, 'active');
             }
-
             if (finalTranscript.trim()) {
                 handleVoiceTranscript(finalTranscript.trim());
             }
         });
 
-        voiceBtn.addEventListener('click', async () => {
-            if (!recognition) return;
+        els.voiceBtn.addEventListener('click', async () => {
             if (voiceCallMode) {
                 stopVoiceCall();
                 return;
             }
-
             voiceCallMode = true;
             voiceReplyEnabled = true;
-            localStorage.setItem(voiceReplyStorageKey, 'true');
-            updateVoiceReplyButton();
-            setComposerStatus('Voice call connected. Say "Hey Vessy" to wake me.', 'active');
-            await speakReply('Voice call connected. Say Hey Vessy when you are ready.');
+            els.voiceReplyToggle.checked = true;
+            localStorage.setItem(STORAGE_KEYS.voiceReply, 'true');
+            setComposerStatus('Voice call connected. Say "Hey Vessy" to start.', 'active');
+            await speakReply('Voice call connected. Say Hey Vessy when you are ready.', true);
             startRecognition();
         });
+
+        els.voiceSelect.addEventListener('change', () => {
+            selectedVoiceName = els.voiceSelect.value;
+            localStorage.setItem(STORAGE_KEYS.voiceName, selectedVoiceName);
+        });
+    }
+
+    function populateVoices() {
+        if (!('speechSynthesis' in window) || !els.voiceSelect) {
+            if (els.voiceReplyToggle) els.voiceReplyToggle.disabled = true;
+            if (els.voiceSelect) els.voiceSelect.disabled = true;
+            return;
+        }
+        availableVoices = window.speechSynthesis.getVoices().filter(voice => voice.lang.toLowerCase().startsWith('en'));
+        if (!availableVoices.length) availableVoices = window.speechSynthesis.getVoices();
+        els.voiceSelect.innerHTML = availableVoices.map(voice => `<option value="${escapeAttr(voice.name)}">${escHtml(friendlyVoiceName(voice.name))}</option>`).join('');
+        if (!availableVoices.length) {
+            els.voiceSelect.innerHTML = '<option value="">Default voice</option>';
+        }
+        const hasSelected = availableVoices.some(voice => voice.name === selectedVoiceName);
+        if (!hasSelected && availableVoices[0]) selectedVoiceName = availableVoices[0].name;
+        els.voiceSelect.value = selectedVoiceName;
+    }
+
+    function friendlyVoiceName(name) {
+        return String(name)
+            .replace(/microsoft|google|english|united states|united kingdom|online|\(natural\)|desktop/ig, '')
+            .replace(/\s+/g, ' ')
+            .trim() || name;
     }
 
     function startRecognition() {
         if (!recognition || recognitionActive || isAssistantSpeaking) return;
-        try {
-            recognition.start();
-        } catch {}
+        try { recognition.start(); } catch {}
     }
 
     function stopRecognition() {
@@ -423,8 +319,8 @@ document.addEventListener('DOMContentLoaded', () => {
         voiceCallMode = false;
         callModeResponsePending = false;
         stopRecognition();
-        if (voiceReplySupported) window.speechSynthesis.cancel();
-        voiceBtn.classList.remove('recording');
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        els.voiceBtn.classList.remove('recording');
         clearComposerStatus();
     }
 
@@ -436,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!strippedWake && WAKE_PATTERN.test(normalized)) {
             stopRecognition();
             callModeResponsePending = true;
-            speakReply('Hello, how are you doing?').then(() => {
+            speakReply('Hello, how are you doing?', true).finally(() => {
                 callModeResponsePending = false;
                 resumeVoiceCallIfNeeded();
             });
@@ -446,39 +342,40 @@ document.addEventListener('DOMContentLoaded', () => {
         const finalText = WAKE_PATTERN.test(normalized) ? strippedWake : normalized;
         if (!finalText) return;
 
-        userInput.value = finalText;
+        els.userInput.value = finalText;
         stopRecognition();
         callModeResponsePending = true;
         handleSend({ fromVoice: true });
     }
 
-    async function maybeSpeakReply(reply, mode) {
-        if (!reply || !voiceReplyEnabled || !voiceReplySupported) return;
-        await speakReply(reply, mode === 'voice_call');
+    function resumeVoiceCallIfNeeded() {
+        if (voiceCallMode && !callModeResponsePending && !isAssistantSpeaking && !els.userInput.disabled) {
+            startRecognition();
+        }
     }
 
-    function speakReply(markdownText, forceConversationTone = false) {
+    async function speakReply(markdownText, forceSpokenTone = false) {
         return new Promise(resolve => {
-            if (!voiceReplySupported) {
+            if (!('speechSynthesis' in window) || !voiceReplyEnabled) {
                 resolve();
                 return;
             }
-
-            const plainText = String(markdownText)
+            const plainText = String(markdownText || '')
                 .replace(/```[\s\S]*?```/g, ' code block ')
                 .replace(/`([^`]+)`/g, '$1')
                 .replace(/\[(.*?)\]\((.*?)\)/g, '$1')
                 .replace(/[#>*_~-]/g, ' ')
                 .replace(/\s+/g, ' ')
                 .trim();
-
             if (!plainText) {
                 resolve();
                 return;
             }
 
             const utterance = new SpeechSynthesisUtterance(plainText);
-            utterance.rate = forceConversationTone ? 1.02 : 1;
+            const selectedVoice = availableVoices.find(voice => voice.name === selectedVoiceName);
+            if (selectedVoice) utterance.voice = selectedVoice;
+            utterance.rate = forceSpokenTone ? 1.02 : 0.98;
             utterance.pitch = 1;
             utterance.onstart = () => {
                 isAssistantSpeaking = true;
@@ -494,32 +391,65 @@ document.addEventListener('DOMContentLoaded', () => {
                 resolve();
                 resumeVoiceCallIfNeeded();
             };
-
             window.speechSynthesis.cancel();
             window.speechSynthesis.speak(utterance);
         });
     }
 
-    function resumeVoiceCallIfNeeded() {
-        if (voiceCallMode && !callModeResponsePending && !isAssistantSpeaking && !userInput.disabled) {
-            startRecognition();
-        }
-    }
+    function initComposer() {
+        els.plusBtn.addEventListener('click', () => {
+            els.composerMenu.classList.toggle('hidden');
+        });
 
-    function updateVoiceReplyButton() {
-        voiceReplyBtn.classList.toggle('active', voiceReplySupported && voiceReplyEnabled);
-    }
+        document.addEventListener('click', event => {
+            if (!els.composerMenu.contains(event.target) && !els.plusBtn.contains(event.target)) {
+                els.composerMenu.classList.add('hidden');
+            }
+        });
 
-    function initUploadFeatures() {
-        fileUploadBtn.addEventListener('click', () => fileUploadInput.click());
-        imageUploadBtn.addEventListener('click', () => imageUploadInput.click());
+        els.sendBtn.addEventListener('click', () => handleSend({ fromVoice: false }));
+        els.userInput.addEventListener('keypress', event => {
+            if (event.key === 'Enter') handleSend({ fromVoice: false });
+        });
 
-        fileUploadInput.addEventListener('change', async event => {
+        els.fileUploadBtn.addEventListener('click', () => {
+            els.fileUploadInput.click();
+            els.composerMenu.classList.add('hidden');
+        });
+        els.imageUploadBtn.addEventListener('click', () => {
+            els.imageUploadInput.click();
+            els.composerMenu.classList.add('hidden');
+        });
+        els.generateImageBtn.addEventListener('click', async () => {
+            els.composerMenu.classList.add('hidden');
+            const prompt = els.userInput.value.trim();
+            if (!prompt) {
+                setComposerStatus('Type an image prompt first, then tap Create image.', 'warn');
+                return;
+            }
+            addMsg(`<p>${escHtml(`Image ${prompt}`)}</p>`, 'user');
+            els.userInput.value = '';
+            clearComposerStatus();
+            await generateImage(prompt);
+        });
+        els.generateVideoBtn.addEventListener('click', async () => {
+            els.composerMenu.classList.add('hidden');
+            const prompt = els.userInput.value.trim();
+            if (!prompt) {
+                setComposerStatus('Type a video prompt first, then tap Create video.', 'warn');
+                return;
+            }
+            addMsg(`<p>${escHtml(`Video ${prompt}`)}</p>`, 'user');
+            els.userInput.value = '';
+            clearComposerStatus();
+            await generateVideo(prompt);
+        });
+
+        els.fileUploadInput.addEventListener('change', async event => {
             await addSelectedFiles(Array.from(event.target.files || []), 'file');
             event.target.value = '';
         });
-
-        imageUploadInput.addEventListener('change', async event => {
+        els.imageUploadInput.addEventListener('change', async event => {
             await addSelectedFiles(Array.from(event.target.files || []), 'image');
             event.target.value = '';
         });
@@ -527,19 +457,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function addSelectedFiles(files, mode) {
         if (!files.length) return;
-
         const openSlots = MAX_ATTACHMENTS - pendingAttachments.length;
         if (openSlots <= 0) {
             setComposerStatus(`You can attach up to ${MAX_ATTACHMENTS} items at a time.`, 'warn');
             return;
         }
-
         const selectedFiles = files.slice(0, openSlots);
         for (const file of selectedFiles) {
-            const attachment = await normalizeAttachment(file, mode);
-            pendingAttachments.push(attachment);
+            pendingAttachments.push(await normalizeAttachment(file, mode));
         }
-
         renderAttachmentTray();
         setComposerStatus(`${pendingAttachments.length} attachment${pendingAttachments.length === 1 ? '' : 's'} ready to send.`, 'active');
     }
@@ -565,7 +491,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 attachment.analysisDataUrl = dataUrl;
                 attachment.note = 'Ready for image analysis.';
             } else {
-                attachment.note = 'Image too large for deep analysis, sending preview metadata only.';
+                attachment.note = 'Image is too large for deep analysis.';
             }
             return attachment;
         }
@@ -573,16 +499,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isTextReadable(file)) {
             const raw = await file.text();
             attachment.extractedText = raw.slice(0, MAX_TEXT_ATTACHMENT_CHARS);
-            attachment.note = raw.length > MAX_TEXT_ATTACHMENT_CHARS ? 'Text preview truncated before analysis.' : 'Ready for file analysis.';
+            attachment.note = raw.length > MAX_TEXT_ATTACHMENT_CHARS ? 'Text preview truncated.' : 'Ready for analysis.';
         } else {
-            attachment.note = 'Attached as metadata only.';
+            attachment.note = 'Metadata only.';
         }
 
         return attachment;
     }
 
     function renderAttachmentTray() {
-        attachmentTray.innerHTML = pendingAttachments.map(attachment => `
+        els.attachmentTray.innerHTML = pendingAttachments.map(attachment => `
             <div class="attachment-chip">
                 ${attachment.kind === 'image'
                     ? `<img class="attachment-thumb" src="${attachment.previewUrl}" alt="${escHtml(attachment.name)}">`
@@ -591,36 +517,35 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="attachment-name">${escHtml(attachment.name)}</div>
                     <div class="attachment-subtext">${escHtml(attachment.size)} - ${escHtml(attachment.note || 'Ready')}</div>
                 </div>
-                <button class="attachment-remove" type="button" data-attachment-id="${attachment.id}"><i class="fa-solid fa-xmark"></i></button>
+                <button class="attachment-remove" type="button" data-id="${attachment.id}"><i class="fa-solid fa-xmark"></i></button>
             </div>
         `).join('');
 
-        attachmentTray.classList.toggle('hidden', pendingAttachments.length === 0);
-        imageUploadBtn.classList.toggle('image-active', pendingAttachments.some(item => item.kind === 'image'));
-
-        attachmentTray.querySelectorAll('.attachment-remove').forEach(button => {
-            button.addEventListener('click', () => removeAttachment(button.dataset.attachmentId));
+        els.attachmentTray.classList.toggle('hidden', pendingAttachments.length === 0);
+        els.attachmentTray.querySelectorAll('.attachment-remove').forEach(button => {
+            button.addEventListener('click', () => {
+                pendingAttachments = pendingAttachments.filter(item => item.id !== button.dataset.id);
+                renderAttachmentTray();
+                if (!pendingAttachments.length) clearComposerStatus();
+            });
         });
     }
 
-    function removeAttachment(attachmentId) {
-        pendingAttachments = pendingAttachments.filter(item => item.id !== attachmentId);
-        renderAttachmentTray();
+    async function handleSend({ fromVoice }) {
+        const text = els.userInput.value.trim();
+        if (!text && pendingAttachments.length === 0) return;
 
-        if (pendingAttachments.length) {
-            setComposerStatus(`${pendingAttachments.length} attachment${pendingAttachments.length === 1 ? '' : 's'} ready to send.`, 'active');
-        } else if (!recognitionActive) {
-            clearComposerStatus();
-        }
+        const attachments = pendingAttachments.map(item => ({ ...item }));
+        const payload = buildMessagePayload(text, attachments, fromVoice);
+        addMsg(payload.userHtml, 'user', `hist-${conversationHistory.length}`);
+        clearComposer();
+        conversationHistory.push({ role: 'user', content: payload.historyText });
+        await triggerAI(payload.prompt, payload.historyText, payload.attachments, fromVoice ? 'voice_call' : 'chat');
     }
 
     function buildMessagePayload(text, attachments, fromVoice) {
         const cleanText = text.trim();
-        const summaryLines = attachments.map(attachment => {
-            const label = attachment.kind === 'image' ? 'Image' : 'File';
-            return `[${label}] ${attachment.name} (${attachment.size})`;
-        });
-
+        const attachmentSummaries = attachments.map(attachment => `[${attachment.kind === 'image' ? 'Image' : 'File'}] ${attachment.name} (${attachment.size})`);
         const promptSections = attachments.map(attachment => {
             if (attachment.kind === 'image') {
                 return `Uploaded image: ${attachment.name}\nType: ${attachment.mimeType}\nSize: ${attachment.size}\nNote: ${attachment.note}`;
@@ -631,44 +556,513 @@ document.addEventListener('DOMContentLoaded', () => {
             return `Uploaded file: ${attachment.name}\nType: ${attachment.mimeType}\nSize: ${attachment.size}\nNote: ${attachment.note}`;
         });
 
-        const historyText = [cleanText || 'Shared attachments.', ...summaryLines].filter(Boolean).join('\n');
         const prompt = [
             fromVoice ? `Voice request: ${cleanText || 'Please help with these attachments.'}` : cleanText || 'Please help with these attachments.',
-            attachments.length ? `Attachments:\n${promptSections.join('\n\n')}` : ''
+            promptSections.length ? `Attachments:\n${promptSections.join('\n\n')}` : ''
         ].filter(Boolean).join('\n\n');
 
         const attachmentHtml = attachments.length ? `
             <div class="message-attachments">
                 ${attachments.map(attachment => attachment.kind === 'image'
                     ? `<div class="message-attachment-chip"><img src="${attachment.previewUrl}" alt="${escHtml(attachment.name)}"><span>${escHtml(attachment.name)}</span></div>`
-                    : `<div class="message-attachment-chip"><i class="fa-solid fa-file-lines"></i><span>${escHtml(attachment.name)}</span></div>`).join('')}
+                    : `<div class="message-attachment-chip"><i class="fa-solid fa-file-lines"></i><span>${escHtml(attachment.name)}</span></div>`
+                ).join('')}
             </div>` : '';
 
         return {
             prompt,
-            historyText,
+            historyText: [cleanText || 'Shared attachments.', ...attachmentSummaries].filter(Boolean).join('\n'),
             userHtml: `${cleanText ? `<p>${escHtml(cleanText)}</p>` : '<p>Shared attachments.</p>'}${attachmentHtml}`,
             attachments
         };
     }
 
     function clearComposer() {
-        userInput.value = '';
+        els.userInput.value = '';
         pendingAttachments = [];
         renderAttachmentTray();
-        if (!recognitionActive) clearComposerStatus();
+        clearComposerStatus();
     }
 
-    function initSessionControls() {}
+    async function triggerAI(prompt, historyText, attachments, mode) {
+        const id = Date.now();
+        addMsg('...', 'bot', id);
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt,
+                    username: currentUsername,
+                    history: conversationHistory.slice(-10),
+                    attachments,
+                    mode
+                })
+            });
+            const data = await response.json();
+            const messageEl = byId(`msg-${id}`);
+            if (messageEl) {
+                messageEl.innerHTML = marked.parse(data.reply || data.error || 'No reply.');
+                conversationHistory.push({ role: 'assistant', content: data.reply || data.error || 'No reply.' });
+                await speakReply(data.reply || '', mode === 'voice_call');
+                saveChat(historyText || prompt, data.reply || data.error || '');
+                renderHistoryList();
+            }
+        } catch {
+            const messageEl = byId(`msg-${id}`);
+            if (messageEl) messageEl.textContent = 'Connection failed.';
+        } finally {
+            callModeResponsePending = false;
+            resumeVoiceCallIfNeeded();
+        }
+    }
+
+    async function generateImage(prompt) {
+        const id = Date.now();
+        addMsg(`<p>Generating "${escHtml(prompt)}"...</p><div class="img-skeleton" id="skel-${id}">Loading...</div>`, 'bot');
+        const primaryUrl = `https://pollinations.ai/p/${encodeURIComponent(prompt)}`;
+        const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=768&nologo=true`;
+        const img = new Image();
+        img.className = 'generated-media';
+        img.alt = prompt;
+        img.src = primaryUrl;
+        img.onload = () => {
+            const skeleton = byId(`skel-${id}`);
+            if (skeleton) skeleton.replaceWith(img);
+            saveChat(prompt, `[Image: ${prompt}]`);
+        };
+        img.onerror = () => {
+            img.src = fallbackUrl;
+            img.onerror = () => {
+                const skeleton = byId(`skel-${id}`);
+                if (skeleton) skeleton.textContent = 'Image generation failed.';
+            };
+        };
+    }
+
+    async function generateVideo(prompt) {
+        const id = Date.now();
+        addMsg(`<p>Rendering "${escHtml(prompt)}"...</p><div class="img-skeleton" id="skel-${id}">Rendering...</div>`, 'bot');
+        const videoUrl = `https://gen.pollinations.ai/video/${encodeURIComponent(prompt)}`;
+        const posterUrl = `https://pollinations.ai/p/${encodeURIComponent(prompt)}`;
+        const video = document.createElement('video');
+        video.className = 'generated-media';
+        video.controls = true;
+        video.autoplay = true;
+        video.loop = true;
+        video.muted = true;
+        video.playsInline = true;
+        video.poster = posterUrl;
+        video.src = videoUrl;
+        video.onloadeddata = () => {
+            const skeleton = byId(`skel-${id}`);
+            if (skeleton) skeleton.replaceWith(video);
+            saveChat(prompt, `[Video: ${prompt}]`);
+        };
+        video.onerror = () => {
+            const skeleton = byId(`skel-${id}`);
+            if (!skeleton) return;
+            skeleton.innerHTML = `<div style="display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;text-align:center;padding:18px"><div>Video generation is unavailable right now.</div><img src="${posterUrl}" alt="${escHtml(prompt)}" class="generated-media"></div>`;
+        };
+    }
+
+    function addMsg(html, role, id) {
+        const wrapper = document.createElement('div');
+        wrapper.className = `message ${role}`;
+        const anchorId = id ? `id="msg-${id}"` : '';
+        if (role === 'bot') {
+            wrapper.innerHTML = `<div class="bot-avatar"><i class="fa-solid fa-robot"></i></div><div class="glass-card" ${anchorId}>${html}</div>`;
+        } else {
+            wrapper.innerHTML = `<div class="glass-card" ${anchorId}>${html}</div>`;
+        }
+        els.chatWindow.appendChild(wrapper);
+        els.chatWindow.scrollTop = els.chatWindow.scrollHeight;
+    }
+
+    async function saveChat(userMessage, aiMessage) {
+        try {
+            await fetch('/api/save-chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: currentUsername,
+                    userMessage,
+                    aiMessage,
+                    timestamp: new Date()
+                })
+            });
+        } catch {}
+    }
+
+    function initAuth() {
+        els.loginBtn.addEventListener('click', async () => {
+            const username = els.loginUsername.value;
+            const password = els.loginPassword.value;
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await response.json();
+                if (data.banned || data.restricted) {
+                    showRestrictionScreen(data);
+                    return;
+                }
+                if (data.success) {
+                    localStorage.setItem(STORAGE_KEYS.session, JSON.stringify({ username: data.username, token: data.token }));
+                    currentUsername = data.username;
+                    sessionToken = data.token;
+                    els.authOverlay.classList.add('hidden');
+                    await afterLogin();
+                } else {
+                    els.loginError.textContent = data.error || 'Login failed.';
+                }
+            } catch {
+                els.loginError.textContent = 'Connection Error';
+            }
+        });
+
+        els.signupBtn.addEventListener('click', async () => {
+            const username = els.signupUsername.value;
+            const password = els.signupPassword.value;
+            const email = byId('signupEmail').value;
+            if (username.toLowerCase() === 'admin') {
+                alert('Reserved username');
+                return;
+            }
+            try {
+                const response = await fetch('/api/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, email })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    localStorage.setItem(STORAGE_KEYS.session, JSON.stringify({ username: data.username, token: data.token }));
+                    currentUsername = data.username;
+                    sessionToken = data.token;
+                    els.authOverlay.classList.add('hidden');
+                    await afterLogin();
+                } else {
+                    els.signupError.textContent = data.error || 'Signup failed.';
+                }
+            } catch {
+                els.signupError.textContent = 'Connection Error';
+            }
+        });
+
+        window.switchAuth = view => {
+            byId('loginView').classList.toggle('hidden', view !== 'login');
+            byId('signupView').classList.toggle('hidden', view !== 'signup');
+        };
+
+        window.togglePw = (inputId, button) => {
+            const input = byId(inputId);
+            if (!input) return;
+            const reveal = input.type === 'password';
+            input.type = reveal ? 'text' : 'password';
+            const icon = button.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-eye', !reveal);
+                icon.classList.toggle('fa-eye-slash', reveal);
+            }
+        };
+    }
+
+    async function initSession() {
+        if (localStorage.getItem(STORAGE_KEYS.terms) === 'true') {
+            els.termsOverlay.classList.add('hidden');
+            if (!checkSession()) els.authOverlay.classList.remove('hidden');
+        }
+
+        setInterval(() => {
+            if (currentUsername) checkRestrictionStatus(false);
+        }, 5000);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && currentUsername) checkRestrictionStatus(false);
+        });
+        window.addEventListener('focus', () => {
+            if (currentUsername) checkRestrictionStatus(false);
+        });
+    }
+
+    function checkSession() {
+        try {
+            const session = JSON.parse(localStorage.getItem(STORAGE_KEYS.session));
+            if (session && session.username && session.token) {
+                currentUsername = session.username;
+                sessionToken = session.token;
+                afterLogin();
+                return true;
+            }
+        } catch {}
+        return false;
+    }
+
+    async function afterLogin() {
+        els.userBadgeName.textContent = currentUsername;
+        await loadAccountData();
+        await loadChatHistory();
+        checkRestrictionStatus(Boolean(readStoredRestrictionNotice()));
+    }
+
+    async function loadAccountData() {
+        if (!currentUsername || !sessionToken) return;
+        try {
+            const response = await fetch('/api/account', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'get',
+                    username: currentUsername,
+                    token: sessionToken
+                })
+            });
+            const data = await response.json();
+            if (data.error) return;
+            accountData = data;
+            els.drawerUsername.textContent = data.username || currentUsername;
+            els.drawerUserEmail.textContent = data.email || 'No email';
+            els.drawerUserCreated.textContent = data.createdAt ? `Created: ${new Date(data.createdAt).toLocaleString()}` : 'Created: --';
+            const enabled = data.settings?.personalizationEnabled !== false;
+            els.personalizationToggle.checked = enabled;
+            updatePersonalizationStatus(enabled, data.memory || []);
+        } catch {}
+    }
+
+    async function saveSettings(settings) {
+        if (!currentUsername || !sessionToken) return;
+        await fetch('/api/account', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'save-settings',
+                username: currentUsername,
+                token: sessionToken,
+                settings
+            })
+        });
+    }
+
+    function updatePersonalizationStatus(enabled, memory) {
+        els.personalizationStatus.classList.remove('active', 'inactive');
+        els.personalizationStatus.classList.add(enabled ? 'active' : 'inactive');
+        if (!enabled) {
+            els.personalizationStatus.textContent = 'Learning is currently off.';
+            return;
+        }
+        const count = Array.isArray(memory) ? memory.length : 0;
+        els.personalizationStatus.textContent = count ? `Learning is on. ${count} remembered detail${count === 1 ? '' : 's'} saved.` : 'Learning is on, but nothing has been learned yet.';
+    }
+
+    async function loadChatHistory() {
+        if (!currentUsername) return;
+        try {
+            const response = await fetch('/api/chat-history', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUsername })
+            });
+            const data = await response.json();
+            const history = Array.isArray(data.history) ? data.history : [];
+            conversationHistory = history
+                .filter(item => item.role === 'user' || item.role === 'assistant')
+                .map(item => ({ role: item.role, content: item.content, timestamp: item.timestamp || null }));
+            renderLoadedHistory(history);
+            renderHistoryList();
+        } catch {}
+    }
+
+    function renderLoadedHistory(history) {
+        els.chatWindow.innerHTML = '';
+        if (!history.length) {
+            addMsg('<p><strong>Vessy OS 31.1 Online.</strong><br>Type <code>Draw a cat</code> or <code>Video a sunset</code>.</p>', 'bot');
+            return;
+        }
+        history.forEach((item, index) => {
+            const id = item.role === 'user' ? `hist-${index}` : '';
+            if (item.role === 'assistant') {
+                addMsg(marked.parse(item.content || ''), 'bot');
+            } else {
+                addMsg(`<p>${escHtml(item.content || '')}</p>`, 'user', id);
+            }
+        });
+    }
+
+    function renderHistoryList() {
+        const items = conversationHistory.filter(item => item.role === 'user').slice(-25).reverse();
+        if (!items.length) {
+            els.historyList.innerHTML = '<div class="history-item empty">No chat history yet.</div>';
+            return;
+        }
+        els.historyList.innerHTML = items.map((item, index) => {
+            const text = String(item.content || '').trim();
+            const title = text.length > 72 ? `${text.slice(0, 72)}...` : text || 'Untitled chat';
+            const preview = text.length > 120 ? `${text.slice(0, 120)}...` : text;
+            const time = item.timestamp ? new Date(item.timestamp).toLocaleString() : 'Recent';
+            return `<button class="history-item" data-target="${conversationHistory.lastIndexOf(item)}"><div class="history-title">${escHtml(title)}</div><div class="history-meta">${escHtml(time)}</div><div class="history-preview">${escHtml(preview)}</div></button>`;
+        }).join('');
+        els.historyList.querySelectorAll('.history-item').forEach(button => {
+            button.addEventListener('click', () => {
+                const targetIndex = Number(button.dataset.target);
+                const targetEl = byId(`hist-${targetIndex}`);
+                if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+        });
+    }
+
+    function initChromeActions() {
+        els.personalizationToggle.addEventListener('change', async () => {
+            await saveSettings({ personalizationEnabled: els.personalizationToggle.checked });
+            const memory = accountData?.memory || [];
+            updatePersonalizationStatus(els.personalizationToggle.checked, memory);
+        });
+
+        els.deletePersonalizationBtn.addEventListener('click', async () => {
+            if (!confirm('Delete all learned personalization data?')) return;
+            await fetch('/api/account', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'clear-memory',
+                    username: currentUsername,
+                    token: sessionToken
+                })
+            });
+            if (accountData) accountData.memory = [];
+            updatePersonalizationStatus(els.personalizationToggle.checked, []);
+            setComposerStatus('Learned data deleted.', 'active');
+        });
+
+        els.logoutBtn.addEventListener('click', logoutUser);
+        els.deleteAccountBtn.addEventListener('click', async () => {
+            if (!confirm('Delete your account permanently? This cannot be undone.')) return;
+            const response = await fetch('/api/account', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'delete-account',
+                    username: currentUsername,
+                    token: sessionToken
+                })
+            });
+            const data = await response.json();
+            if (data.success) {
+                logoutUser();
+            } else {
+                setComposerStatus(data.error || 'Could not delete account.', 'warn');
+            }
+        });
+
+        window.logoutUser = logoutUser;
+        window.setBg = setBackground;
+        window.closeApp = () => els.appModal.classList.add('hidden');
+        window.launchApp = app => {
+            if (app === 'browser') {
+                els.appModal.classList.remove('hidden');
+                els.appTitle.textContent = 'Browser';
+                els.appContent.innerHTML = '<iframe src="https://www.wikipedia.org"></iframe>';
+            }
+        };
+    }
+
+    function logoutUser() {
+        localStorage.removeItem(STORAGE_KEYS.session);
+        localStorage.removeItem(STORAGE_KEYS.restriction);
+        location.reload();
+    }
+
+    function initCameraModal() {
+        els.cameraOpenBtn.addEventListener('click', async () => {
+            els.composerMenu.classList.add('hidden');
+            await openCamera();
+        });
+        els.cameraCloseBtn.addEventListener('click', closeCameraModal);
+        els.capturePhotoBtn.addEventListener('click', capturePhotoFromCamera);
+        els.switchCameraBtn.addEventListener('click', async () => {
+            if (cameraDevices.length < 2) return;
+            currentCameraIndex = (currentCameraIndex + 1) % cameraDevices.length;
+            await startCameraStream();
+        });
+    }
+
+    async function openCamera() {
+        if (!navigator.mediaDevices?.getUserMedia) {
+            setComposerStatus('Camera access is not supported here.', 'warn');
+            return;
+        }
+        try {
+            cameraDevices = (await navigator.mediaDevices.enumerateDevices()).filter(device => device.kind === 'videoinput');
+            currentCameraIndex = 0;
+            els.switchCameraBtn.style.display = cameraDevices.length > 1 ? 'inline-flex' : 'none';
+            els.cameraModal.classList.remove('hidden');
+            await startCameraStream();
+        } catch {
+            setComposerStatus('Could not open the camera.', 'warn');
+        }
+    }
+
+    async function startCameraStream() {
+        closeCameraStream();
+        const preferredDevice = cameraDevices[currentCameraIndex];
+        const constraints = preferredDevice
+            ? { video: { deviceId: { exact: preferredDevice.deviceId } } }
+            : { video: { facingMode: 'user' } };
+        currentCameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+        els.cameraPreview.srcObject = currentCameraStream;
+    }
+
+    function closeCameraStream() {
+        if (currentCameraStream) {
+            currentCameraStream.getTracks().forEach(track => track.stop());
+            currentCameraStream = null;
+        }
+    }
+
+    function closeCameraModal() {
+        closeCameraStream();
+        els.cameraModal.classList.add('hidden');
+    }
+
+    async function capturePhotoFromCamera() {
+        const video = els.cameraPreview;
+        const canvas = els.cameraCanvas;
+        if (!video.videoWidth || !video.videoHeight) return;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+        const attachment = {
+            id: `${Date.now()}-camera`,
+            kind: 'image',
+            name: `Camera ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.jpg`,
+            size: formatFileSize(Math.round((dataUrl.length * 3) / 4)),
+            mimeType: 'image/jpeg',
+            previewUrl: dataUrl,
+            analysisDataUrl: dataUrl,
+            extractedText: '',
+            note: 'Captured from camera.'
+        };
+        if (pendingAttachments.length >= MAX_ATTACHMENTS) {
+            setComposerStatus(`You can attach up to ${MAX_ATTACHMENTS} items at a time.`, 'warn');
+            return;
+        }
+        pendingAttachments.push(attachment);
+        renderAttachmentTray();
+        setComposerStatus('Camera photo attached.', 'active');
+        closeCameraModal();
+    }
 
     function consumeStoredRestrictionNotice() {
         const stored = readStoredRestrictionNotice();
-        if (stored && localStorage.getItem('vessy_session')) showRestrictionScreen(stored);
+        if (stored && localStorage.getItem(STORAGE_KEYS.session)) showRestrictionScreen(stored);
     }
 
     function readStoredRestrictionNotice() {
         try {
-            return JSON.parse(localStorage.getItem(restrictionStorageKey) || 'null');
+            return JSON.parse(localStorage.getItem(STORAGE_KEYS.restriction) || 'null');
         } catch {
             return null;
         }
@@ -676,7 +1070,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function checkRestrictionStatus(skipReload) {
         if (!currentUsername) return;
-
         try {
             const response = await fetch('/api/ban-user', {
                 method: 'POST',
@@ -684,9 +1077,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ action: 'check-status', username: currentUsername })
             });
             const data = await response.json();
-
             if (data.restricted) {
-                localStorage.setItem(restrictionStorageKey, JSON.stringify(data));
+                localStorage.setItem(STORAGE_KEYS.restriction, JSON.stringify(data));
+                if (data.kind === 'kicked') {
+                    handleKickExit(data);
+                    return;
+                }
                 if (!skipReload && !restrictionTriggered) {
                     restrictionTriggered = true;
                     location.reload();
@@ -694,46 +1090,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 showRestrictionScreen(data);
             } else {
-                localStorage.removeItem(restrictionStorageKey);
+                localStorage.removeItem(STORAGE_KEYS.restriction);
                 clearRestrictionScreen();
             }
         } catch {}
     }
 
-    function clearRestrictionScreen() {
-        const existing = document.getElementById('banScreen');
-        if (existing) existing.remove();
-        userInput.disabled = false;
-        sendBtn.disabled = false;
-        voiceBtn.disabled = !voiceInputSupported;
-        voiceReplyBtn.disabled = !voiceReplySupported;
-        fileUploadBtn.disabled = false;
-        imageUploadBtn.disabled = false;
-        userInput.placeholder = 'Ask Vessy OS...';
+    function handleKickExit(data) {
+        localStorage.removeItem(STORAGE_KEYS.session);
+        localStorage.setItem(STORAGE_KEYS.restriction, JSON.stringify(data));
+        showRestrictionScreen(data, true);
+        setTimeout(() => {
+            try {
+                window.open('', '_self');
+                window.close();
+            } catch {}
+            setTimeout(() => location.replace('about:blank'), 1200);
+        }, 1000);
     }
 
-    function showRestrictionScreen(data) {
-        const existing = document.getElementById('banScreen');
-        if (existing) existing.remove();
+    function clearRestrictionScreen() {
+        byId('banScreen')?.remove();
+        els.userInput.disabled = false;
+        els.sendBtn.disabled = false;
+        els.voiceBtn.disabled = !recognition;
+        els.plusBtn.disabled = false;
+        els.fileUploadBtn.disabled = false;
+        els.imageUploadBtn.disabled = false;
+        els.userInput.placeholder = 'Ask Vessy OS...';
+    }
 
-        const title = getRestrictionTitle(data);
-        const reason = escHtml(data.reason || 'Classified');
-        const timeLeft = escHtml(data.timeLeft || 'Unknown time');
-        const typeLabel = data.type === 'ip' ? 'Your IP address has been restricted' : 'Your account has been restricted';
+    function showRestrictionScreen(data, isKick = false) {
+        byId('banScreen')?.remove();
+        stopVoiceCall();
+        els.userInput.disabled = true;
+        els.sendBtn.disabled = true;
+        els.voiceBtn.disabled = true;
+        els.plusBtn.disabled = true;
+        els.fileUploadBtn.disabled = true;
+        els.imageUploadBtn.disabled = true;
         const accent = data.kind === 'kicked' ? '#ffaa00' : '#ff0055';
         const border = data.kind === 'kicked' ? 'rgba(255,170,0,.2)' : 'rgba(255,0,85,.2)';
         const boxBg = data.kind === 'kicked' ? 'rgba(255,170,0,.05)' : 'rgba(255,0,85,.04)';
-        const boxBorder = data.kind === 'kicked' ? 'rgba(255,170,0,.16)' : 'rgba(255,0,85,.1)';
-
-        userInput.disabled = true;
-        sendBtn.disabled = true;
-        voiceBtn.disabled = true;
-        voiceReplyBtn.disabled = true;
-        fileUploadBtn.disabled = true;
-        imageUploadBtn.disabled = true;
-        userInput.placeholder = title;
-        stopVoiceCall();
-
         const overlay = document.createElement('div');
         overlay.id = 'banScreen';
         overlay.className = 'overlay-screen';
@@ -745,15 +1143,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="overlay-icon" style="background:${boxBg};border-color:${border};color:${accent}">
                         <i class="fa-solid ${data.kind === 'kicked' ? 'fa-arrow-right-from-bracket' : 'fa-ban'}"></i>
                     </div>
-                    <h1>${title}</h1>
-                    <p class="overlay-subtitle">${typeLabel}</p>
+                    <h1>${escHtml(getRestrictionTitle(data))}</h1>
+                    <p class="overlay-subtitle">${escHtml(data.type === 'ip' ? 'Your IP address has been restricted' : 'Your account has been restricted')}</p>
                 </div>
                 <div class="overlay-body" style="text-align:center">
-                    <div style="background:${boxBg};border:1px solid ${boxBorder};border-radius:12px;padding:16px;margin-bottom:16px">
+                    <div style="background:${boxBg};border:1px solid ${border};border-radius:12px;padding:16px;margin-bottom:16px">
                         <div style="font-size:16px;color:${accent};font-weight:700;line-height:1.5">You have been ${escHtml(data.kind || 'banned')}.</div>
-                        <div style="font-size:12px;color:#999;margin-top:10px">Because: <span style="color:#ddd;font-weight:600">${reason}</span></div>
-                        <div style="font-size:12px;color:#999;margin-top:8px">For: <span style="color:${accent};font-weight:700">${timeLeft}</span></div>
-                        <div style="font-size:9px;color:#444;margin-top:10px">${typeLabel}</div>
+                        <div style="font-size:12px;color:#999;margin-top:10px">Because: <span style="color:#ddd;font-weight:600">${escHtml(data.reason || 'Classified')}</span></div>
+                        <div style="font-size:12px;color:#999;margin-top:8px">For: <span style="color:${accent};font-weight:700">${escHtml(data.timeLeft || 'Unknown time')}</span></div>
+                        ${isKick ? '<div style="font-size:10px;color:#666;margin-top:10px">Closing Vessy AI...</div>' : ''}
                     </div>
                 </div>
                 <div class="overlay-footer">
@@ -770,14 +1168,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setComposerStatus(message, tone) {
-        composerStatus.textContent = message;
-        composerStatus.className = 'composer-status';
-        if (tone) composerStatus.classList.add(tone);
+        els.composerStatus.textContent = message;
+        els.composerStatus.className = 'composer-status';
+        if (tone) els.composerStatus.classList.add(tone);
     }
 
     function clearComposerStatus() {
-        composerStatus.textContent = '';
-        composerStatus.className = 'composer-status hidden';
+        els.composerStatus.textContent = '';
+        els.composerStatus.className = 'composer-status hidden';
     }
 
     function formatFileSize(size) {
@@ -810,40 +1208,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
-    window.switchAuth = view => {
-        document.getElementById('loginView').classList.toggle('hidden', view !== 'login');
-        document.getElementById('signupView').classList.toggle('hidden', view !== 'signup');
-    };
-
-    window.togglePw = (inputId, button) => {
-        const input = document.getElementById(inputId);
-        if (!input) return;
-        const reveal = input.type === 'password';
-        input.type = reveal ? 'text' : 'password';
-        const icon = button.querySelector('i');
-        if (icon) {
-            icon.classList.toggle('fa-eye', !reveal);
-            icon.classList.toggle('fa-eye-slash', reveal);
-        }
-    };
-
-    window.logoutUser = () => {
-        localStorage.removeItem('vessy_session');
-        localStorage.removeItem(restrictionStorageKey);
-        location.reload();
-    };
-
-    window.launchApp = app => {
-        if (app === 'browser') {
-            document.getElementById('appModal').classList.remove('hidden');
-            document.getElementById('appContent').innerHTML = '<iframe src="https://www.wikipedia.org"></iframe>';
-            document.getElementById('appTitle').innerText = 'Browser';
-        }
-    };
-
-    window.closeApp = () => document.getElementById('appModal').classList.add('hidden');
-    document.getElementById('menuBtn').addEventListener('click', () => document.getElementById('appGrid').classList.toggle('hidden'));
-    document.getElementById('settingsBtn').addEventListener('click', () => document.getElementById('settingsModal').classList.toggle('hidden'));
-    window.toggleSettings = () => document.getElementById('settingsModal').classList.add('hidden');
-    window.setBg = theme => document.getElementById('bgLayer').className = `bg-${theme}`;
+    function escapeAttr(value) {
+        return String(value).replace(/"/g, '&quot;');
+    }
 });
