@@ -23,18 +23,33 @@ export async function onRequestPost(context) {
 
         // Get all bans
         let userBans = [];
-        for (const user of [...users, '...']) {
+        for (const user of users) {
             const ban = await kv.get(`ban:${user.toLowerCase()}`, 'json');
-            if (ban) userBans.push({ username: user, ...ban });
+            if (!ban) continue;
+            if (ban.expiresAt && new Date() > new Date(ban.expiresAt)) {
+                await kv.delete(`ban:${user.toLowerCase()}`);
+                continue;
+            }
+            userBans.push({ username: user, ...ban });
         }
 
         // Get all IP bans
         let bannedIps = [];
         try {
             const ipRegistry = await kv.get('banned-ips:registry', 'json') || [];
+            const activeIpRegistry = [];
             for (const ip of ipRegistry) {
                 const ban = await kv.get(`ban-ip:${ip}`, 'json');
-                if (ban) bannedIps.push(ban);
+                if (!ban) continue;
+                if (ban.expiresAt && new Date() > new Date(ban.expiresAt)) {
+                    await kv.delete(`ban-ip:${ip}`);
+                    continue;
+                }
+                activeIpRegistry.push(ip);
+                bannedIps.push(ban);
+            }
+            if (activeIpRegistry.length !== ipRegistry.length) {
+                await kv.put('banned-ips:registry', JSON.stringify(activeIpRegistry));
             }
         } catch {}
 

@@ -30,6 +30,8 @@ export async function onRequestPost(context) {
     } catch (error) { return json({ error: error.message }, 500); }
 }
 
-async function hashPw(pw) { const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw + 'vessy-ai-31-salt-2025')); return Array.from(new Uint8Array(d)).map(b => b.toString(16).padStart(2, '0')).join(''); }
+const PASSWORD_SALT = 'vessy-os-31-salt-2025';
+
+async function hashPw(pw) { const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw + PASSWORD_SALT)); return Array.from(new Uint8Array(d)).map(b => b.toString(16).padStart(2, '0')).join(''); }
 function genToken() { const a = new Uint8Array(32); crypto.getRandomValues(a); return Array.from(a, b => b.toString(16).padStart(2, '0')).join(''); }
 function json(d, s = 200) { return new Response(JSON.stringify(d), { status: s, headers: { 'Content-Type': 'application/json' } }); }

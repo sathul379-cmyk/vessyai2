@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const termsCheckbox = document.getElementById('termsCheckbox');
     const termsAcceptBtn = document.getElementById('termsAcceptBtn');
     const authOverlay = document.getElementById('authOverlay');
+    const sendBtn = document.getElementById('sendBtn');
+    const restrictionStorageKey = 'vessy_restriction_notice';
 
     if(termsCheckbox && termsAcceptBtn) {
         termsCheckbox.checked = false; // Reset on load
@@ -24,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Session Check
     let currentUsername = null, sessionToken = null;
+    let restrictionTriggered = false;
     function checkSession() {
         try {
             const s = JSON.parse(localStorage.getItem('vessy_session'));
@@ -46,26 +49,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const userInput = document.getElementById('userInput');
     let conversationHistory = [];
 
-    // Kick check every 30 seconds
-    const kickInterval = setInterval(async () => {
-        if (!currentUsername) return;
-        try {
-            const r = await fetch('/api/ban-user', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'check-kick', username: currentUsername, adminPassword: 'vessy@2015' })
-            });
-            const d = await r.json();
-            if (d.kicked) {
-                addMsg(`<p style="color:#ff0055;font-weight:700"><i class="fa-solid fa-arrow-right-from-bracket"></i> You have been kicked from Vessy OS. Reason: ${escHtml(d.reason)}</p>`, 'bot');
-                userInput.disabled = true;
-                userInput.placeholder = 'You have been kicked.';
-                clearInterval(kickInterval);
-            }
-        } catch {}
+    const restrictionInterval = setInterval(() => {
+        if (currentUsername) checkRestrictionStatus(true);
     }, 30000);
 
-    document.getElementById('sendBtn').addEventListener('click', handleSend);
+    consumeStoredRestrictionNotice();
+
+    sendBtn.addEventListener('click', handleSend);
     userInput.addEventListener('keypress', e => { if(e.key==='Enter') handleSend(); });
 
     async function handleSend() {
@@ -150,12 +140,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const u = document.getElementById('loginUsername').value;
         const p = document.getElementById('loginPassword').value;
         try {
-            const ipRes = await fetch('https://api.ipify.org?format=json').catch(() => ({ ip: 'unknown' }));
-            const ip = ipRes.ip || 'unknown';
-            const r = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:u, password:p, clientIp: ip}) });
+            const r = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:u, password:p}) });
             const d = await r.json();
-            if(d.banned) {
-                showBanScreen(d);
+            if(d.banned || d.restricted) {
+                showRestrictionScreen(d);
                 return;
             }
             if(d.success) {
@@ -184,6 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function onUserReady() { 
         document.getElementById('userBadgeName').textContent = currentUsername; 
         document.getElementById('settingsUsername').textContent = currentUsername;
+        checkRestrictionStatus(Boolean(readStoredRestrictionNotice()));
     }
     
     window.logoutUser = () => { localStorage.removeItem('vessy_session'); location.reload(); };
@@ -194,39 +183,105 @@ document.addEventListener('DOMContentLoaded', () => {
     window.toggleSettings = () => document.getElementById('settingsModal').classList.add('hidden');
     window.setBg = (t) => document.getElementById('bgLayer').className = 'bg-'+t;
 
-    function showBanScreen(d) {
+    function consumeStoredRestrictionNotice() {
+        const stored = readStoredRestrictionNotice();
+        if (stored && localStorage.getItem('vessy_session')) {
+            showRestrictionScreen(stored);
+        }
+    }
+
+    function readStoredRestrictionNotice() {
+        try {
+            return JSON.parse(localStorage.getItem(restrictionStorageKey) || 'null');
+        } catch {
+            return null;
+        }
+    }
+
+    async function checkRestrictionStatus(skipReload) {
+        if (!currentUsername) return;
+        try {
+            const r = await fetch('/api/ban-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'check-status', username: currentUsername })
+            });
+            const d = await r.json();
+            if (d.restricted) {
+                localStorage.setItem(restrictionStorageKey, JSON.stringify(d));
+                if (!skipReload && !restrictionTriggered) {
+                    restrictionTriggered = true;
+                    location.reload();
+                    return;
+                }
+                showRestrictionScreen(d);
+            } else {
+                localStorage.removeItem(restrictionStorageKey);
+                clearRestrictionScreen();
+            }
+        } catch {}
+    }
+
+    function clearRestrictionScreen() {
+        const existing = document.getElementById('banScreen');
+        if (existing) existing.remove();
+        userInput.disabled = false;
+        sendBtn.disabled = false;
+        userInput.placeholder = 'Ask Vessy OS...';
+    }
+
+    function showRestrictionScreen(d) {
         let existing = document.getElementById('banScreen');
         if (existing) existing.remove();
+
+        const title = getRestrictionTitle(d);
+        const reason = escHtml(d.reason || 'Classified');
+        const timeLeft = escHtml(d.timeLeft || 'Unknown time');
+        const typeLabel = d.type === 'ip' ? 'Your IP address has been restricted' : 'Your account has been restricted';
+        const accent = d.kind === 'kicked' ? '#ffaa00' : '#ff0055';
+        const border = d.kind === 'kicked' ? 'rgba(255,170,0,.2)' : 'rgba(255,0,85,.2)';
+        const boxBg = d.kind === 'kicked' ? 'rgba(255,170,0,.05)' : 'rgba(255,0,85,.04)';
+        const boxBorder = d.kind === 'kicked' ? 'rgba(255,170,0,.16)' : 'rgba(255,0,85,.1)';
+
+        userInput.disabled = true;
+        sendBtn.disabled = true;
+        userInput.placeholder = title;
 
         const overlay = document.createElement('div');
         overlay.id = 'banScreen';
         overlay.className = 'overlay-screen';
         overlay.innerHTML = `
             <div class="overlay-backdrop"></div>
-            <div class="overlay-modal" style="max-width:440px;text-align:center;border-color:rgba(255,0,85,.2)">
+            <div class="overlay-modal" style="max-width:440px;text-align:center;border-color:${border}">
                 <div class="overlay-glow"></div>
                 <div class="overlay-header">
-                    <div class="overlay-icon" style="background:rgba(255,0,85,.06);border-color:rgba(255,0,85,.2);color:#ff0055">
-                        <i class="fa-solid fa-ban"></i>
+                    <div class="overlay-icon" style="background:${boxBg};border-color:${border};color:${accent}">
+                        <i class="fa-solid ${d.kind === 'kicked' ? 'fa-arrow-right-from-bracket' : 'fa-ban'}"></i>
                     </div>
-                    <h1>Account Banned</h1>
-                    <p class="overlay-subtitle">You are restricted from accessing Vessy OS</p>
+                    <h1>${title}</h1>
+                    <p class="overlay-subtitle">${typeLabel}</p>
                 </div>
                 <div class="overlay-body" style="text-align:center">
-                    <div style="background:rgba(255,0,85,.04);border:1px solid rgba(255,0,85,.1);border-radius:12px;padding:16px;margin-bottom:16px">
-                        <div style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Reason</div>
-                        <div style="font-size:14px;color:#ff6688;font-weight:600;margin-bottom:12px">${escHtml(d.reason || 'Violated community guidelines')}</div>
-                        <div style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Time Remaining</div>
-                        <div style="font-size:18px;font-weight:800;color:#ff0055">${d.timeLeft || 'N/A'}</div>
-                        <div style="font-size:9px;color:#444;margin-top:4px">${d.type === 'ip' ? 'Your IP address has been banned' : 'Your account has been banned'}</div>
+                    <div style="background:${boxBg};border:1px solid ${boxBorder};border-radius:12px;padding:16px;margin-bottom:16px">
+                        <div style="font-size:16px;color:${accent};font-weight:700;line-height:1.5">You have been ${escHtml(d.kind || 'banned')}.</div>
+                        <div style="font-size:12px;color:#999;margin-top:10px">Because: <span style="color:#ddd;font-weight:600">${reason}</span></div>
+                        <div style="font-size:12px;color:#999;margin-top:8px">For: <span style="color:${accent};font-weight:700">${timeLeft}</span></div>
+                        <div style="font-size:9px;color:#444;margin-top:10px">${typeLabel}</div>
                     </div>
                 </div>
                 <div class="overlay-footer">
-                    <button class="ghost-btn" onclick="document.getElementById('banScreen').remove()">Close</button>
+                    <button class="ghost-btn" onclick="location.reload()">Reload</button>
                 </div>
             </div>`;
         document.body.appendChild(overlay);
     }
+
+    function getRestrictionTitle(data) {
+        if (data.kind === 'kicked') return 'You have been kicked';
+        if (data.kind === 'temp banned') return 'You have been temp banned';
+        return 'You have been banned';
+    }
+
     function escHtml(s) {
         return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
