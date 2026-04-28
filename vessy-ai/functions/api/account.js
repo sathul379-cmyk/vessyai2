@@ -22,9 +22,12 @@ export async function onRequestPost(context) {
                 email: user?.email || '',
                 createdAt: user?.createdAt || null,
                 settings: {
-                    personalizationEnabled: storedSettings.personalizationEnabled !== false
+                    personalizationEnabled: storedSettings.personalizationEnabled !== false,
+                    voiceReplyEnabled: storedSettings.voiceReplyEnabled !== false,
+                    preferredVoiceId: storedSettings.preferredVoiceId || ''
                 },
-                memory: memory.snippets || []
+                memory: memory.snippets || [],
+                voiceCatalog: buildVoiceCatalog(env)
             });
         }
 
@@ -67,8 +70,42 @@ export async function onRequestPost(context) {
 
 function sanitizeSettings(settings) {
     const input = settings && typeof settings === 'object' ? settings : {};
-    return {
+    const output = {
         personalizationEnabled: input.personalizationEnabled !== false
+    };
+
+    if (typeof input.voiceReplyEnabled === 'boolean') {
+        output.voiceReplyEnabled = input.voiceReplyEnabled;
+    }
+    if (typeof input.preferredVoiceId === 'string') {
+        output.preferredVoiceId = input.preferredVoiceId.slice(0, 80);
+    }
+
+    return output;
+}
+
+function buildVoiceCatalog(env) {
+    if (!env.OPENAI_API_KEY) {
+        return {
+            provider: 'browser',
+            available: false,
+            voices: []
+        };
+    }
+
+    return {
+        provider: 'openai',
+        available: true,
+        voices: [
+            { id: 'openai:cedar', label: 'Cedar' },
+            { id: 'openai:marin', label: 'Marin' },
+            { id: 'openai:coral', label: 'Coral' },
+            { id: 'openai:ash', label: 'Ash' },
+            { id: 'openai:sage', label: 'Sage' },
+            { id: 'openai:verse', label: 'Verse' },
+            { id: 'openai:alloy', label: 'Alloy' },
+            { id: 'openai:nova', label: 'Nova' }
+        ]
     };
 }
 

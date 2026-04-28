@@ -44,7 +44,6 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteAccountBtn: byId('deleteAccountBtn'),
         bgOptions: Array.from(document.querySelectorAll('.bg-option')),
         userBadgeName: byId('userBadgeName'),
-        settingsUsername: byId('settingsUsername'),
         loginBtn: byId('loginBtn'),
         signupBtn: byId('signupBtn'),
         loginUsername: byId('loginUsername'),
@@ -89,12 +88,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let conversationHistory = [];
     let voiceReplyEnabled = localStorage.getItem(STORAGE_KEYS.voiceReply) !== 'false';
     let selectedVoiceName = localStorage.getItem(STORAGE_KEYS.voiceName) || '';
+    let browserVoices = [];
     let availableVoices = [];
     let recognition = null;
     let recognitionActive = false;
     let voiceCallMode = false;
     let callModeResponsePending = false;
     let isAssistantSpeaking = false;
+    let currentAudio = null;
+    let stopActivePlayback = null;
     let currentCameraStream = null;
     let cameraDevices = [];
     let currentCameraIndex = 0;
@@ -205,10 +207,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         els.voiceReplyToggle.checked = voiceReplyEnabled;
-        els.voiceReplyToggle.addEventListener('change', () => {
+        els.voiceReplyToggle.addEventListener('change', async () => {
             voiceReplyEnabled = els.voiceReplyToggle.checked;
             localStorage.setItem(STORAGE_KEYS.voiceReply, String(voiceReplyEnabled));
+            await saveSettings({ voiceReplyEnabled: voiceReplyEnabled });
             setComposerStatus(voiceReplyEnabled ? 'Voice replies enabled.' : 'Voice replies disabled.', voiceReplyEnabled ? 'active' : '');
+        });
+
+        els.voiceSelect.addEventListener('change', async () => {
+            selectedVoiceName = els.voiceSelect.value;
+            localStorage.setItem(STORAGE_KEYS.voiceName, selectedVoiceName);
+            await saveSettings({ preferredVoiceId: selectedVoiceName });
+            await previewSelectedVoice();
         });
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -271,39 +281,71 @@ document.addEventListener('DOMContentLoaded', () => {
             voiceReplyEnabled = true;
             els.voiceReplyToggle.checked = true;
             localStorage.setItem(STORAGE_KEYS.voiceReply, 'true');
+            await saveSettings({ voiceReplyEnabled: true });
             setComposerStatus('Voice call connected. Say "Hey Vessy" to start.', 'active');
-            await speakReply('Voice call connected. Say Hey Vessy when you are ready.', true);
+            await speakReply('Hey, I am Vessy. Say Hey Vessy when you are ready.', true);
             startRecognition();
-        });
-
-        els.voiceSelect.addEventListener('change', () => {
-            selectedVoiceName = els.voiceSelect.value;
-            localStorage.setItem(STORAGE_KEYS.voiceName, selectedVoiceName);
         });
     }
 
     function populateVoices() {
-        if (!('speechSynthesis' in window) || !els.voiceSelect) {
-            if (els.voiceReplyToggle) els.voiceReplyToggle.disabled = true;
-            if (els.voiceSelect) els.voiceSelect.disabled = true;
+        if (!els.voiceSelect) return;
+
+        browserVoices = getBrowserVoiceOptions();
+        availableVoices = [...getPremiumVoiceOptions(), ...browserVoices];
+
+        if (!availableVoices.length) {
+            els.voiceReplyToggle.disabled = true;
+            els.voiceSelect.disabled = true;
+            els.voiceSelect.innerHTML = '<option value="">No voice available</option>';
             return;
         }
-        availableVoices = window.speechSynthesis.getVoices().filter(voice => voice.lang.toLowerCase().startsWith('en'));
-        if (!availableVoices.length) availableVoices = window.speechSynthesis.getVoices();
-        els.voiceSelect.innerHTML = availableVoices.map(voice => `<option value="${escapeAttr(voice.name)}">${escHtml(friendlyVoiceName(voice.name))}</option>`).join('');
-        if (!availableVoices.length) {
-            els.voiceSelect.innerHTML = '<option value="">Default voice</option>';
+
+        els.voiceReplyToggle.disabled = false;
+        els.voiceSelect.disabled = false;
+        els.voiceSelect.innerHTML = availableVoices
+            .map(voice => `<option value="${escapeAttr(voice.id)}">${escHtml(voice.label)}</option>`)
+            .join('');
+
+        const hasSelected = availableVoices.some(voice => voice.id === selectedVoiceName);
+        if (!hasSelected) {
+            selectedVoiceName = chooseDefaultVoiceId(availableVoices);
+            localStorage.setItem(STORAGE_KEYS.voiceName, selectedVoiceName);
         }
-        const hasSelected = availableVoices.some(voice => voice.name === selectedVoiceName);
-        if (!hasSelected && availableVoices[0]) selectedVoiceName = availableVoices[0].name;
         els.voiceSelect.value = selectedVoiceName;
     }
 
     function friendlyVoiceName(name) {
-        return String(name)
-            .replace(/microsoft|google|english|united states|united kingdom|online|\(natural\)|desktop/ig, '')
+        const raw = String(name || '').trim();
+        const lower = raw.toLowerCase();
+
+        if (/\bcedar\b/.test(lower)) return 'Cedar';
+        if (/\bmarin\b/.test(lower)) return 'Marin';
+        if (/\bcoral\b/.test(lower)) return 'Coral';
+        if (/\bash\b/.test(lower)) return 'Ash';
+        if (/\bsage\b/.test(lower)) return 'Sage';
+        if (/\bverse\b/.test(lower)) return 'Verse';
+        if (/\balloy\b/.test(lower)) return 'Alloy';
+        if (/\bnova\b/.test(lower)) return 'Nova';
+        if (/\baria\b/.test(lower)) return 'Aria';
+        if (/\bjenny\b/.test(lower)) return 'Jenny';
+        if (/\bguy\b/.test(lower)) return 'Guy';
+        if (/\blibby\b/.test(lower)) return 'Libby';
+        if (/\bdavis\b/.test(lower)) return 'Davis';
+        if (/\bsara\b/.test(lower)) return 'Sara';
+
+        if (/google.*uk.*female/.test(lower)) return 'Vanessa';
+        if (/google.*uk.*male/.test(lower)) return 'Carl';
+        if (/google.*female/.test(lower)) return 'Vera';
+        if (/google.*male/.test(lower)) return 'Kevin';
+
+        const cleaned = raw
+            .replace(/microsoft|google|english|united states|united kingdom|online|\(natural\)|desktop|voice/ig, '')
+            .replace(/[-()]/g, ' ')
             .replace(/\s+/g, ' ')
-            .trim() || name;
+            .trim();
+
+        return cleaned || raw;
     }
 
     function startRecognition() {
@@ -319,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
         voiceCallMode = false;
         callModeResponsePending = false;
         stopRecognition();
-        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        stopPlayback();
         els.voiceBtn.classList.remove('recording');
         clearComposerStatus();
     }
@@ -332,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!strippedWake && WAKE_PATTERN.test(normalized)) {
             stopRecognition();
             callModeResponsePending = true;
-            speakReply('Hello, how are you doing?', true).finally(() => {
+            speakReply('Hey, I am here. How are you doing?', true).finally(() => {
                 callModeResponsePending = false;
                 resumeVoiceCallIfNeeded();
             });
@@ -354,43 +396,205 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function speakReply(markdownText, forceSpokenTone = false) {
-        return new Promise(resolve => {
-            if (!('speechSynthesis' in window) || !voiceReplyEnabled) {
-                resolve();
-                return;
-            }
-            const plainText = String(markdownText || '')
-                .replace(/```[\s\S]*?```/g, ' code block ')
-                .replace(/`([^`]+)`/g, '$1')
-                .replace(/\[(.*?)\]\((.*?)\)/g, '$1')
-                .replace(/[#>*_~-]/g, ' ')
-                .replace(/\s+/g, ' ')
-                .trim();
-            if (!plainText) {
-                resolve();
-                return;
-            }
+    async function speakReply(markdownText, forceSpokenTone = false, options = {}) {
+        if (!options.preview && !voiceReplyEnabled) return false;
 
-            const utterance = new SpeechSynthesisUtterance(plainText);
-            const selectedVoice = availableVoices.find(voice => voice.name === selectedVoiceName);
-            if (selectedVoice) utterance.voice = selectedVoice;
-            utterance.rate = forceSpokenTone ? 1.02 : 0.98;
+        const plainText = prepareSpokenText(markdownText);
+        if (!plainText) return false;
+
+        const selectedVoice = options.voiceOption || getSelectedVoiceOption();
+        if (selectedVoice?.provider === 'openai') {
+            const usedPremium = await playPremiumVoice(plainText, selectedVoice, {
+                preview: Boolean(options.preview),
+                forceSpokenTone
+            });
+            if (usedPremium) return true;
+            if (options.preview) {
+                setComposerStatus('Premium voice preview was unavailable, so a local voice was used instead.', 'warn');
+            }
+        }
+
+        return playBrowserVoice(plainText, selectedVoice, forceSpokenTone);
+    }
+
+    function getPremiumVoiceOptions() {
+        const premiumVoices = Array.isArray(accountData?.voiceCatalog?.voices) ? accountData.voiceCatalog.voices : [];
+        return premiumVoices.map(voice => ({
+            id: voice.id,
+            label: voice.label,
+            provider: 'openai'
+        }));
+    }
+
+    function getBrowserVoiceOptions() {
+        if (!('speechSynthesis' in window)) return [];
+        const voices = window.speechSynthesis.getVoices();
+        let englishVoices = voices.filter(voice => voice.lang.toLowerCase().startsWith('en'));
+        if (!englishVoices.length) englishVoices = voices;
+
+        return englishVoices
+            .slice()
+            .sort((left, right) => scoreBrowserVoice(right) - scoreBrowserVoice(left))
+            .map(voice => ({
+                id: `browser:${voice.name}`,
+                label: friendlyVoiceName(voice.name),
+                provider: 'browser',
+                browserName: voice.name
+            }));
+    }
+
+    function scoreBrowserVoice(voice) {
+        const name = String(voice?.name || '').toLowerCase();
+        let score = 0;
+        if (/natural/.test(name)) score += 40;
+        if (/aria|jenny|guy|libby|davis|sara/.test(name)) score += 28;
+        if (/google/.test(name)) score += 18;
+        if (/online/.test(name)) score += 10;
+        if (/desktop/.test(name)) score -= 8;
+        if (/english/.test(name)) score += 4;
+        return score;
+    }
+
+    function chooseDefaultVoiceId(voices) {
+        return voices.find(voice => voice.id === 'openai:cedar')?.id
+            || voices.find(voice => voice.id === 'openai:marin')?.id
+            || voices[0]?.id
+            || '';
+    }
+
+    function getSelectedVoiceOption() {
+        return availableVoices.find(voice => voice.id === selectedVoiceName) || availableVoices[0] || null;
+    }
+
+    async function previewSelectedVoice() {
+        const selectedVoice = getSelectedVoiceOption();
+        if (!selectedVoice) return;
+
+        setComposerStatus(`Previewing ${selectedVoice.label}...`, 'active');
+        await speakReply(`Hey, I am ${selectedVoice.label}. Would you like to choose this voice for Vessy?`, true, {
+            preview: true,
+            voiceOption: selectedVoice
+        });
+        setComposerStatus(`${selectedVoice.label} selected for Vessy.`, 'active');
+    }
+
+    function prepareSpokenText(markdownText) {
+        return String(markdownText || '')
+            .replace(/```[\s\S]*?```/g, ' code block ')
+            .replace(/`([^`]+)`/g, '$1')
+            .replace(/\[(.*?)\]\((.*?)\)/g, '$1')
+            .replace(/[#>*_~-]/g, ' ')
+            .replace(/\bVessy OS\b/g, 'Vessy')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function stopPlayback() {
+        if (typeof stopActivePlayback === 'function') {
+            const stop = stopActivePlayback;
+            stopActivePlayback = null;
+            stop(false);
+        }
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio.src = '';
+            currentAudio = null;
+        }
+        isAssistantSpeaking = false;
+    }
+
+    async function playPremiumVoice(text, voiceOption, options = {}) {
+        if (!voiceOption || voiceOption.provider !== 'openai' || !currentUsername || !sessionToken) {
+            return false;
+        }
+
+        try {
+            const response = await fetch('/api/voice', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text,
+                    voiceId: voiceOption.id,
+                    username: currentUsername,
+                    token: sessionToken,
+                    preview: Boolean(options.preview)
+                })
+            });
+            if (!response.ok) return false;
+
+            const audioBlob = await response.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+
+            return await new Promise(resolve => {
+                let settled = false;
+                const finish = success => {
+                    if (settled) return;
+                    settled = true;
+                    if (stopActivePlayback === finish) stopActivePlayback = null;
+                    if (currentAudio) {
+                        currentAudio.pause();
+                        currentAudio.src = '';
+                        currentAudio = null;
+                    }
+                    URL.revokeObjectURL(audioUrl);
+                    isAssistantSpeaking = false;
+                    resolve(success);
+                    resumeVoiceCallIfNeeded();
+                };
+
+                stopPlayback();
+                currentAudio = new Audio(audioUrl);
+                currentAudio.preload = 'auto';
+                currentAudio.onplay = () => {
+                    isAssistantSpeaking = true;
+                    stopRecognition();
+                };
+                currentAudio.onended = () => finish(true);
+                currentAudio.onerror = () => finish(false);
+                stopActivePlayback = finish;
+                currentAudio.play().catch(() => finish(false));
+            });
+        } catch {
+            return false;
+        }
+    }
+
+    function playBrowserVoice(text, voiceOption, forceSpokenTone) {
+        if (!('speechSynthesis' in window)) return Promise.resolve(false);
+
+        const browserName = voiceOption?.provider === 'browser'
+            ? voiceOption.browserName
+            : browserVoices[0]?.browserName;
+        const selectedVoice = window.speechSynthesis
+            .getVoices()
+            .find(voice => voice.name === browserName);
+        if (!selectedVoice) return Promise.resolve(false);
+
+        return new Promise(resolve => {
+            let settled = false;
+            const finish = success => {
+                if (settled) return;
+                settled = true;
+                if (stopActivePlayback === finish) stopActivePlayback = null;
+                isAssistantSpeaking = false;
+                resolve(success);
+                resumeVoiceCallIfNeeded();
+            };
+
+            stopPlayback();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.voice = selectedVoice;
+            utterance.rate = forceSpokenTone ? 1.01 : 0.97;
             utterance.pitch = 1;
             utterance.onstart = () => {
                 isAssistantSpeaking = true;
                 stopRecognition();
             };
-            utterance.onend = () => {
-                isAssistantSpeaking = false;
-                resolve();
-                resumeVoiceCallIfNeeded();
-            };
-            utterance.onerror = () => {
-                isAssistantSpeaking = false;
-                resolve();
-                resumeVoiceCallIfNeeded();
-            };
+            utterance.onend = () => finish(true);
+            utterance.onerror = () => finish(false);
+
+            stopActivePlayback = finish;
             window.speechSynthesis.cancel();
             window.speechSynthesis.speak(utterance);
         });
@@ -825,6 +1029,16 @@ document.addEventListener('DOMContentLoaded', () => {
             els.drawerUsername.textContent = data.username || currentUsername;
             els.drawerUserEmail.textContent = data.email || 'No email';
             els.drawerUserCreated.textContent = data.createdAt ? `Created: ${new Date(data.createdAt).toLocaleString()}` : 'Created: --';
+            if (typeof data.settings?.voiceReplyEnabled === 'boolean') {
+                voiceReplyEnabled = data.settings.voiceReplyEnabled;
+                localStorage.setItem(STORAGE_KEYS.voiceReply, String(voiceReplyEnabled));
+            }
+            if (data.settings?.preferredVoiceId) {
+                selectedVoiceName = data.settings.preferredVoiceId;
+                localStorage.setItem(STORAGE_KEYS.voiceName, selectedVoiceName);
+            }
+            els.voiceReplyToggle.checked = voiceReplyEnabled;
+            populateVoices();
             const enabled = data.settings?.personalizationEnabled !== false;
             els.personalizationToggle.checked = enabled;
             updatePersonalizationStatus(enabled, data.memory || []);
@@ -833,7 +1047,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function saveSettings(settings) {
         if (!currentUsername || !sessionToken) return;
-        await fetch('/api/account', {
+        const response = await fetch('/api/account', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -843,6 +1057,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 settings
             })
         });
+        const data = await response.json().catch(() => null);
+        if (data?.settings) {
+            accountData = accountData || {};
+            accountData.settings = { ...(accountData.settings || {}), ...data.settings };
+        }
     }
 
     function updatePersonalizationStatus(enabled, memory) {
