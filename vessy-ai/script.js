@@ -218,7 +218,6 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedVoiceName = els.voiceSelect.value;
             localStorage.setItem(STORAGE_KEYS.voiceName, selectedVoiceName);
             await saveSettings({ preferredVoiceId: selectedVoiceName });
-            await previewSelectedVoice();
         });
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -408,31 +407,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!plainText) return false;
 
         const selectedVoice = options.voiceOption || getSelectedVoiceOption();
-        if (selectedVoice?.provider === 'puter') {
+        if (selectedVoice?.provider === 'pollinations') {
             const usedPremium = await playPremiumVoice(plainText, selectedVoice, {
                 preview: Boolean(options.preview),
                 forceSpokenTone
             });
             if (usedPremium) return true;
-            if (options.preview) {
-                setComposerStatus('Voice preview was unavailable, so a local voice was used instead.', 'warn');
-            }
         }
 
         return playBrowserVoice(plainText, selectedVoice, forceSpokenTone);
     }
 
     function getPremiumVoiceOptions() {
-        if (!(window.puter && puter.ai && typeof puter.ai.txt2speech === 'function')) {
-            return [];
-        }
-
         return [
-            { id: 'puter:xai:ara', label: 'Ara', provider: 'puter', puterProvider: 'xai', voice: 'ara' },
-            { id: 'puter:xai:eve', label: 'Eve', provider: 'puter', puterProvider: 'xai', voice: 'eve' },
-            { id: 'puter:xai:sal', label: 'Sal', provider: 'puter', puterProvider: 'xai', voice: 'sal' },
-            { id: 'puter:xai:rex', label: 'Rex', provider: 'puter', puterProvider: 'xai', voice: 'rex' },
-            { id: 'puter:xai:leo', label: 'Leo', provider: 'puter', puterProvider: 'xai', voice: 'leo' }
+            { id: 'pollinations:rachel', label: 'Rachel', provider: 'pollinations', voice: 'rachel' },
+            { id: 'pollinations:bella', label: 'Bella', provider: 'pollinations', voice: 'bella' },
+            { id: 'pollinations:alloy', label: 'Alloy', provider: 'pollinations', voice: 'alloy' },
+            { id: 'pollinations:nova', label: 'Nova', provider: 'pollinations', voice: 'nova' },
+            { id: 'pollinations:coral', label: 'Coral', provider: 'pollinations', voice: 'coral' },
+            { id: 'pollinations:sage', label: 'Sage', provider: 'pollinations', voice: 'sage' },
+            { id: 'pollinations:verse', label: 'Verse', provider: 'pollinations', voice: 'verse' }
         ];
     }
 
@@ -466,26 +460,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function chooseDefaultVoiceId(voices) {
-        return voices.find(voice => voice.id === 'puter:xai:ara')?.id
-            || voices.find(voice => voice.id === 'puter:xai:eve')?.id
+        return voices.find(voice => voice.id === 'pollinations:rachel')?.id
+            || voices.find(voice => voice.id === 'pollinations:bella')?.id
             || voices[0]?.id
             || '';
     }
 
     function getSelectedVoiceOption() {
         return availableVoices.find(voice => voice.id === selectedVoiceName) || availableVoices[0] || null;
-    }
-
-    async function previewSelectedVoice() {
-        const selectedVoice = getSelectedVoiceOption();
-        if (!selectedVoice) return;
-
-        setComposerStatus(`Previewing ${selectedVoice.label}...`, 'active');
-        await speakReply(`Hey, I am ${selectedVoice.label}. Would you like to choose this voice for Vessy?`, true, {
-            preview: true,
-            voiceOption: selectedVoice
-        });
-        setComposerStatus(`${selectedVoice.label} selected for Vessy.`, 'active');
     }
 
     function prepareSpokenText(markdownText) {
@@ -515,16 +497,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function playPremiumVoice(text, voiceOption, options = {}) {
-        if (!voiceOption || voiceOption.provider !== 'puter' || !(window.puter && puter.ai && typeof puter.ai.txt2speech === 'function')) {
+        if (!voiceOption || voiceOption.provider !== 'pollinations') {
             return false;
         }
 
         try {
-            const audio = await puter.ai.txt2speech(text, {
-                provider: voiceOption.puterProvider || 'xai',
-                voice: voiceOption.voice
-            });
-            if (!audio) return false;
+            const voice = encodeURIComponent(voiceOption.voice || 'rachel');
+            const spokenText = encodeURIComponent(text.slice(0, 4000));
+            const audioUrl = `https://gen.pollinations.ai/audio/${spokenText}?voice=${voice}`;
 
             return await new Promise(resolve => {
                 let settled = false;
@@ -543,7 +523,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
 
                 stopPlayback();
-                currentAudio = audio;
+                currentAudio = new Audio(audioUrl);
                 currentAudio.preload = 'auto';
                 currentAudio.onplay = () => {
                     isAssistantSpeaking = true;
@@ -635,17 +615,14 @@ document.addEventListener('DOMContentLoaded', () => {
             clearComposerStatus();
             await generateImage(prompt);
         });
-        els.generateVideoBtn.addEventListener('click', async () => {
-            els.composerMenu.classList.add('hidden');
-            const prompt = els.userInput.value.trim();
-            if (!prompt) {
-                setComposerStatus('Type a video prompt first, then tap Create video.', 'warn');
-                return;
-            }
-            addMsg(`<p>${escHtml(`Video ${prompt}`)}</p>`, 'user');
-            els.userInput.value = '';
-            clearComposerStatus();
-            await generateVideo(prompt);
+        els.generateVideoBtn.addEventListener('click', event => {
+            event.preventDefault();
+        });
+        els.generateVideoBtn.addEventListener('mouseenter', () => {
+            setComposerStatus('Coming soon.', 'warn');
+        });
+        els.generateVideoBtn.addEventListener('mouseleave', () => {
+            if (!pendingAttachments.length) clearComposerStatus();
         });
 
         els.fileUploadInput.addEventListener('change', async event => {
@@ -824,19 +801,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const id = Date.now();
         addMsg(`<p>Generating "${escHtml(prompt)}"...</p><div class="img-skeleton" id="skel-${id}">Loading...</div>`, 'bot');
         const skeleton = byId(`skel-${id}`);
-        if (!(window.puter && puter.ai && typeof puter.ai.txt2img === 'function')) {
-            if (skeleton) skeleton.textContent = 'Image generation is unavailable right now.';
-            return;
-        }
 
         try {
-            const result = await puter.ai.txt2img(prompt);
-            const img = result instanceof HTMLImageElement ? result : new Image();
-            if (!(result instanceof HTMLImageElement)) {
-                img.src = String(result || '');
-            }
+            const img = new Image();
             img.className = 'generated-media';
             img.alt = prompt;
+            img.referrerPolicy = 'no-referrer';
+            img.src = `https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&safe=false`;
 
             await new Promise((resolve, reject) => {
                 if (img.complete && img.naturalWidth) {
@@ -855,11 +826,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function generateVideo(prompt) {
-        const id = Date.now();
-        addMsg(`<p>Video for "${escHtml(prompt)}"</p><div class="img-skeleton" id="skel-${id}">Coming soon</div>`, 'bot');
-        const skeleton = byId(`skel-${id}`);
-        if (!skeleton) return;
-        skeleton.innerHTML = `<div style="display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;text-align:center;padding:18px"><i class="fa-solid fa-film" style="font-size:18px;color:#777"></i><div>Video generation is coming soon.</div><div style="font-size:10px;color:#666">The button is kept here, but the feature is not live yet.</div></div>`;
+        return;
     }
 
     function addMsg(html, role, id) {
