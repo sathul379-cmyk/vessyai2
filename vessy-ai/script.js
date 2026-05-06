@@ -327,6 +327,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (/\bverse\b/.test(lower)) return 'Verse';
         if (/\balloy\b/.test(lower)) return 'Alloy';
         if (/\bnova\b/.test(lower)) return 'Nova';
+        if (/\beve\b/.test(lower)) return 'Eve';
+        if (/\bara\b/.test(lower)) return 'Ara';
+        if (/\brex\b/.test(lower)) return 'Rex';
+        if (/\bsal\b/.test(lower)) return 'Sal';
+        if (/\bleo\b/.test(lower)) return 'Leo';
         if (/\baria\b/.test(lower)) return 'Aria';
         if (/\bjenny\b/.test(lower)) return 'Jenny';
         if (/\bguy\b/.test(lower)) return 'Guy';
@@ -403,14 +408,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!plainText) return false;
 
         const selectedVoice = options.voiceOption || getSelectedVoiceOption();
-        if (selectedVoice?.provider === 'openai') {
+        if (selectedVoice?.provider === 'puter') {
             const usedPremium = await playPremiumVoice(plainText, selectedVoice, {
                 preview: Boolean(options.preview),
                 forceSpokenTone
             });
             if (usedPremium) return true;
             if (options.preview) {
-                setComposerStatus('Premium voice preview was unavailable, so a local voice was used instead.', 'warn');
+                setComposerStatus('Voice preview was unavailable, so a local voice was used instead.', 'warn');
             }
         }
 
@@ -418,12 +423,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getPremiumVoiceOptions() {
-        const premiumVoices = Array.isArray(accountData?.voiceCatalog?.voices) ? accountData.voiceCatalog.voices : [];
-        return premiumVoices.map(voice => ({
-            id: voice.id,
-            label: voice.label,
-            provider: 'openai'
-        }));
+        if (!(window.puter && puter.ai && typeof puter.ai.txt2speech === 'function')) {
+            return [];
+        }
+
+        return [
+            { id: 'puter:xai:ara', label: 'Ara', provider: 'puter', puterProvider: 'xai', voice: 'ara' },
+            { id: 'puter:xai:eve', label: 'Eve', provider: 'puter', puterProvider: 'xai', voice: 'eve' },
+            { id: 'puter:xai:sal', label: 'Sal', provider: 'puter', puterProvider: 'xai', voice: 'sal' },
+            { id: 'puter:xai:rex', label: 'Rex', provider: 'puter', puterProvider: 'xai', voice: 'rex' },
+            { id: 'puter:xai:leo', label: 'Leo', provider: 'puter', puterProvider: 'xai', voice: 'leo' }
+        ];
     }
 
     function getBrowserVoiceOptions() {
@@ -456,8 +466,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function chooseDefaultVoiceId(voices) {
-        return voices.find(voice => voice.id === 'openai:cedar')?.id
-            || voices.find(voice => voice.id === 'openai:marin')?.id
+        return voices.find(voice => voice.id === 'puter:xai:ara')?.id
+            || voices.find(voice => voice.id === 'puter:xai:eve')?.id
             || voices[0]?.id
             || '';
     }
@@ -505,26 +515,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function playPremiumVoice(text, voiceOption, options = {}) {
-        if (!voiceOption || voiceOption.provider !== 'openai' || !currentUsername || !sessionToken) {
+        if (!voiceOption || voiceOption.provider !== 'puter' || !(window.puter && puter.ai && typeof puter.ai.txt2speech === 'function')) {
             return false;
         }
 
         try {
-            const response = await fetch('/api/voice', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    text,
-                    voiceId: voiceOption.id,
-                    username: currentUsername,
-                    token: sessionToken,
-                    preview: Boolean(options.preview)
-                })
+            const audio = await puter.ai.txt2speech(text, {
+                provider: voiceOption.puterProvider || 'xai',
+                voice: voiceOption.voice
             });
-            if (!response.ok) return false;
-
-            const audioBlob = await response.blob();
-            const audioUrl = URL.createObjectURL(audioBlob);
+            if (!audio) return false;
 
             return await new Promise(resolve => {
                 let settled = false;
@@ -537,14 +537,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         currentAudio.src = '';
                         currentAudio = null;
                     }
-                    URL.revokeObjectURL(audioUrl);
                     isAssistantSpeaking = false;
                     resolve(success);
                     resumeVoiceCallIfNeeded();
                 };
 
                 stopPlayback();
-                currentAudio = new Audio(audioUrl);
+                currentAudio = audio;
                 currentAudio.preload = 'auto';
                 currentAudio.onplay = () => {
                     isAssistantSpeaking = true;
@@ -824,50 +823,43 @@ document.addEventListener('DOMContentLoaded', () => {
     async function generateImage(prompt) {
         const id = Date.now();
         addMsg(`<p>Generating "${escHtml(prompt)}"...</p><div class="img-skeleton" id="skel-${id}">Loading...</div>`, 'bot');
-        const primaryUrl = `https://pollinations.ai/p/${encodeURIComponent(prompt)}`;
-        const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=768&nologo=true`;
-        const img = new Image();
-        img.className = 'generated-media';
-        img.alt = prompt;
-        img.src = primaryUrl;
-        img.onload = () => {
-            const skeleton = byId(`skel-${id}`);
+        const skeleton = byId(`skel-${id}`);
+        if (!(window.puter && puter.ai && typeof puter.ai.txt2img === 'function')) {
+            if (skeleton) skeleton.textContent = 'Image generation is unavailable right now.';
+            return;
+        }
+
+        try {
+            const result = await puter.ai.txt2img(prompt);
+            const img = result instanceof HTMLImageElement ? result : new Image();
+            if (!(result instanceof HTMLImageElement)) {
+                img.src = String(result || '');
+            }
+            img.className = 'generated-media';
+            img.alt = prompt;
+
+            await new Promise((resolve, reject) => {
+                if (img.complete && img.naturalWidth) {
+                    resolve();
+                    return;
+                }
+                img.onload = resolve;
+                img.onerror = reject;
+            });
+
             if (skeleton) skeleton.replaceWith(img);
             saveChat(prompt, `[Image: ${prompt}]`);
-        };
-        img.onerror = () => {
-            img.src = fallbackUrl;
-            img.onerror = () => {
-                const skeleton = byId(`skel-${id}`);
-                if (skeleton) skeleton.textContent = 'Image generation failed.';
-            };
-        };
+        } catch {
+            if (skeleton) skeleton.textContent = 'Image generation failed.';
+        }
     }
 
     async function generateVideo(prompt) {
         const id = Date.now();
-        addMsg(`<p>Rendering "${escHtml(prompt)}"...</p><div class="img-skeleton" id="skel-${id}">Rendering...</div>`, 'bot');
-        const videoUrl = `https://gen.pollinations.ai/video/${encodeURIComponent(prompt)}`;
-        const posterUrl = `https://pollinations.ai/p/${encodeURIComponent(prompt)}`;
-        const video = document.createElement('video');
-        video.className = 'generated-media';
-        video.controls = true;
-        video.autoplay = true;
-        video.loop = true;
-        video.muted = true;
-        video.playsInline = true;
-        video.poster = posterUrl;
-        video.src = videoUrl;
-        video.onloadeddata = () => {
-            const skeleton = byId(`skel-${id}`);
-            if (skeleton) skeleton.replaceWith(video);
-            saveChat(prompt, `[Video: ${prompt}]`);
-        };
-        video.onerror = () => {
-            const skeleton = byId(`skel-${id}`);
-            if (!skeleton) return;
-            skeleton.innerHTML = `<div style="display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;text-align:center;padding:18px"><div>Video generation is unavailable right now.</div><img src="${posterUrl}" alt="${escHtml(prompt)}" class="generated-media"></div>`;
-        };
+        addMsg(`<p>Video for "${escHtml(prompt)}"</p><div class="img-skeleton" id="skel-${id}">Coming soon</div>`, 'bot');
+        const skeleton = byId(`skel-${id}`);
+        if (!skeleton) return;
+        skeleton.innerHTML = `<div style="display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;text-align:center;padding:18px"><i class="fa-solid fa-film" style="font-size:18px;color:#777"></i><div>Video generation is coming soon.</div><div style="font-size:10px;color:#666">The button is kept here, but the feature is not live yet.</div></div>`;
     }
 
     function addMsg(html, role, id) {
