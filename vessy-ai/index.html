@@ -183,8 +183,110 @@
         </div>
     </aside>
 
-    <main id="chatWindow">
-        <div class="message bot"><div class="bot-avatar"><i class="fa-solid fa-robot"></i></div><div class="glass-card"><p><strong>Vessy OS 31.1 Online.</strong><br>Type <code>Draw a cat</code> or <code>Video a sunset</code>.</p></div></div>
+    <main id="appMain" class="app-main">
+        <section id="homePanel" class="home-panel">
+            <div class="home-hero glass-surface">
+                <div class="home-badge">Original AI Workspace</div>
+                <h1>Vessy OS helps people chat, create, organize ideas, and stay in one place.</h1>
+                <p class="home-lead">This site combines AI chat, uploads, voice tools, account history, and private sessions inside one glass-style workspace. It is built for everyday users who want one assistant that feels fast, simple, and personal.</p>
+                <div class="home-actions">
+                    <button id="homeLoginBtn" class="primary-btn home-btn"><span>Sign In</span><i class="fa-solid fa-arrow-right"></i></button>
+                    <button id="homeSignupBtn" class="glass-btn home-btn"><i class="fa-solid fa-user-plus"></i> Create Account</button>
+                </div>
+            </div>
+
+            <section class="home-grid">
+                <article class="home-card glass-surface">
+                    <div class="home-card-icon"><i class="fa-solid fa-comments"></i></div>
+                    <h2>What Vessy Does</h2>
+                    <p>Vessy OS is designed for natural chat, file-based help, image understanding, account memory, and a clean conversation workflow. It is intended to be useful for study, planning, writing, ideation, and lightweight productivity.</p>
+                </article>
+                <article class="home-card glass-surface">
+                    <div class="home-card-icon"><i class="fa-solid fa-shield"></i></div>
+                    <h2>How Content Is Managed</h2>
+                    <p>User sessions are account-based, chats are stored privately for the signed-in user, and moderation controls can be used to remove access or restrict abusive accounts. AI outputs are educational and should be reviewed by the user.</p>
+                </article>
+                <article class="home-card glass-surface">
+                    <div class="home-card-icon"><i class="fa-solid fa-sparkles"></i></div>
+                    <h2>Who It Is For</h2>
+                    <p>This product is aimed at students, creators, small teams, and curious users who want a single AI interface for questions, drafts, summaries, brainstorming, and simple media actions.</p>
+                </article>
+            </section>
+
+            <section class="home-section glass-surface">
+                <div class="section-heading">
+                    <span class="section-tag">Features</span>
+                    <h2>Core product areas</h2>
+                </div>
+                <div class="feature-list">
+                    <div class="feature-item"><strong>Chat and memory:</strong> Ongoing conversations, saved history, and optional personalization.</div>
+                    <div class="feature-item"><strong>File and image support:</strong> Upload files or images and ask Vessy to analyze the content directly.</div>
+                    <div class="feature-item"><strong>Voice tools:</strong> Voice replies, voice call mode, and browser-based speech fallbacks.</div>
+                    <div class="feature-item"><strong>Account controls:</strong> Login, settings, logout, account deletion, and admin restriction tools.</div>
+                </div>
+            </section>
+
+            <section class="home-section pricing-layout">
+                <article class="pricing-card glass-surface">
+                    <div class="section-heading">
+                        <span class="section-tag">Free</span>
+                        <h2>Starter access</h2>
+                    </div>
+                    <div class="price-line">$0 <span>for casual use</span></div>
+                    <p>Basic chat, history, uploads, and account access for users who want to try the workspace before paying.</p>
+                    <ul class="pricing-list">
+                        <li>Private account login</li>
+                        <li>Basic AI chat</li>
+                        <li>Saved chat history</li>
+                        <li>File and image attachments</li>
+                    </ul>
+                </article>
+                <article class="pricing-card glass-surface featured-price">
+                    <div class="section-heading">
+                        <span class="section-tag">Pro</span>
+                        <h2>Recommended monetization path</h2>
+                    </div>
+                    <div class="price-line">$9<span>/month idea</span></div>
+                    <p>A simple subscription tier is usually a better fit than heavy ads for an AI product. This section is ready for you to replace with your final offer later.</p>
+                    <ul class="pricing-list">
+                        <li>Faster responses</li>
+                        <li>More uploads and larger limits</li>
+                        <li>Priority features and media tools</li>
+                        <li>Optional no-ads experience</li>
+                    </ul>
+                </article>
+            </section>
+
+            <section class="home-section glass-surface">
+                <div class="section-heading">
+                    <span class="section-tag">Ad Ready</span>
+                    <h2>Safe place for future ads</h2>
+                </div>
+                <p class="home-copy">If you later add AdSense or another network, this area is a cleaner location than the chat itself. It sits next to original publisher content instead of inside user-generated conversations.</p>
+                <div class="ad-placeholder">
+                    <div class="ad-placeholder-label">Reserved Ad Slot</div>
+                    <div class="ad-placeholder-copy">Add your future leaderboard or content ad here after approval.</div>
+                </div>
+            </section>
+
+            <section class="home-section glass-surface">
+                <div class="section-heading">
+                    <span class="section-tag">Trust</span>
+                    <h2>Public site information</h2>
+                </div>
+                <p class="home-copy">For monetization and public launch, the site now includes linked policy and information pages. These pages help show ownership, transparency, and original site content outside the chat app itself.</p>
+                <div class="home-links">
+                    <a href="about.html" class="info-link">About</a>
+                    <a href="contact.html" class="info-link">Contact</a>
+                    <a href="privacy.html" class="info-link">Privacy Policy</a>
+                    <a href="terms.html" class="info-link">Terms of Service</a>
+                </div>
+            </section>
+        </section>
+
+        <section id="chatWindow" class="chat-window">
+            <div class="message bot"><div class="bot-avatar"><i class="fa-solid fa-robot"></i></div><div class="glass-card"><p><strong>Vessy OS 31.1 Online.</strong><br>Type <code>Draw a cat</code> or <code>Video a sunset</code>.</p></div></div>
+        </section>
     </main>
 
     <footer>
@@ -205,6 +307,12 @@
                 <input type="file" id="imageUploadInput" class="hidden-input" multiple accept="image/*">
                 <input type="text" id="userInput" placeholder="Ask Vessy OS..." autocomplete="off">
                 <button id="sendBtn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+            <div class="footer-links">
+                <a href="about.html">About</a>
+                <a href="contact.html">Contact</a>
+                <a href="privacy.html">Privacy</a>
+                <a href="terms.html">Terms</a>
             </div>
             <div class="dock-copyright">&copy; 2026 Vessy OS. All Rights Reserved.</div>
         </div>

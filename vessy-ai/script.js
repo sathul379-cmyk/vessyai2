@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
         cookieBanner: byId('cookieBanner'),
         cookieAcceptAll: byId('cookieAcceptAll'),
         cookieEssentialOnly: byId('cookieEssentialOnly'),
+        homePanel: byId('homePanel'),
+        homeLoginBtn: byId('homeLoginBtn'),
+        homeSignupBtn: byId('homeSignupBtn'),
         chatWindow: byId('chatWindow'),
         userInput: byId('userInput'),
         sendBtn: byId('sendBtn'),
@@ -106,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initTerms();
     initBackground();
     initDrawer();
+    initHomePanel();
     initVoice();
     initComposer();
     initAuth();
@@ -191,6 +195,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         window.toggleSettings = () => openDrawer('settingsPanel');
+    }
+
+    function initHomePanel() {
+        els.homeLoginBtn?.addEventListener('click', () => {
+            els.authOverlay.classList.remove('hidden');
+            if (window.switchAuth) window.switchAuth('login');
+        });
+        els.homeSignupBtn?.addEventListener('click', () => {
+            els.authOverlay.classList.remove('hidden');
+            if (window.switchAuth) window.switchAuth('signup');
+        });
+        setPublicShellState(false);
+    }
+
+    function setPublicShellState(isSignedIn) {
+        els.homePanel?.classList.toggle('hidden', isSignedIn);
+        if (els.chatWindow) {
+            els.chatWindow.classList.toggle('chat-window-public', !isSignedIn);
+        }
     }
 
     function setDrawerPanel(panelId) {
@@ -964,6 +987,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function afterLogin() {
+        setPublicShellState(true);
         els.userBadgeName.textContent = currentUsername;
         await loadAccountData();
         await loadChatHistory();
