@@ -38,6 +38,9 @@ document.addEventListener('DOMContentLoaded', () => {
         drawerUsername: byId('drawerUsername'),
         drawerUserEmail: byId('drawerUserEmail'),
         drawerUserCreated: byId('drawerUserCreated'),
+        usageChatValue: byId('usageChatValue'),
+        usageVoiceValue: byId('usageVoiceValue'),
+        usageResetText: byId('usageResetText'),
         voiceReplyToggle: byId('voiceReplyToggle'),
         voiceSelect: byId('voiceSelect'),
         personalizationToggle: byId('personalizationToggle'),
@@ -65,6 +68,15 @@ document.addEventListener('DOMContentLoaded', () => {
         appModal: byId('appModal'),
         appTitle: byId('appTitle'),
         appContent: byId('appContent'),
+        limitModal: byId('limitModal'),
+        limitModalTitle: byId('limitModalTitle'),
+        limitModalSubtitle: byId('limitModalSubtitle'),
+        limitModalChatValue: byId('limitModalChatValue'),
+        limitModalVoiceValue: byId('limitModalVoiceValue'),
+        limitModalResetText: byId('limitModalResetText'),
+        limitRewardBtn: byId('limitRewardBtn'),
+        limitProBtn: byId('limitProBtn'),
+        limitCloseBtn: byId('limitCloseBtn'),
         clock: byId('clock')
     };
 
@@ -103,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentCameraStream = null;
     let cameraDevices = [];
     let currentCameraIndex = 0;
+    let usageState = null;
 
     initClock();
     initCookieBanner();
@@ -110,6 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initBackground();
     initDrawer();
     initHomePanel();
+    initLimitModal();
     initVoice();
     initComposer();
     initAuth();
@@ -207,6 +221,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.switchAuth) window.switchAuth('signup');
         });
         setPublicShellState(false);
+    }
+
+    function initLimitModal() {
+        els.limitCloseBtn?.addEventListener('click', hideLimitModal);
+        els.limitRewardBtn?.addEventListener('click', () => {
+            setComposerStatus('More access is not available on this account right now.', 'warn');
+            hideLimitModal();
+        });
+        els.limitProBtn?.addEventListener('click', () => {
+            window.location.href = 'contact.html';
+        });
     }
 
     function setPublicShellState(isSignedIn) {
@@ -738,12 +763,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const text = els.userInput.value.trim();
         if (!text && pendingAttachments.length === 0) return;
 
+        const usageKind = fromVoice ? 'voice' : 'chat';
+        const usageCheck = await consumeUsage(usageKind);
+        if (usageCheck.allowed === false) {
+            showLimitModal(usageKind);
+            return;
+        }
+
         const attachments = pendingAttachments.map(item => ({ ...item }));
         const payload = buildMessagePayload(text, attachments, fromVoice);
         addMsg(payload.userHtml, 'user', `hist-${conversationHistory.length}`);
         clearComposer();
         conversationHistory.push({ role: 'user', content: payload.historyText });
-        await triggerAI(payload.prompt, payload.historyText, payload.attachments, fromVoice ? 'voice_call' : 'chat');
+        await triggerAI(payload.prompt, payload.historyText, payload.attachments, fromVoice ? 'voice_call' : 'chat', usageKind);
     }
 
     function buildMessagePayload(text, attachments, fromVoice) {
@@ -787,7 +819,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearComposerStatus();
     }
 
-    async function triggerAI(prompt, historyText, attachments, mode) {
+    async function triggerAI(prompt, historyText, attachments, mode, usageKind) {
         const id = Date.now();
         addMsg('...', 'bot', id);
         try {
@@ -804,6 +836,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await response.json();
             const messageEl = byId(`msg-${id}`);
+            if (data.error) {
+                if (messageEl) messageEl.textContent = data.error;
+                if (usageKind) await releaseUsage(usageKind);
+                return;
+            }
             if (messageEl) {
                 messageEl.innerHTML = marked.parse(data.reply || data.error || 'No reply.');
                 conversationHistory.push({ role: 'assistant', content: data.reply || data.error || 'No reply.' });
@@ -814,6 +851,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch {
             const messageEl = byId(`msg-${id}`);
             if (messageEl) messageEl.textContent = 'Connection failed.';
+            if (usageKind) await releaseUsage(usageKind);
         } finally {
             callModeResponsePending = false;
             resumeVoiceCallIfNeeded();
@@ -990,6 +1028,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setPublicShellState(true);
         els.userBadgeName.textContent = currentUsername;
         await loadAccountData();
+        await loadUsageStatus();
         await loadChatHistory();
         checkRestrictionStatus(Boolean(readStoredRestrictionNotice()));
     }
@@ -1045,6 +1084,100 @@ document.addEventListener('DOMContentLoaded', () => {
             accountData = accountData || {};
             accountData.settings = { ...(accountData.settings || {}), ...data.settings };
         }
+    }
+
+    async function loadUsageStatus() {
+        if (!currentUsername || !sessionToken) return null;
+        try {
+            const response = await fetch('/api/usage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'get',
+                    username: currentUsername,
+                    token: sessionToken
+                })
+            });
+            const data = await response.json();
+            if (data.error) return null;
+            usageState = data;
+            renderUsageState();
+            return data;
+        } catch {
+            return null;
+        }
+    }
+
+    function renderUsageState() {
+        if (!usageState) return;
+        if (els.usageChatValue) els.usageChatValue.textContent = `${usageState.chat.used} / ${usageState.chat.limit}`;
+        if (els.usageVoiceValue) els.usageVoiceValue.textContent = `${usageState.voice.used} / ${usageState.voice.limit}`;
+        if (els.usageResetText) els.usageResetText.textContent = usageState.resetLabel || 'Daily limits reset every day.';
+        if (els.limitModalChatValue) els.limitModalChatValue.textContent = `${usageState.chat.used} / ${usageState.chat.limit}`;
+        if (els.limitModalVoiceValue) els.limitModalVoiceValue.textContent = `${usageState.voice.used} / ${usageState.voice.limit}`;
+        if (els.limitModalResetText) els.limitModalResetText.textContent = usageState.resetLabel || 'Daily limits reset every day.';
+    }
+
+    async function consumeUsage(kind) {
+        if (!currentUsername || !sessionToken) return { allowed: true, usage: usageState };
+        try {
+            const response = await fetch('/api/usage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'consume',
+                    username: currentUsername,
+                    token: sessionToken,
+                    kind
+                })
+            });
+            const data = await response.json();
+            if (data.usage) {
+                usageState = data.usage;
+                renderUsageState();
+            }
+            return data;
+        } catch {
+            return { allowed: true, usage: usageState };
+        }
+    }
+
+    async function releaseUsage(kind) {
+        if (!currentUsername || !sessionToken) return;
+        try {
+            const response = await fetch('/api/usage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'release',
+                    username: currentUsername,
+                    token: sessionToken,
+                    kind
+                })
+            });
+            const data = await response.json();
+            if (data.usage) {
+                usageState = data.usage;
+                renderUsageState();
+            }
+        } catch {}
+    }
+
+    function showLimitModal(kind) {
+        if (els.limitModalTitle) {
+            els.limitModalTitle.textContent = kind === 'voice' ? 'Daily voice limit reached' : 'Daily chat limit reached';
+        }
+        if (els.limitModalSubtitle) {
+            els.limitModalSubtitle.textContent = kind === 'voice'
+                ? 'You have used your voice messages for today.'
+                : 'You have used your chat messages for today.';
+        }
+        renderUsageState();
+        els.limitModal?.classList.remove('hidden');
+    }
+
+    function hideLimitModal() {
+        els.limitModal?.classList.add('hidden');
     }
 
     function updatePersonalizationStatus(enabled, memory) {
