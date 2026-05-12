@@ -149,6 +149,15 @@
                 </div>
 
                 <div class="drawer-section">
+                    <div class="drawer-section-label">Daily Usage</div>
+                    <div id="usageCard" class="usage-card">
+                        <div class="usage-row"><span>Chat messages</span><strong id="usageChatValue">-- / --</strong></div>
+                        <div class="usage-row"><span>Voice messages</span><strong id="usageVoiceValue">-- / --</strong></div>
+                        <div class="usage-note" id="usageResetText">Daily limits reset every day.</div>
+                    </div>
+                </div>
+
+                <div class="drawer-section">
                     <div class="drawer-section-label">Voice</div>
                     <div class="toggle-row"><span class="toggle-label">Voice Replies</span><label class="toggle-switch"><input type="checkbox" id="voiceReplyToggle"><span class="toggle-slider"></span></label></div>
                     <div class="settings-field">
@@ -265,7 +274,10 @@
                 <p class="home-copy">If you later add AdSense or another network, this area is a cleaner location than the chat itself. It sits next to original publisher content instead of inside user-generated conversations.</p>
                 <div class="ad-placeholder">
                     <div class="ad-placeholder-label">Reserved Ad Slot</div>
-                    <div class="ad-placeholder-copy">Add your future leaderboard or content ad here after approval.</div>
+                    <div class="ad-placeholder-copy">Add your future leaderboard or content ad here after approval. Advertising inquiries can be directed through the contact page.</div>
+                </div>
+                <div class="home-links" style="margin-top:12px;">
+                    <a href="contact.html" class="info-link">Advertising Contact</a>
                 </div>
             </section>
 
@@ -331,6 +343,33 @@
             <div class="camera-actions">
                 <button class="glass-btn" id="switchCameraBtn"><i class="fa-solid fa-rotate"></i> Switch Camera</button>
                 <button class="primary-btn camera-capture-btn" id="capturePhotoBtn"><span>Capture Photo</span><i class="fa-solid fa-camera"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="limitModal" class="overlay-screen hidden">
+        <div class="overlay-backdrop"></div>
+        <div class="overlay-modal auth-modal">
+            <div class="overlay-glow"></div>
+            <div class="overlay-header">
+                <div class="overlay-icon" style="border-color:rgba(255,170,0,.22);"><i class="fa-solid fa-hourglass-half" style="color:#ffaa00;"></i></div>
+                <h1 id="limitModalTitle">Daily limit reached</h1>
+                <p class="overlay-subtitle" id="limitModalSubtitle">You have used your messages for today.</p>
+            </div>
+            <div class="overlay-body">
+                <div class="usage-card">
+                    <div class="usage-row"><span>Chat messages</span><strong id="limitModalChatValue">-- / --</strong></div>
+                    <div class="usage-row"><span>Voice messages</span><strong id="limitModalVoiceValue">-- / --</strong></div>
+                    <div class="usage-note" id="limitModalResetText">Limits reset daily.</div>
+                </div>
+                <div class="doc-note" style="margin-top:14px;">
+                    <p><strong>Rewarded ads:</strong> This unlock flow is planned for later. Once ads are live, users will be able to watch a short rewarded ad for extra daily usage.</p>
+                </div>
+            </div>
+            <div class="overlay-footer">
+                <button id="limitRewardBtn" class="primary-btn"><span>Rewarded Unlock Soon</span><i class="fa-solid fa-badge-dollar"></i></button>
+                <button id="limitProBtn" class="glass-btn" style="width:100%;justify-content:center;margin-top:8px;"><i class="fa-solid fa-crown"></i> Get Pro</button>
+                <button id="limitCloseBtn" class="ghost-btn">Close</button>
             </div>
         </div>
     </div>
