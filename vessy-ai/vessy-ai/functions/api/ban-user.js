@@ -1,11 +1,10 @@
 export async function onRequestPost(context) {
     try {
         const { request, env } = context;
-        const { adminPassword, action, username, ip, banType, durationMinutes } = await request.json();
+        const { adminToken, action, username, ip, banType, durationMinutes } = await request.json();
 
-        // Verify admin password
-        if (!adminPassword || adminPassword !== 'vessy@2015') {
-            return json({ error: 'Invalid password. Access denied.' }, 403);
+        if (!await validateAdminSession(env, adminToken)) {
+            return json({ error: 'Invalid or expired admin session.' }, 401);
         }
 
         const kv = env.VESSY_CHATS;
@@ -74,6 +73,26 @@ export async function onRequestPost(context) {
 function json(data, status = 200) {
     return new Response(JSON.stringify(data), {
         status,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        headers: { 'Content-Type': 'application/json' }
     });
+}
+
+async function validateAdminSession(env, token) {
+    if (!token || typeof token !== 'string' || !env.ADMIN_SESSION_SECRET) return false;
+
+    const kv = env.VESSY_CHATS;
+    if (!kv) return false;
+
+    const session = await kv.get(await adminSessionKey(token, env), 'json');
+    return Boolean(session?.createdAt);
+}
+
+async function adminSessionKey(token, env) {
+    return `admin-session:${await sha256Hex(token + env.ADMIN_SESSION_SECRET)}`;
+}
+
+async function sha256Hex(value) {
+    const bytes = new TextEncoder().encode(value);
+    const hash = await crypto.subtle.digest('SHA-256', bytes);
+    return [...new Uint8Array(hash)].map(byte => byte.toString(16).padStart(2, '0')).join('');
 }

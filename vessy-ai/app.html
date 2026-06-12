@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vessy OS Workspace</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="workspace-page">
+    <div id="bgLayer" class="bg-default"></div>
+    <div class="vignette"></div>
+
+    <div id="cookieBanner" class="cookie-banner hidden">
+        <div class="cookie-inner">
+            <div class="cookie-text">
+                <i class="fa-solid fa-cookie-bite"></i>
+                <p>Vessy OS uses cookies to keep you signed in and improve your experience.</p>
+            </div>
+            <div class="cookie-actions">
+                <button id="cookieAcceptAll" class="cookie-btn primary">Accept All</button>
+                <button id="cookieEssentialOnly" class="cookie-btn secondary">Essential Only</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="termsOverlay" class="overlay-screen">
+        <div class="overlay-backdrop"></div>
+        <div class="overlay-modal">
+            <div class="overlay-glow"></div>
+            <div class="overlay-header">
+                <div class="overlay-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <h1>Welcome to Vessy OS</h1>
+                <p class="overlay-subtitle">Version 31.1 - Please review our terms</p>
+            </div>
+            <div class="overlay-body">
+                <div class="terms-section">
+                    <div class="terms-section-icon"><i class="fa-solid fa-database"></i></div>
+                    <div>
+                        <h3>Private Data Storage</h3>
+                        <p>All chats are stored <strong>privately on Vessy OS servers</strong>. Chat logs are server-side only and <strong>not downloadable by users</strong>.</p>
+                    </div>
+                </div>
+                <div class="terms-section">
+                    <div class="terms-section-icon"><i class="fa-solid fa-brain"></i></div>
+                    <div>
+                        <h3>AI Personalization</h3>
+                        <p>Vessy OS learns your <strong>tone and interests</strong> to personalize responses. You can disable this in Settings.</p>
+                    </div>
+                </div>
+                <div class="terms-section">
+                    <div class="terms-section-icon"><i class="fa-solid fa-gavel"></i></div>
+                    <div>
+                        <h3>Responsibility</h3>
+                        <p><strong>Any illegal activities conducted by the user are entirely the user's fault.</strong> Vessy OS accepts no liability. AI advice is educational only.</p>
+                    </div>
+                </div>
+                <div class="terms-divider"></div>
+                <div class="terms-summary">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <p><strong>Summary:</strong> Chats are private. AI learns from you. You are responsible for your actions.</p>
+                </div>
+            </div>
+            <div class="overlay-footer">
+                <label class="terms-checkbox-wrap" id="termsCheckWrap">
+                    <input type="checkbox" id="termsCheckbox">
+                    <span class="terms-checkmark"></span>
+                    <span class="terms-checkbox-label">I agree to the Terms &amp; Conditions</span>
+                </label>
+                <button id="termsAcceptBtn" class="primary-btn" disabled>
+                    <span>Accept &amp; Continue</span><i class="fa-solid fa-arrow-right"></i>
+                </button>
+                <button id="termsDeclineBtn" class="ghost-btn" onclick="window.location.href='index.html'">Back</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="authOverlay" class="overlay-screen hidden">
+        <div class="overlay-backdrop"></div>
+        <div class="overlay-modal auth-modal">
+            <div class="overlay-glow"></div>
+            <div id="loginView" class="auth-view">
+                <div class="overlay-header">
+                    <div class="overlay-icon" style="border-color:rgba(0,242,255,.2);"><i class="fa-solid fa-right-to-bracket" style="color:#00f2ff;"></i></div>
+                    <h1>Sign In</h1>
+                    <p class="overlay-subtitle">Welcome back to Vessy OS 31.1</p>
+                </div>
+                <div class="auth-body">
+                    <div class="auth-field"><label>Username</label><div class="auth-input-wrap"><i class="fa-solid fa-user"></i><input type="text" id="loginUsername" placeholder="Username" autocomplete="off"></div></div>
+                    <div class="auth-field"><label>Password</label><div class="auth-input-wrap"><i class="fa-solid fa-lock"></i><input type="password" id="loginPassword" placeholder="Password"><button class="toggle-pw-btn" onclick="togglePw('loginPassword',this)"><i class="fa-solid fa-eye"></i></button></div></div>
+                    <div id="loginError" class="auth-error"></div>
+                    <button id="loginBtn" class="primary-btn">Sign In <i class="fa-solid fa-arrow-right"></i></button>
+                    <div class="auth-switch">No account? <button onclick="switchAuth('signup')">Create one</button></div>
+                </div>
+            </div>
+            <div id="signupView" class="auth-view hidden">
+                <div class="overlay-header">
+                    <div class="overlay-icon" style="border-color:rgba(255,0,255,.2);"><i class="fa-solid fa-user-plus" style="color:#ff00ff;"></i></div>
+                    <h1>Create Account</h1>
+                </div>
+                <div class="auth-body">
+                    <div class="auth-field"><label>Username</label><div class="auth-input-wrap"><i class="fa-solid fa-user"></i><input type="text" id="signupUsername" placeholder="Choose username" maxlength="24"></div><div id="signupUsernameStatus" class="field-status"></div></div>
+                    <div class="auth-field"><label>Email (Optional)</label><div class="auth-input-wrap"><i class="fa-solid fa-envelope"></i><input type="email" id="signupEmail" placeholder="Email"></div></div>
+                    <div class="auth-field"><label>Password</label><div class="auth-input-wrap"><i class="fa-solid fa-lock"></i><input type="password" id="signupPassword" placeholder="Min 6 chars"><button class="toggle-pw-btn" onclick="togglePw('signupPassword',this)"><i class="fa-solid fa-eye"></i></button></div></div>
+                    <div id="signupError" class="auth-error"></div>
+                    <button id="signupBtn" class="primary-btn purple">Create Account <i class="fa-solid fa-rocket"></i></button>
+                    <div class="auth-switch">Has account? <button onclick="switchAuth('login')">Sign in</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <div class="left-controls"><button id="menuBtn" class="glass-btn"><i class="fa-solid fa-bars"></i> MENU</button><div id="clock">00:00</div></div>
+        <div class="center-title"><span class="title-icon">&#9670;</span> VESSY OS <span class="title-version">Workspace</span></div>
+        <div class="right-controls"><div class="user-badge" id="userBadge"><i class="fa-solid fa-user"></i><span id="userBadgeName">---</span></div><button id="settingsBtn" class="glass-btn icon-only"><i class="fa-solid fa-gear"></i></button></div>
+    </header>
+
+    <div id="drawerBackdrop" class="drawer-backdrop hidden"></div>
+    <aside id="sideDrawer" class="side-drawer hidden">
+        <div class="drawer-header">
+            <div>
+                <div class="drawer-title">Workspace</div>
+                <div class="drawer-subtitle">History and settings</div>
+            </div>
+            <button id="drawerCloseBtn" class="drawer-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="drawer-tabs">
+            <button class="drawer-tab active" data-panel="historyPanel">History</button>
+            <button class="drawer-tab" data-panel="settingsPanel">Settings</button>
+        </div>
+        <div class="drawer-body">
+            <section id="historyPanel" class="drawer-panel">
+                <div class="drawer-section-label">Recent Chats</div>
+                <div id="historyList" class="history-list"></div>
+            </section>
+            <section id="settingsPanel" class="drawer-panel hidden">
+                <div class="drawer-section">
+                    <div class="drawer-section-label">Account</div>
+                    <div class="settings-user-card">
+                        <div class="settings-avatar"><i class="fa-solid fa-user"></i></div>
+                        <div>
+                            <div class="settings-user-name" id="drawerUsername">---</div>
+                            <div class="settings-user-email" id="drawerUserEmail">No email</div>
+                        </div>
+                    </div>
+                    <div class="settings-meta" id="drawerUserCreated">Created: --</div>
+                </div>
+
+                <div class="drawer-section">
+                    <div class="drawer-section-label">Daily Usage</div>
+                    <div id="usageCard" class="usage-card">
+                        <div class="usage-row"><span>Chat messages</span><strong id="usageChatValue">-- / --</strong></div>
+                        <div class="usage-row"><span>Voice messages</span><strong id="usageVoiceValue">-- / --</strong></div>
+                        <div class="usage-note" id="usageResetText">Daily limits reset every day.</div>
+                    </div>
+                </div>
+
+                <div class="drawer-section">
+                    <div class="drawer-section-label">Voice</div>
+                    <div class="toggle-row"><span class="toggle-label">Voice Replies</span><label class="toggle-switch"><input type="checkbox" id="voiceReplyToggle"><span class="toggle-slider"></span></label></div>
+                    <div class="settings-field">
+                        <label for="voiceSelect">Voice</label>
+                        <select id="voiceSelect" class="settings-select"></select>
+                        <div class="settings-help">Voice previews and replies use synthetic speech.</div>
+                    </div>
+                </div>
+
+                <div class="drawer-section">
+                    <div class="drawer-section-label">Personalization</div>
+                    <div class="toggle-row"><span class="toggle-label">Enable Learning</span><label class="toggle-switch"><input type="checkbox" id="personalizationToggle" checked><span class="toggle-slider"></span></label></div>
+                    <div id="personalizationStatus" class="personalization-status inactive">Learning is currently off.</div>
+                    <button class="settings-link-btn danger-link" id="deletePersonalizationBtn">Delete Learned Data</button>
+                </div>
+
+                <div class="drawer-section">
+                    <div class="drawer-section-label">Background</div>
+                    <div class="bg-grid">
+                        <div class="bg-option" data-bg="default">Dark</div>
+                        <div class="bg-option" data-bg="blue">Neon</div>
+                        <div class="bg-option" data-bg="pink">Cyber</div>
+                    </div>
+                </div>
+
+                <div class="drawer-section">
+                    <div class="drawer-section-label">Account Actions</div>
+                    <button class="settings-link-btn" id="logoutBtn">Log Out</button>
+                    <button class="settings-link-btn danger-link" id="deleteAccountBtn">Delete Account</button>
+                </div>
+            </section>
+        </div>
+    </aside>
+
+    <main id="appMain" class="app-main workspace-main">
+        <section id="homePanel" class="home-panel hidden"></section>
+        <section id="chatWindow" class="chat-window">
+            <div class="message bot"><div class="bot-avatar"><i class="fa-solid fa-robot"></i></div><div class="glass-card"><p><strong>Vessy OS Workspace Online.</strong><br>Type <code>Draw a cat</code> or <code>Summarize this file</code>.</p></div></div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="dock">
+            <div id="composerStatus" class="composer-status hidden"></div>
+            <div id="attachmentTray" class="attachment-tray hidden"></div>
+            <div id="composerMenu" class="composer-menu hidden">
+                <button class="composer-menu-item" id="generateImageBtn"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Create image</span></button>
+                <button class="composer-menu-item" id="generateVideoBtn" title="Coming soon"><i class="fa-solid fa-film"></i><span>Create video</span></button>
+                <button class="composer-menu-item" id="fileUploadBtn"><i class="fa-solid fa-file-arrow-up"></i><span>Upload file</span></button>
+                <button class="composer-menu-item" id="imageUploadBtn"><i class="fa-solid fa-image"></i><span>Upload image</span></button>
+                <button class="composer-menu-item" id="cameraOpenBtn"><i class="fa-solid fa-camera"></i><span>Use camera</span></button>
+            </div>
+            <div class="dock-inner">
+                <button id="voiceBtn" class="tool-btn" type="button" title="Voice call"><i class="fa-solid fa-microphone"></i></button>
+                <button id="plusBtn" class="tool-btn plus-btn" type="button" title="More actions"><i class="fa-solid fa-plus"></i></button>
+                <input type="file" id="fileUploadInput" class="hidden-input" multiple accept=".txt,.md,.json,.csv,.js,.ts,.html,.css,.xml,.rtf,text/*,application/json,text/csv">
+                <input type="file" id="imageUploadInput" class="hidden-input" multiple accept="image/*">
+                <input type="text" id="userInput" placeholder="Ask Vessy OS..." autocomplete="off">
+                <button id="sendBtn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+            <div class="footer-links">
+                <a href="index.html">Home</a>
+                <a href="about.html">About</a>
+                <a href="contact.html">Contact</a>
+                <a href="privacy.html">Privacy</a>
+                <a href="terms.html">Terms</a>
+            </div>
+            <div class="dock-copyright">&copy; 2026 Vessy OS. All Rights Reserved.</div>
+        </div>
+    </footer>
+
+    <div id="appModal" class="modal hidden">
+        <div class="modal-header"><div class="modal-dots"><span class="dot red" onclick="closeApp()"></span><span class="dot yellow"></span><span class="dot green"></span></div><span id="appTitle">App</span><button class="modal-close-btn" onclick="closeApp()">&times;</button></div>
+        <div class="modal-body" id="appContent"></div>
+    </div>
+
+    <div id="cameraModal" class="modal hidden camera-modal">
+        <div class="modal-header"><span>Camera</span><button class="modal-close-btn" id="cameraCloseBtn">&times;</button></div>
+        <div class="modal-body camera-body">
+            <video id="cameraPreview" autoplay playsinline muted></video>
+            <canvas id="cameraCanvas" class="hidden-canvas"></canvas>
+            <div class="camera-actions">
+                <button class="glass-btn" id="switchCameraBtn"><i class="fa-solid fa-rotate"></i> Switch Camera</button>
+                <button class="primary-btn camera-capture-btn" id="capturePhotoBtn"><span>Capture Photo</span><i class="fa-solid fa-camera"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="limitModal" class="overlay-screen hidden">
+        <div class="overlay-backdrop"></div>
+        <div class="overlay-modal auth-modal">
+            <div class="overlay-glow"></div>
+            <div class="overlay-header">
+                <div class="overlay-icon" style="border-color:rgba(255,170,0,.22);"><i class="fa-solid fa-hourglass-half" style="color:#ffaa00;"></i></div>
+                <h1 id="limitModalTitle">Daily limit reached</h1>
+                <p class="overlay-subtitle" id="limitModalSubtitle">You have used your messages for today.</p>
+            </div>
+            <div class="overlay-body">
+                <div class="usage-card">
+                    <div class="usage-row"><span>Chat messages</span><strong id="limitModalChatValue">-- / --</strong></div>
+                    <div class="usage-row"><span>Voice messages</span><strong id="limitModalVoiceValue">-- / --</strong></div>
+                    <div class="usage-note" id="limitModalResetText">Limits reset daily.</div>
+                </div>
+                <div class="doc-note" style="margin-top:14px;">
+                    <p><strong>More access:</strong> Extra access options are managed here alongside standard daily limits and account-based usage controls.</p>
+                </div>
+            </div>
+            <div class="overlay-footer">
+                <button id="limitRewardBtn" class="primary-btn"><span>More Access</span><i class="fa-solid fa-badge-dollar"></i></button>
+                <button id="limitProBtn" class="glass-btn" style="width:100%;justify-content:center;margin-top:8px;"><i class="fa-solid fa-crown"></i> Get Pro</button>
+                <button id="limitCloseBtn" class="ghost-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

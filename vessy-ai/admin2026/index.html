@@ -119,7 +119,7 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeBanModal(); });
 
     let allUsers = [], allChats = {}, userBans = [], bannedIps = [];
-    let adminPw = '', banTarget = '', banMode = '';
+    let adminToken = '', banTarget = '', banMode = '';
 
     async function doLogin() {
         const pw = document.getElementById('apw').value;
@@ -133,22 +133,32 @@
         btn.textContent = 'Authenticating...';
 
         try {
-            const r = await fetch('/api/admin-data', {
+            const authResponse = await fetch('/api/admin-auth', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ adminPassword: pw })
             });
-            const d = await r.json();
+            const authData = await authResponse.json();
 
-            if (d.error) {
-                err.textContent = d.error;
+            if (authData.error || !authData.adminToken) {
+                err.textContent = authData.error || 'Authentication failed.';
                 btn.classList.remove('loading');
                 btn.textContent = 'Authenticate';
                 return;
             }
 
-            // Success
-            adminPw = pw;
+            adminToken = authData.adminToken;
+            document.getElementById('apw').value = '';
+
+            const d = await loadAdminData();
+            if (d.error) {
+                err.textContent = d.error;
+                adminToken = '';
+                btn.classList.remove('loading');
+                btn.textContent = 'Authenticate';
+                return;
+            }
+
             document.getElementById('lw').style.display = 'none';
             document.getElementById('ap').classList.add('show');
 
@@ -163,6 +173,30 @@
             btn.classList.remove('loading');
             btn.textContent = 'Authenticate';
         }
+    }
+
+    async function loadAdminData() {
+        const r = await fetch('/api/admin-data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ adminToken })
+        });
+        return r.json();
+    }
+
+    function handleAdminError(data) {
+        if (!data || !data.error) return false;
+        if (/admin session/i.test(data.error)) {
+            adminToken = '';
+            alert(data.error + ' Please log in again.');
+            document.getElementById('ap').classList.remove('show');
+            document.getElementById('lw').style.display = 'flex';
+            document.getElementById('abtn').classList.remove('loading');
+            document.getElementById('abtn').textContent = 'Authenticate';
+            return true;
+        }
+        alert(data.error);
+        return true;
     }
 
     function renderPanel() {
@@ -427,7 +461,7 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    adminPassword: adminPw,
+                    adminToken,
                     action: 'ban-user',
                     username: user,
                     banType: mode === 'temp' ? 'temp' : 'perma',
@@ -436,7 +470,7 @@
                 })
             });
             const d = await r.json();
-            if (d.error) { alert(d.error); return; }
+            if (handleAdminError(d)) return;
             closeBanModal();
             alert(d.message || 'Banned!');
             refreshData();
@@ -453,10 +487,11 @@
             const r = await fetch('/api/ban-user', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminPassword: adminPw, action: 'unban-user', username: user })
+                body: JSON.stringify({ adminToken, action: 'unban-user', username: user })
             });
             const d = await r.json();
-            alert(d.error || d.message);
+            if (handleAdminError(d)) return;
+            alert(d.message);
             refreshData();
         } catch(e) { alert('Failed: ' + e.message); }
     }
@@ -467,12 +502,13 @@
             const r = await fetch('/api/ban-user', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminPassword: adminPw, action: 'unban-ip', ip })
+                body: JSON.stringify({ adminToken, action: 'unban-ip', ip })
             });
             const d = await r.json();
-            alert(d.error || d.message);
-            const r2 = await fetch('/api/admin-data', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({adminPassword: adminPw}) });
-            const d2 = await r2.json();
+            if (handleAdminError(d)) return;
+            alert(d.message);
+            const d2 = await loadAdminData();
+            if (handleAdminError(d2)) return;
             bannedIps = d2.bannedIps || [];
             renderPanel();
         } catch(e) { alert('Failed: ' + e.message); }
@@ -488,16 +524,22 @@
             const r = await fetch('/api/ban-user', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminPassword: adminPw, action: 'kick-user', username: user })
+                body: JSON.stringify({ adminToken, action: 'kick-user', username: user })
             });
             const d = await r.json();
-            alert(d.error || d.message);
+            if (handleAdminError(d)) return;
+            alert(d.message);
         } catch(e) { alert('Failed: ' + e.message); }
     }
     function refreshData() {
-        fetch('/api/admin-data', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({adminPassword: adminPw}) })
-            .then(r => r.json())
-            .then(d => { allChats = d.chats || {}; userBans = d.userBans || []; bannedIps = d.bannedIps || []; renderPanel(); })
+        loadAdminData()
+            .then(d => {
+                if (handleAdminError(d)) return;
+                allChats = d.chats || {};
+                userBans = d.userBans || [];
+                bannedIps = d.bannedIps || [];
+                renderPanel();
+            })
             .catch(e => console.error(e));
     }
     </script>

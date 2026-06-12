@@ -235,6 +235,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setPublicShellState(isSignedIn) {
+        if (document.body.classList.contains('workspace-page')) {
+            els.homePanel?.classList.add('hidden');
+            if (els.chatWindow) els.chatWindow.classList.remove('chat-window-public');
+            return;
+        }
         els.homePanel?.classList.toggle('hidden', isSignedIn);
         if (els.chatWindow) {
             els.chatWindow.classList.toggle('chat-window-public', !isSignedIn);
