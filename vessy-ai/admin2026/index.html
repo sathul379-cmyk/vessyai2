@@ -133,6 +133,11 @@
         location.href = '../app.html';
     }
 
+    function clearStoredSession() {
+        localStorage.removeItem('vessy_session');
+        localStorage.removeItem('vessy_restriction_notice');
+    }
+
     async function authenticateFromAdminAccount() {
         const session = getStoredSession();
         const err = document.getElementById('aerr');
@@ -163,7 +168,12 @@
             const authData = await authResponse.json();
 
             if (authData.error || !authData.adminToken) {
-                err.textContent = authData.error || 'Authentication failed.';
+                if (/invalid admin account session/i.test(authData.error || '')) {
+                    clearStoredSession();
+                    err.textContent = 'Your admin login expired. Sign in again.';
+                } else {
+                    err.textContent = authData.error || 'Authentication failed.';
+                }
                 btn.classList.remove('loading');
                 btn.textContent = 'Open Vessy Login';
                 return;

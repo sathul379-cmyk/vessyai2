@@ -18,14 +18,14 @@ export async function onRequestPost(context) {
         }
 
         const accountSession = await kv.get(`session:${token}`, 'json');
-        if (!accountSession || accountSession.username?.toLowerCase() !== 'admin') {
+        if (getSessionUsername(accountSession) !== 'admin') {
             return json({ error: 'Invalid admin account session.' }, 401);
         }
 
         const adminToken = randomHex(32);
         await kv.put(await adminSessionKey(adminToken, env), JSON.stringify({
             createdAt: new Date().toISOString(),
-            username: accountSession.username,
+            username: accountSession.username || username,
             ip: getClientIp(request)
         }), { expirationTtl: ADMIN_SESSION_TTL_SECONDS });
 
@@ -57,6 +57,10 @@ function getClientIp(request) {
         || request.headers.get('x-real-ip')
         || '';
     return forwarded.split(',')[0].trim();
+}
+
+function getSessionUsername(session) {
+    return String(session?.username || session?.user || session?.account?.username || '').toLowerCase();
 }
 
 function json(data, status = 200) {

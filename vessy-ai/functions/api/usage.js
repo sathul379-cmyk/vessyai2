@@ -19,6 +19,10 @@ export async function onRequestPost(context) {
             return json({ error: 'Invalid session.' }, 401);
         }
 
+        if (normalizedUsername === 'admin') {
+            return json(buildUnlimitedUsageResponse());
+        }
+
         const dateKey = getDateKey();
         const storageKey = `usage:${normalizedUsername}:${dateKey}`;
         const current = await kv.get(storageKey, 'json') || createEmptyUsage(dateKey);
@@ -93,6 +97,18 @@ function buildUsageResponse(usage) {
         chatFast: summarizeBucket(usage.chatFast.used, FAST_CHAT_LIMIT),
         chatSmart: summarizeBucket(usage.chatSmart.used, SMART_CHAT_LIMIT),
         voice: summarizeBucket(usage.voice.used, VOICE_LIMIT)
+    };
+}
+
+function buildUnlimitedUsageResponse() {
+    const unlimited = { used: 0, limit: 'Unlimited', remaining: 'Unlimited' };
+    return {
+        dateKey: getDateKey(),
+        resetLabel: 'Admin account has unlimited access.',
+        chat: unlimited,
+        chatFast: unlimited,
+        chatSmart: unlimited,
+        voice: unlimited
     };
 }
 
