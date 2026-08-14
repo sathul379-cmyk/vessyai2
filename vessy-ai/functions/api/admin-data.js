@@ -57,8 +57,7 @@ export async function onRequestPost(context) {
         const chats = {};
         for (const user of users) {
             try {
-                const userChats = await kv.get(`chats:${user.toLowerCase()}`, 'json');
-                chats[user] = userChats || [];
+                chats[user] = await getUserChatMessages(kv, user.toLowerCase(), env);
             } catch {
                 chats[user] = [];
             }
@@ -96,4 +95,49 @@ async function sha256Hex(value) {
     const bytes = new TextEncoder().encode(value);
     const hash = await crypto.subtle.digest('SHA-256', bytes);
     return [...new Uint8Array(hash)].map(byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+async function getUserChatMessages(kv, username, env) {
+    const sessions = await kv.get(`chat-sessions:${username}`, 'json') || [];
+    if (!sessions.length) {
+        return await kv.get(`chats:${username}`, 'json') || [];
+    }
+
+    const messages = [];
+    for (const summary of sessions.slice(0, 20)) {
+        if (!summary?.id) continue;
+        const session = await readChatSession(kv, `chat-session:${username}:${summary.id}`, env);
+        if (!session?.messages?.length) continue;
+        messages.push({
+            role: 'system',
+            content: `Chat session: ${summary.title || summary.id}`,
+            timestamp: session.createdAt || summary.createdAt || null
+        });
+        messages.push(...session.messages);
+    }
+    return messages.slice(-300);
+}
+
+async function readChatSession(kv, key, env) {
+    const stored = await kv.get(key, 'json');
+    if (!stored) return null;
+    if (!stored.encrypted) return stored;
+    return decryptJson(stored, env.CHAT_ENCRYPTION_SECRET);
+}
+
+async function decryptJson(payload, secret) {
+    if (!secret) return null;
+    const iv = base64Decode(payload.iv);
+    const data = base64Decode(payload.data);
+    const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, await encryptionKey(secret), data);
+    return JSON.parse(new TextDecoder().decode(decrypted));
+}
+
+async function encryptionKey(secret) {
+    const material = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(secret));
+    return crypto.subtle.importKey('raw', material, 'AES-GCM', false, ['decrypt']);
+}
+
+function base64Decode(value) {
+    return Uint8Array.from(atob(value), char => char.charCodeAt(0));
 }

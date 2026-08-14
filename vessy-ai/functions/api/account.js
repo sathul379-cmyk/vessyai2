@@ -47,6 +47,12 @@ export async function onRequestPost(context) {
         }
 
         if (action === 'delete-account') {
+            if (normalizedUsername === 'admin') {
+                return json({ error: 'The admin account cannot be deleted from the app.' }, 403);
+            }
+            const chatSessions = await kv.get(`chat-sessions:${normalizedUsername}`, 'json') || [];
+            await Promise.all(chatSessions.map(item => item?.id ? kv.delete(`chat-session:${normalizedUsername}:${item.id}`) : null));
+            await kv.delete(`chat-sessions:${normalizedUsername}`);
             await kv.delete(`user:${normalizedUsername}`);
             await kv.delete(`chats:${normalizedUsername}`);
             await kv.delete(`memory:${normalizedUsername}`);

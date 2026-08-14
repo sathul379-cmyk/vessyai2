@@ -96,17 +96,16 @@
         <div class="admin-login">
             <div class="icon"><i class="fa-solid fa-user-shield"></i></div>
             <h1>Admin Panel</h1>
-            <p>Vessy OS 31.1 — Authorized Access Only</p>
-            <input type="password" class="admin-input" id="apw" placeholder="Enter admin password" autocomplete="off">
+            <p>Vessy OS 31.1 - Admin account access only</p>
             <div class="admin-error" id="aerr"></div>
-            <button class="admin-submit" id="abtn" onclick="doLogin()">Authenticate</button>
+            <button class="admin-submit" id="abtn" onclick="goToAppLogin()">Open Vessy Login</button>
         </div>
     </div>
 
     <div class="admin-panel" id="ap">
         <div class="admin-topbar">
             <h1><i class="fa-solid fa-user-shield"></i> Vessy OS Admin <span class="ver">v31.1</span></h1>
-            <button class="dl-btn sec" onclick="location.href='/'"><i class="fa-solid fa-arrow-left"></i> Back</button>
+            <button class="dl-btn sec" onclick="location.href='../app.html'"><i class="fa-solid fa-arrow-left"></i> Back</button>
         </div>
         <div class="admin-stats" id="as"></div>
         <div class="admin-actions" id="aa"></div>
@@ -115,47 +114,69 @@
     </div>
 
     <script>
-    document.getElementById('apw').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeBanModal(); });
 
     let allUsers = [], allChats = {}, userBans = [], bannedIps = [];
     let adminToken = '', banTarget = '', banMode = '';
 
-    async function doLogin() {
-        const pw = document.getElementById('apw').value;
+    authenticateFromAdminAccount();
+
+    function getStoredSession() {
+        try {
+            return JSON.parse(localStorage.getItem('vessy_session') || 'null');
+        } catch {
+            return null;
+        }
+    }
+
+    function goToAppLogin() {
+        location.href = '../app.html';
+    }
+
+    async function authenticateFromAdminAccount() {
+        const session = getStoredSession();
         const err = document.getElementById('aerr');
         const btn = document.getElementById('abtn');
         err.textContent = '';
 
-        if (!pw) { err.textContent = 'Enter password.'; return; }
+        if (!session?.username || !session?.token) {
+            err.textContent = 'Sign in to the admin account first.';
+            btn.textContent = 'Open Vessy Login';
+            return;
+        }
+
+        if (String(session.username).toLowerCase() !== 'admin') {
+            err.textContent = 'This panel is only available to the admin account.';
+            btn.textContent = 'Back to Vessy';
+            return;
+        }
 
         btn.classList.add('loading');
-        btn.textContent = 'Authenticating...';
+        btn.textContent = 'Opening panel...';
 
         try {
             const authResponse = await fetch('/api/admin-auth', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminPassword: pw })
+                body: JSON.stringify({ username: session.username, token: session.token })
             });
             const authData = await authResponse.json();
 
             if (authData.error || !authData.adminToken) {
                 err.textContent = authData.error || 'Authentication failed.';
                 btn.classList.remove('loading');
-                btn.textContent = 'Authenticate';
+                btn.textContent = 'Open Vessy Login';
                 return;
             }
 
             adminToken = authData.adminToken;
-            document.getElementById('apw').value = '';
 
             const d = await loadAdminData();
             if (d.error) {
                 err.textContent = d.error;
                 adminToken = '';
                 btn.classList.remove('loading');
-                btn.textContent = 'Authenticate';
+                btn.textContent = 'Open Vessy Login';
                 return;
             }
 
@@ -171,7 +192,7 @@
         } catch(e) {
             err.textContent = 'Connection failed: ' + e.message;
             btn.classList.remove('loading');
-            btn.textContent = 'Authenticate';
+            btn.textContent = 'Open Vessy Login';
         }
     }
 
@@ -192,7 +213,7 @@
             document.getElementById('ap').classList.remove('show');
             document.getElementById('lw').style.display = 'flex';
             document.getElementById('abtn').classList.remove('loading');
-            document.getElementById('abtn').textContent = 'Authenticate';
+            document.getElementById('abtn').textContent = 'Open Vessy Login';
             return true;
         }
         alert(data.error);

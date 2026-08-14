@@ -78,6 +78,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 
 header{height:50px;display:flex;justify-content:space-between;align-items:center;padding:0 14px;background:rgba(8,8,12,.75);backdrop-filter:blur(25px);-webkit-backdrop-filter:blur(25px);border-bottom:1px solid var(--border);z-index:100}
 .left-controls,.right-controls{display:flex;align-items:center;gap:10px}
+.model-selector-wrap{height:34px;display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.035);border:1px solid var(--border);border-radius:10px;padding:0 9px;color:#666}
+.model-selector-wrap i{font-size:10px;color:var(--accent)}
+.model-selector{background:transparent;border:none;color:#bbb;font-size:11px;font-weight:600;font-family:inherit;outline:none;cursor:pointer;max-width:160px}
+.model-selector option{background:#111114;color:#ddd}
 .center-title{font-weight:800;font-size:12px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;display:flex;align-items:center;gap:6px}
 .title-icon{font-size:7px;animation:pulse 3s ease infinite}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .title-version{font-size:9px;font-weight:500;color:var(--text-dim);background:rgba(255,255,255,.04);padding:2px 6px;border-radius:4px}
@@ -114,7 +118,9 @@ header{height:50px;display:flex;justify-content:space-between;align-items:center
 .history-list{display:flex;flex-direction:column;gap:8px}
 .history-item{width:100%;text-align:left;font-family:inherit;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:11px 13px;cursor:pointer;transition:.2s}
 .history-item:hover{background:rgba(255,255,255,.045);border-color:rgba(255,255,255,.09)}
+.history-item.active{border-color:rgba(0,242,255,.18);background:rgba(0,242,255,.045)}
 .history-item.empty{cursor:default;color:#666;text-align:center;padding:20px 14px}
+.new-chat-btn{justify-content:center;margin-bottom:14px;color:#cfeff2;border-color:rgba(0,242,255,.12);background:rgba(0,242,255,.035)}
 .history-title{font-size:12px;color:#ddd;font-weight:600;line-height:1.45}
 .history-meta{font-size:10px;color:#555;margin-top:6px}
 .history-preview{font-size:10px;color:#666;margin-top:6px;line-height:1.45}
@@ -194,6 +200,7 @@ footer{position:fixed;bottom:0;left:0;right:0;z-index:100;padding:6px 14px 10px;
 .tool-btn.image-active{color:#ff66cc}
 .tool-btn:disabled{opacity:.35;cursor:not-allowed}
 .plus-btn{font-size:13px}
+.beta-chip{font-size:9px;letter-spacing:.4px;text-transform:uppercase;color:#ffaa66;border:1px solid rgba(255,170,0,.14);background:rgba(255,170,0,.055);border-radius:999px;padding:4px 7px;white-space:nowrap}
 .hidden-input{display:none}
 input[type="text"]{flex:1;background:transparent;border:none;color:white;font-size:13.5px;outline:none;font-family:inherit}input[type="text"]::placeholder{color:rgba(255,255,255,.2)}
 .send-btn{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#00aaff);border:none;color:#000;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:.25s}.send-btn:hover{transform:scale(1.05);box-shadow:0 4px 18px rgba(0,242,255,.25)}
@@ -274,4 +281,4 @@ iframe{width:100%;height:100%;border:none}
 .doc-note{margin-top:18px;padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05)}
 
 @media(max-width:900px){.home-grid,.pricing-layout{grid-template-columns:1fr}.home-hero h1{font-size:24px}}
-@media(max-width:600px){header{padding:0 10px}.center-title{font-size:10px}.title-version{display:none}.user-badge span{display:none}.app-grid{width:calc(100% - 28px)}.modal{width:95%;height:85%}.small-modal{width:92%}.overlay-modal{width:95%}main{padding:12px 10px 160px}.app-main{padding-top:12px}.home-hero,.home-card,.home-section,.pricing-card,.doc-card{padding:18px}.dock-inner{padding-left:10px;border-radius:24px}.tool-btn{width:30px;height:30px}.attachment-name{max-width:120px}.side-drawer{top:50px;left:0;right:0;bottom:0;width:100%;max-width:100%;border-radius:18px 18px 0 0}.camera-actions{flex-direction:column}.camera-capture-btn{max-width:none}}
+@media(max-width:600px){header{padding:0 10px}.center-title{font-size:10px}.title-version{display:none}.user-badge span{display:none}.model-selector-wrap{max-width:116px;padding:0 7px}.model-selector{max-width:86px;font-size:10px}.beta-chip{display:none}.app-grid{width:calc(100% - 28px)}.modal{width:95%;height:85%}.small-modal{width:92%}.overlay-modal{width:95%}main{padding:12px 10px 160px}.app-main{padding-top:12px}.home-hero,.home-card,.home-section,.pricing-card,.doc-card{padding:18px}.dock-inner{padding-left:10px;border-radius:24px}.tool-btn{width:30px;height:30px}.attachment-name{max-width:120px}.side-drawer{top:50px;left:0;right:0;bottom:0;width:100%;max-width:100%;border-radius:18px 18px 0 0}.camera-actions{flex-direction:column}.camera-capture-btn{max-width:none}}

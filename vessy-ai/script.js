@@ -28,17 +28,21 @@ document.addEventListener('DOMContentLoaded', () => {
         attachmentTray: byId('attachmentTray'),
         composerStatus: byId('composerStatus'),
         menuBtn: byId('menuBtn'),
+        modelSelect: byId('modelSelect'),
         settingsBtn: byId('settingsBtn'),
         userBadge: byId('userBadge'),
         drawerBackdrop: byId('drawerBackdrop'),
         sideDrawer: byId('sideDrawer'),
         drawerCloseBtn: byId('drawerCloseBtn'),
         drawerTabs: Array.from(document.querySelectorAll('.drawer-tab')),
+        newChatBtn: byId('newChatBtn'),
         historyList: byId('historyList'),
         drawerUsername: byId('drawerUsername'),
         drawerUserEmail: byId('drawerUserEmail'),
         drawerUserCreated: byId('drawerUserCreated'),
         usageChatValue: byId('usageChatValue'),
+        usageFastValue: byId('usageFastValue'),
+        usageSmartValue: byId('usageSmartValue'),
         usageVoiceValue: byId('usageVoiceValue'),
         usageResetText: byId('usageResetText'),
         voiceReplyToggle: byId('voiceReplyToggle'),
@@ -46,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         personalizationToggle: byId('personalizationToggle'),
         personalizationStatus: byId('personalizationStatus'),
         deletePersonalizationBtn: byId('deletePersonalizationBtn'),
+        adminPanelBtn: byId('adminPanelBtn'),
         logoutBtn: byId('logoutBtn'),
         deleteAccountBtn: byId('deleteAccountBtn'),
         bgOptions: Array.from(document.querySelectorAll('.bg-option')),
@@ -72,6 +77,8 @@ document.addEventListener('DOMContentLoaded', () => {
         limitModalTitle: byId('limitModalTitle'),
         limitModalSubtitle: byId('limitModalSubtitle'),
         limitModalChatValue: byId('limitModalChatValue'),
+        limitModalFastValue: byId('limitModalFastValue'),
+        limitModalSmartValue: byId('limitModalSmartValue'),
         limitModalVoiceValue: byId('limitModalVoiceValue'),
         limitModalResetText: byId('limitModalResetText'),
         limitRewardBtn: byId('limitRewardBtn'),
@@ -87,7 +94,8 @@ document.addEventListener('DOMContentLoaded', () => {
         restriction: 'vessy_restriction_notice',
         background: 'vessy_background',
         voiceReply: 'vessy_voice_reply_enabled',
-        voiceName: 'vessy_voice_name'
+        voiceName: 'vessy_voice_name',
+        modelTier: 'vessy_model_tier'
     };
 
     const MAX_ATTACHMENTS = 5;
@@ -101,6 +109,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let restrictionTriggered = false;
     let pendingAttachments = [];
     let conversationHistory = [];
+    let chatSessions = [];
+    let activeChatId = null;
+    let selectedModelTier = localStorage.getItem(STORAGE_KEYS.modelTier) === 'smart' ? 'smart' : 'fast';
     let voiceReplyEnabled = localStorage.getItem(STORAGE_KEYS.voiceReply) !== 'false';
     let selectedVoiceName = localStorage.getItem(STORAGE_KEYS.voiceName) || '';
     let browserVoices = [];
@@ -122,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initTerms();
     initBackground();
     initDrawer();
+    initModelSelector();
     initHomePanel();
     initLimitModal();
     initVoice();
@@ -207,8 +219,35 @@ document.addEventListener('DOMContentLoaded', () => {
         els.drawerTabs.forEach(tab => {
             tab.addEventListener('click', () => setDrawerPanel(tab.dataset.panel));
         });
+        els.newChatBtn?.addEventListener('click', startNewChat);
 
         window.toggleSettings = () => openDrawer('settingsPanel');
+    }
+
+    function initModelSelector() {
+        if (!els.modelSelect) return;
+        els.modelSelect.value = selectedModelTier;
+        els.modelSelect.addEventListener('change', () => {
+            selectedModelTier = els.modelSelect.value === 'smart' ? 'smart' : 'fast';
+            localStorage.setItem(STORAGE_KEYS.modelTier, selectedModelTier);
+            renderUsageState();
+            setComposerStatus(selectedModelTier === 'smart'
+                ? 'Vessy Smart selected. Daily limit: 50 messages.'
+                : 'Vessy Fast selected. Daily limit: 90 messages.', 'active');
+        });
+    }
+
+    function startNewChat() {
+        activeChatId = createClientChatId();
+        conversationHistory = [];
+        renderLoadedHistory([]);
+        renderHistoryList();
+        setComposerStatus('New chat started.', 'active');
+        els.userInput?.focus();
+    }
+
+    function createClientChatId() {
+        return `chat-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
     }
 
     function initHomePanel() {
@@ -288,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
         recognition.addEventListener('start', () => {
             recognitionActive = true;
             els.voiceBtn.classList.add('recording');
-            setComposerStatus(voiceCallMode ? 'Voice call live. Say "Hey Vessy".' : 'Listening...', 'active');
+            setComposerStatus(voiceCallMode ? 'Live voice chat beta. Say "Hey Vessy".' : 'Listening...', 'active');
         });
 
         recognition.addEventListener('end', () => {
@@ -334,8 +373,8 @@ document.addEventListener('DOMContentLoaded', () => {
             els.voiceReplyToggle.checked = true;
             localStorage.setItem(STORAGE_KEYS.voiceReply, 'true');
             await saveSettings({ voiceReplyEnabled: true });
-            setComposerStatus('Voice call connected. Say "Hey Vessy" to start.', 'active');
-            await speakReply('Hey, I am Vessy. Say Hey Vessy when you are ready.', true);
+            setComposerStatus('Live voice chat beta connected. Say "Hey Vessy" to start.', 'active');
+            await speakReply('Hey, I am Vessy. Live voice chat is in beta. Say Hey Vessy when you are ready.', true);
             startRecognition();
         });
     }
@@ -656,20 +695,21 @@ document.addEventListener('DOMContentLoaded', () => {
             els.imageUploadInput.click();
             els.composerMenu.classList.add('hidden');
         });
-        els.generateImageBtn.addEventListener('click', async () => {
+        els.generateImageBtn.addEventListener('click', event => {
+            event.preventDefault();
             els.composerMenu.classList.add('hidden');
-            const prompt = els.userInput.value.trim();
-            if (!prompt) {
-                setComposerStatus('Type an image prompt first, then tap Create image.', 'warn');
-                return;
-            }
-            addMsg(`<p>${escHtml(`Image ${prompt}`)}</p>`, 'user');
-            els.userInput.value = '';
-            clearComposerStatus();
-            await generateImage(prompt);
+            setComposerStatus('Image creation is coming soon.', 'warn');
+        });
+        els.generateImageBtn.addEventListener('mouseenter', () => {
+            setComposerStatus('Image creation is coming soon.', 'warn');
+        });
+        els.generateImageBtn.addEventListener('mouseleave', () => {
+            if (!pendingAttachments.length) clearComposerStatus();
         });
         els.generateVideoBtn.addEventListener('click', event => {
             event.preventDefault();
+            els.composerMenu.classList.add('hidden');
+            setComposerStatus('Video creation is coming soon.', 'warn');
         });
         els.generateVideoBtn.addEventListener('mouseenter', () => {
             setComposerStatus('Coming soon.', 'warn');
@@ -769,7 +809,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!text && pendingAttachments.length === 0) return;
 
         const usageKind = fromVoice ? 'voice' : 'chat';
-        const usageCheck = await consumeUsage(usageKind);
+        const modelTier = selectedModelTier;
+        const usageCheck = await consumeUsage(usageKind, modelTier);
         if (usageCheck.allowed === false) {
             showLimitModal(usageKind);
             return;
@@ -780,7 +821,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addMsg(payload.userHtml, 'user', `hist-${conversationHistory.length}`);
         clearComposer();
         conversationHistory.push({ role: 'user', content: payload.historyText });
-        await triggerAI(payload.prompt, payload.historyText, payload.attachments, fromVoice ? 'voice_call' : 'chat', usageKind);
+        await triggerAI(payload.prompt, payload.historyText, payload.attachments, fromVoice ? 'voice_call' : 'chat', usageKind, modelTier);
     }
 
     function buildMessagePayload(text, attachments, fromVoice) {
@@ -824,7 +865,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearComposerStatus();
     }
 
-    async function triggerAI(prompt, historyText, attachments, mode, usageKind) {
+    async function triggerAI(prompt, historyText, attachments, mode, usageKind, modelTier = selectedModelTier) {
         const id = Date.now();
         addMsg('...', 'bot', id);
         try {
@@ -834,29 +875,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({
                     prompt,
                     username: currentUsername,
+                    token: sessionToken,
                     history: conversationHistory.slice(-10),
                     attachments,
-                    mode
+                    mode,
+                    modelTier
                 })
             });
             const data = await response.json();
             const messageEl = byId(`msg-${id}`);
             if (data.error) {
                 if (messageEl) messageEl.textContent = data.error;
-                if (usageKind) await releaseUsage(usageKind);
+                if (usageKind) await releaseUsage(usageKind, modelTier);
                 return;
             }
             if (messageEl) {
                 messageEl.innerHTML = marked.parse(data.reply || data.error || 'No reply.');
                 conversationHistory.push({ role: 'assistant', content: data.reply || data.error || 'No reply.' });
                 await speakReply(data.reply || '', mode === 'voice_call');
-                saveChat(historyText || prompt, data.reply || data.error || '');
+                await saveChat(historyText || prompt, data.reply || data.error || '', modelTier);
                 renderHistoryList();
             }
         } catch {
             const messageEl = byId(`msg-${id}`);
             if (messageEl) messageEl.textContent = 'Connection failed.';
-            if (usageKind) await releaseUsage(usageKind);
+            if (usageKind) await releaseUsage(usageKind, modelTier);
         } finally {
             callModeResponsePending = false;
             resumeVoiceCallIfNeeded();
@@ -908,18 +951,27 @@ document.addEventListener('DOMContentLoaded', () => {
         els.chatWindow.scrollTop = els.chatWindow.scrollHeight;
     }
 
-    async function saveChat(userMessage, aiMessage) {
+    async function saveChat(userMessage, aiMessage, modelTier = selectedModelTier) {
         try {
-            await fetch('/api/save-chat', {
+            const response = await fetch('/api/save-chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     username: currentUsername,
+                    token: sessionToken,
+                    chatId: activeChatId,
                     userMessage,
                     aiMessage,
-                    timestamp: new Date()
+                    timestamp: new Date(),
+                    modelTier
                 })
             });
+            const data = await response.json();
+            if (data.chatId) activeChatId = data.chatId;
+            if (data.session) {
+                chatSessions = [data.session, ...chatSessions.filter(item => item.id !== data.session.id)].slice(0, 50);
+                renderHistoryList();
+            }
         } catch {}
     }
 
@@ -1032,6 +1084,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function afterLogin() {
         setPublicShellState(true);
         els.userBadgeName.textContent = currentUsername;
+        updateAdminEntryPoint();
         await loadAccountData();
         await loadUsageStatus();
         await loadChatHistory();
@@ -1047,7 +1100,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({
                     action: 'get',
                     username: currentUsername,
-                    token: sessionToken
+                    token: sessionToken,
+                    modelTier: selectedModelTier
                 })
             });
             const data = await response.json();
@@ -1070,6 +1124,12 @@ document.addEventListener('DOMContentLoaded', () => {
             els.personalizationToggle.checked = enabled;
             updatePersonalizationStatus(enabled, data.memory || []);
         } catch {}
+    }
+
+    function updateAdminEntryPoint() {
+        const isAdmin = String(currentUsername || '').toLowerCase() === 'admin';
+        els.adminPanelBtn?.classList.toggle('hidden', !isAdmin);
+        els.deleteAccountBtn?.classList.toggle('hidden', isAdmin);
     }
 
     async function saveSettings(settings) {
@@ -1115,15 +1175,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderUsageState() {
         if (!usageState) return;
-        if (els.usageChatValue) els.usageChatValue.textContent = `${usageState.chat.used} / ${usageState.chat.limit}`;
+        const selectedChat = selectedModelTier === 'fast' ? usageState.chatFast : usageState.chatSmart;
+        if (els.usageChatValue && selectedChat) els.usageChatValue.textContent = `${selectedChat.used} / ${selectedChat.limit}`;
+        if (els.usageFastValue && usageState.chatFast) els.usageFastValue.textContent = `${usageState.chatFast.used} / ${usageState.chatFast.limit}`;
+        if (els.usageSmartValue && usageState.chatSmart) els.usageSmartValue.textContent = `${usageState.chatSmart.used} / ${usageState.chatSmart.limit}`;
         if (els.usageVoiceValue) els.usageVoiceValue.textContent = `${usageState.voice.used} / ${usageState.voice.limit}`;
         if (els.usageResetText) els.usageResetText.textContent = usageState.resetLabel || 'Daily limits reset every day.';
-        if (els.limitModalChatValue) els.limitModalChatValue.textContent = `${usageState.chat.used} / ${usageState.chat.limit}`;
+        if (els.limitModalChatValue && selectedChat) els.limitModalChatValue.textContent = `${selectedChat.used} / ${selectedChat.limit}`;
+        if (els.limitModalFastValue && usageState.chatFast) els.limitModalFastValue.textContent = `${usageState.chatFast.used} / ${usageState.chatFast.limit}`;
+        if (els.limitModalSmartValue && usageState.chatSmart) els.limitModalSmartValue.textContent = `${usageState.chatSmart.used} / ${usageState.chatSmart.limit}`;
         if (els.limitModalVoiceValue) els.limitModalVoiceValue.textContent = `${usageState.voice.used} / ${usageState.voice.limit}`;
         if (els.limitModalResetText) els.limitModalResetText.textContent = usageState.resetLabel || 'Daily limits reset every day.';
     }
 
-    async function consumeUsage(kind) {
+    async function consumeUsage(kind, modelTier = selectedModelTier) {
         if (!currentUsername || !sessionToken) return { allowed: true, usage: usageState };
         try {
             const response = await fetch('/api/usage', {
@@ -1133,7 +1198,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     action: 'consume',
                     username: currentUsername,
                     token: sessionToken,
-                    kind
+                    kind,
+                    modelTier
                 })
             });
             const data = await response.json();
@@ -1147,7 +1213,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function releaseUsage(kind) {
+    async function releaseUsage(kind, modelTier = selectedModelTier) {
         if (!currentUsername || !sessionToken) return;
         try {
             const response = await fetch('/api/usage', {
@@ -1157,7 +1223,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     action: 'release',
                     username: currentUsername,
                     token: sessionToken,
-                    kind
+                    kind,
+                    modelTier
                 })
             });
             const data = await response.json();
@@ -1175,7 +1242,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (els.limitModalSubtitle) {
             els.limitModalSubtitle.textContent = kind === 'voice'
                 ? 'You have used your voice messages for today.'
-                : 'You have used your chat messages for today.';
+                : `You have used your ${selectedModelTier === 'fast' ? 'Fast' : 'Smart'} model messages for today.`;
         }
         renderUsageState();
         els.limitModal?.classList.remove('hidden');
@@ -1202,9 +1269,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/api/chat-history', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: currentUsername })
+                body: JSON.stringify({ username: currentUsername, token: sessionToken, chatId: activeChatId })
             });
             const data = await response.json();
+            chatSessions = Array.isArray(data.sessions) ? data.sessions : [];
+            activeChatId = data.chatId || activeChatId || chatSessions[0]?.id || createClientChatId();
             const history = Array.isArray(data.history) ? data.history : [];
             conversationHistory = history
                 .filter(item => item.role === 'user' || item.role === 'assistant')
@@ -1214,10 +1283,37 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch {}
     }
 
+    async function loadChatSession(chatId) {
+        if (!currentUsername || !sessionToken || !chatId) return;
+        try {
+            const response = await fetch('/api/chat-history', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUsername, token: sessionToken, chatId })
+            });
+            const data = await response.json();
+            if (data.error) {
+                setComposerStatus(data.error, 'warn');
+                return;
+            }
+            chatSessions = Array.isArray(data.sessions) ? data.sessions : chatSessions;
+            activeChatId = data.chatId || chatId;
+            const history = Array.isArray(data.history) ? data.history : [];
+            conversationHistory = history
+                .filter(item => item.role === 'user' || item.role === 'assistant')
+                .map(item => ({ role: item.role, content: item.content, timestamp: item.timestamp || null }));
+            renderLoadedHistory(history);
+            renderHistoryList();
+            setComposerStatus('Chat session loaded.', 'active');
+        } catch {
+            setComposerStatus('Could not load that chat session.', 'warn');
+        }
+    }
+
     function renderLoadedHistory(history) {
         els.chatWindow.innerHTML = '';
         if (!history.length) {
-            addMsg('<p><strong>Vessy OS 31.1 Online.</strong><br>Type <code>Draw a cat</code> or <code>Video a sunset</code>.</p>', 'bot');
+            addMsg('<p><strong>Vessy OS 31.1 Online.</strong><br>Ask a question, upload a file, or start a new chat session.</p>', 'bot');
             return;
         }
         history.forEach((item, index) => {
@@ -1231,23 +1327,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderHistoryList() {
-        const items = conversationHistory.filter(item => item.role === 'user').slice(-25).reverse();
+        const items = chatSessions.slice(0, 30);
         if (!items.length) {
             els.historyList.innerHTML = '<div class="history-item empty">No chat history yet.</div>';
             return;
         }
-        els.historyList.innerHTML = items.map((item, index) => {
-            const text = String(item.content || '').trim();
+        els.historyList.innerHTML = items.map(item => {
+            const text = String(item.title || item.preview || '').trim();
             const title = text.length > 72 ? `${text.slice(0, 72)}...` : text || 'Untitled chat';
-            const preview = text.length > 120 ? `${text.slice(0, 120)}...` : text;
-            const time = item.timestamp ? new Date(item.timestamp).toLocaleString() : 'Recent';
-            return `<button class="history-item" data-target="${conversationHistory.lastIndexOf(item)}"><div class="history-title">${escHtml(title)}</div><div class="history-meta">${escHtml(time)}</div><div class="history-preview">${escHtml(preview)}</div></button>`;
+            const previewText = String(item.preview || '').trim();
+            const preview = previewText.length > 120 ? `${previewText.slice(0, 120)}...` : previewText;
+            const time = item.updatedAt ? new Date(item.updatedAt).toLocaleString() : 'Recent';
+            const modelLabel = item.modelTier === 'fast' ? 'Fast' : 'Smart';
+            return `<button class="history-item ${item.id === activeChatId ? 'active' : ''}" data-chat-id="${escHtml(item.id)}"><div class="history-title">${escHtml(title)}</div><div class="history-meta">${escHtml(time)} | ${modelLabel} | ${item.messageCount || 0} msgs</div><div class="history-preview">${escHtml(preview)}</div></button>`;
         }).join('');
         els.historyList.querySelectorAll('.history-item').forEach(button => {
             button.addEventListener('click', () => {
-                const targetIndex = Number(button.dataset.target);
-                const targetEl = byId(`hist-${targetIndex}`);
-                if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                loadChatSession(button.dataset.chatId);
             });
         });
     }
@@ -1276,6 +1372,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         els.logoutBtn.addEventListener('click', logoutUser);
+        els.adminPanelBtn?.addEventListener('click', () => {
+            location.href = 'admin2026/';
+        });
         els.deleteAccountBtn.addEventListener('click', async () => {
             if (!confirm('Delete your account permanently? This cannot be undone.')) return;
             const response = await fetch('/api/account', {

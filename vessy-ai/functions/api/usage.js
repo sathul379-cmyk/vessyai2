@@ -1,4 +1,5 @@
-const CHAT_LIMIT = 50;
+const FAST_CHAT_LIMIT = 90;
+const SMART_CHAT_LIMIT = 50;
 const VOICE_LIMIT = 25;
 const TIME_ZONE = 'Asia/Calcutta';
 const RECORD_TTL_SECONDS = 60 * 60 * 24 * 14;
@@ -6,7 +7,7 @@ const RECORD_TTL_SECONDS = 60 * 60 * 24 * 14;
 export async function onRequestPost(context) {
     try {
         const { request, env } = context;
-        const { action, username, token, kind } = await request.json();
+        const { action, username, token, kind, modelTier } = await request.json();
         if (!username || !token) return json({ error: 'Username and token required.' }, 400);
 
         const kv = env.VESSY_CHATS;
@@ -28,13 +29,16 @@ export async function onRequestPost(context) {
 
         if (action === 'consume') {
             if (!isValidKind(kind)) return json({ error: 'Invalid usage kind.' }, 400);
-            const bucket = kind === 'voice' ? current.voice : current.chat;
-            const limit = kind === 'voice' ? VOICE_LIMIT : CHAT_LIMIT;
+            normalizeUsageShape(current);
+            const tier = normalizeModelTier(modelTier);
+            const bucket = getBucket(current, kind, tier);
+            const limit = getLimit(kind, tier);
             if (bucket.used >= limit) {
                 return json({
                     success: false,
                     allowed: false,
                     kind,
+                    modelTier: kind === 'chat' ? tier : null,
                     usage: buildUsageResponse(current)
                 });
             }
@@ -46,13 +50,15 @@ export async function onRequestPost(context) {
                 success: true,
                 allowed: true,
                 kind,
+                modelTier: kind === 'chat' ? tier : null,
                 usage: buildUsageResponse(current)
             });
         }
 
         if (action === 'release') {
             if (!isValidKind(kind)) return json({ error: 'Invalid usage kind.' }, 400);
-            const bucket = kind === 'voice' ? current.voice : current.chat;
+            normalizeUsageShape(current);
+            const bucket = getBucket(current, kind, normalizeModelTier(modelTier));
             bucket.used = Math.max(0, bucket.used - 1);
             current.updatedAt = new Date().toISOString();
             await kv.put(storageKey, JSON.stringify(current), { expirationTtl: RECORD_TTL_SECONDS });
@@ -71,17 +77,21 @@ export async function onRequestPost(context) {
 function createEmptyUsage(dateKey) {
     return {
         dateKey,
-        chat: { used: 0 },
+        chatFast: { used: 0 },
+        chatSmart: { used: 0 },
         voice: { used: 0 },
         updatedAt: new Date().toISOString()
     };
 }
 
 function buildUsageResponse(usage) {
+    normalizeUsageShape(usage);
     return {
         dateKey: usage.dateKey,
         resetLabel: 'Daily limits reset every day.',
-        chat: summarizeBucket(usage.chat.used, CHAT_LIMIT),
+        chat: summarizeBucket(usage.chatSmart.used, SMART_CHAT_LIMIT),
+        chatFast: summarizeBucket(usage.chatFast.used, FAST_CHAT_LIMIT),
+        chatSmart: summarizeBucket(usage.chatSmart.used, SMART_CHAT_LIMIT),
         voice: summarizeBucket(usage.voice.used, VOICE_LIMIT)
     };
 }
@@ -105,6 +115,29 @@ function getDateKey() {
 
 function isValidKind(kind) {
     return kind === 'chat' || kind === 'voice';
+}
+
+function normalizeUsageShape(usage) {
+    usage.chatFast ||= { used: 0 };
+    usage.chatSmart ||= { used: 0 };
+    usage.voice ||= { used: 0 };
+    if (usage.chat?.used && !usage.chatSmart.used) {
+        usage.chatSmart.used = usage.chat.used;
+    }
+}
+
+function normalizeModelTier(value) {
+    return value === 'fast' ? 'fast' : 'smart';
+}
+
+function getBucket(usage, kind, tier) {
+    if (kind === 'voice') return usage.voice;
+    return tier === 'fast' ? usage.chatFast : usage.chatSmart;
+}
+
+function getLimit(kind, tier) {
+    if (kind === 'voice') return VOICE_LIMIT;
+    return tier === 'fast' ? FAST_CHAT_LIMIT : SMART_CHAT_LIMIT;
 }
 
 function json(data, status = 200) {

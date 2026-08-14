@@ -3,27 +3,29 @@ const ADMIN_SESSION_TTL_SECONDS = 12 * 60 * 60;
 export async function onRequestPost(context) {
     try {
         const { request, env } = context;
-        const { adminPassword } = await request.json();
+        const { username, token } = await request.json();
 
         const kv = env.VESSY_CHATS;
         if (!kv) return json({ error: 'Database not connected.' }, 500);
 
-        if (!env.ADMIN_PASSWORD_HASH || !env.ADMIN_PASSWORD_PEPPER || !env.ADMIN_SESSION_SECRET) {
+        if (!env.ADMIN_SESSION_SECRET) {
             return json({ error: 'Admin security is not configured.' }, 500);
         }
 
-        if (!adminPassword || typeof adminPassword !== 'string') {
-            return json({ error: 'Enter password.' }, 400);
+        const normalizedUsername = String(username || '').toLowerCase();
+        if (normalizedUsername !== 'admin' || !token) {
+            return json({ error: 'Admin account session required.' }, 403);
         }
 
-        const candidateHash = await sha256Hex(adminPassword + env.ADMIN_PASSWORD_PEPPER);
-        if (!timingSafeEqual(candidateHash, normalizeHex(env.ADMIN_PASSWORD_HASH))) {
-            return json({ error: 'Invalid password. Access denied.' }, 403);
+        const accountSession = await kv.get(`session:${token}`, 'json');
+        if (!accountSession || accountSession.username?.toLowerCase() !== 'admin') {
+            return json({ error: 'Invalid admin account session.' }, 401);
         }
 
         const adminToken = randomHex(32);
         await kv.put(await adminSessionKey(adminToken, env), JSON.stringify({
             createdAt: new Date().toISOString(),
+            username: accountSession.username,
             ip: getClientIp(request)
         }), { expirationTtl: ADMIN_SESSION_TTL_SECONDS });
 
@@ -51,20 +53,6 @@ function randomHex(length) {
     const bytes = new Uint8Array(length);
     crypto.getRandomValues(bytes);
     return [...bytes].map(byte => byte.toString(16).padStart(2, '0')).join('');
-}
-
-function timingSafeEqual(a, b) {
-    if (a.length !== b.length) return false;
-
-    let diff = 0;
-    for (let i = 0; i < a.length; i += 1) {
-        diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-    }
-    return diff === 0;
-}
-
-function normalizeHex(value) {
-    return String(value || '').trim().toLowerCase();
 }
 
 function getClientIp(request) {

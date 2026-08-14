@@ -1,17 +1,24 @@
 export async function onRequestPost(context) {
     try {
         const { request, env } = context;
-        const { prompt, username, history, personalization, attachments, mode } = await request.json();
+        const { prompt, username, token, history, personalization, attachments, mode, modelTier } = await request.json();
         const apiKey = env.GROQ_API_KEY;
         if (!apiKey) return json({ error: 'GROQ_API_KEY not set.' }, 500);
+
+        const kv = env.VESSY_CHATS;
+        const normalizedUsername = typeof username === 'string' ? username.toLowerCase() : '';
+        if (kv && normalizedUsername) {
+            const session = await kv.get(`session:${token}`, 'json');
+            if (!session || session.username?.toLowerCase() !== normalizedUsername) {
+                return json({ error: 'Invalid session.' }, 401);
+            }
+        }
 
         const normalizedAttachments = Array.isArray(attachments) ? attachments.slice(0, 5) : [];
         const hasVisionInput = normalizedAttachments.some(item => item.kind === 'image' && item.analysisDataUrl);
         const model = hasVisionInput
             ? 'meta-llama/llama-4-scout-17b-16e-instruct'
-            : 'llama-3.3-70b-versatile';
-        const kv = env.VESSY_CHATS;
-        const normalizedUsername = typeof username === 'string' ? username.toLowerCase() : '';
+            : getTextModel(modelTier);
         const storedSettings = kv && normalizedUsername ? await kv.get(`settings:${normalizedUsername}`, 'json') || {} : {};
         const storedMemory = kv && normalizedUsername ? await kv.get(`memory:${normalizedUsername}`, 'json') || { snippets: [] } : { snippets: [] };
 
@@ -77,7 +84,7 @@ Rules:
         }
         if (data.error) throw new Error(data.error.message);
 
-        return json({ reply: data.choices?.[0]?.message?.content || 'No reply generated.' });
+        return json({ reply: data.choices?.[0]?.message?.content || 'No reply generated.', modelTier: normalizeModelTier(modelTier) });
     } catch (error) {
         return json({ error: error.message }, 500);
     }
@@ -135,4 +142,14 @@ function json(data, status = 200) {
         status,
         headers: { 'Content-Type': 'application/json' }
     });
+}
+
+function normalizeModelTier(value) {
+    return value === 'fast' ? 'fast' : 'smart';
+}
+
+function getTextModel(modelTier) {
+    return normalizeModelTier(modelTier) === 'fast'
+        ? 'llama-3.1-8b-instant'
+        : 'llama-3.3-70b-versatile';
 }
