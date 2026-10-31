@@ -1,6 +1,6 @@
-const FAST_CHAT_LIMIT = 90;
-const SMART_CHAT_LIMIT = 50;
-const VOICE_LIMIT = 25;
+const FAST_CHAT_LIMIT = 90000;
+const SMART_CHAT_LIMIT = 50000000;
+const VOICE_LIMIT = 2000000005;
 const TIME_ZONE = 'Asia/Calcutta';
 const RECORD_TTL_SECONDS = 60 * 60 * 24 * 14;
 
