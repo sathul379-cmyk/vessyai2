@@ -150,5 +150,6 @@ function normalizeModelTier(value) {
 
 function getTextModel(modelTier) {
     return normalizeModelTier(modelTier) === 'fast'
-        ? 'openai/gpt-oss-120b':
+        ? 'openai/gpt-oss-120b'
+        : 'openai/gpt-oss-120b';
 }
